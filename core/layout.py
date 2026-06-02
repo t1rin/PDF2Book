@@ -47,39 +47,38 @@ class PDFImposer():
 
         cell_width = PAGE_WIDTH / self.params.cols
         cell_height = PAGE_HEIGHT / self.params.rows
+        pages_per_sheet = self.params.rows * self.params.cols
+        total_sheets = (len(self.input_doc) + pages_per_sheet - 1) // pages_per_sheet
 
-        page = self.output_doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
-        page_counter = 0       
+        for sheet_num in range(total_sheets):
+            page = self.output_doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+        
+            for row in range(self.params.rows):
+                for col in range(self.params.cols):
+                    index = sheet_num * pages_per_sheet + row * self.params.cols + col
 
-        for row in range(self.params.rows):
-            for col in range(self.params.cols):
-                if page_counter >= len(self.input_doc):
-                    break
+                    x0 = col * cell_width + self.params.margin
+                    y0 = row * cell_height + self.params.margin
+                    x1 = (col + 1) * cell_width - self.params.margin
+                    y1 = (row + 1) * cell_height - self.params.margin
+                    
+                    rect = fitz.Rect(x0, y0, x1, y1)
                 
-                x0 = col * cell_width + self.params.margin
-                y0 = row * cell_height + self.params.margin
-                x1 = (col + 1) * cell_width - self.params.margin
-                y1 = (row + 1) * cell_height - self.params.margin
-                
-                rect = fitz.Rect(x0, y0, x1, y1)
-            
-                page.show_pdf_page(rect, self.input_doc, page_counter, 
-                                       keep_proportion=True)
+                    page.show_pdf_page(rect, self.input_doc, index, 
+                                        keep_proportion=True)
 
-                if self.params.margin:
-                    page.draw_rect(rect, color=self.params.cut_color, 
-                                       width=1, dashes="[4 2] 0", fill=None)
-                else:
-                    page.draw_line(fitz.Point((col + 1) * cell_width, 0), 
-                                   fitz.Point((col + 1) * cell_width, PAGE_HEIGHT),
-                                    color=self.params.cut_color, width=1,
-                                    dashes="[4 2] 0")
-                    page.draw_line(fitz.Point(0, (row + 1) * cell_height), 
-                                   fitz.Point(PAGE_WIDTH, (row + 1) * cell_height),
-                                    color=self.params.cut_color, width=1,
-                                    dashes="[4 2] 0")
-
-                page_counter += 1
+                    if self.params.margin:
+                        page.draw_rect(rect, color=self.params.cut_color, 
+                                        width=1, dashes="[4 2] 0", fill=None)
+                    else:
+                        page.draw_line(fitz.Point((col + 1) * cell_width, 0), 
+                                    fitz.Point((col + 1) * cell_width, PAGE_HEIGHT),
+                                        color=self.params.cut_color, width=1,
+                                        dashes="[4 2] 0")
+                        page.draw_line(fitz.Point(0, (row + 1) * cell_height), 
+                                    fitz.Point(PAGE_WIDTH, (row + 1) * cell_height),
+                                        color=self.params.cut_color, width=1,
+                                        dashes="[4 2] 0")
 
     def export_doc(self, path):
         if self.input_doc is None:

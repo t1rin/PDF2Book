@@ -3,6 +3,17 @@
 PAGE_WIDTH = 595
 PAGE_HEIGHT = 842
 
+def get_positions_pages(quentity, _list=[3, 0, 1, 2]):
+    """получение списка индексов для расположение в порядке для разреза"""
+    if quentity <= len(_list):
+        return _list
+    ind = _list.index(_list[-4])
+    for i in range(4):
+        _list.append(_list[ind+i]+2)
+    for i in range(len(_list)-4):
+        if (i % 4 == 0) or (i % 4 == 3):
+            _list[i] += 4
+    return get_positions_pages(quentity, _list)
 
 def get_cell_size(cols, rows):
     """получение размеров ячейки"""

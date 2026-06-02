@@ -1,7 +1,19 @@
+import fitz
+from dataclasses import dataclass
 
 
 PAGE_WIDTH = 595
 PAGE_HEIGHT = 842
+
+
+@dataclass
+class BookParams:
+    rows: int
+    cols: int
+    margin: int
+    cut_lines: bool
+    cut_color: tuple[int]
+    blocks_are_vertical: bool
 
 def get_positions_pages(quentity, is_vertical=False, _list=[3, 0, 1, 2]):
     """получение списка индексов для расположение в порядке для разреза"""
@@ -47,3 +59,87 @@ def get_cords_horizontal_line(row, cols, rows):
     point0 = (0, (row + 1) * cell_height)
     point1 = (PAGE_WIDTH, (row + 1) * cell_height)
     return (point0, point1)
+
+
+def calculate_doc(input_doc, output_doc, params: BookParams, page_num=None):
+    if input_doc is None:
+        raise ValueError("No PDF document loaded")
+    
+    if output_doc: output_doc.close()
+    output_doc = fitz.open()
+
+    is_vertical = params.blocks_are_vertical
+    new_positions = get_positions_pages(len(input_doc), is_vertical=is_vertical)
+    side0, side1 = [], []
+    for i in range(len(new_positions)):
+        if (i // 2) % 2 == 0:
+            side0.append(new_positions[i])
+        else:
+            side1.append(new_positions[i])
+    
+
+    sheet_num = 0
+    while side0 or side1:
+        sheet_num += 1
+        
+        if (page_num is None) or (page_num == sheet_num):
+            page = output_doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+
+        def get_index():
+            index = None
+            if sheet_num % 2 == 1:
+                if side0: index = side0.pop(0)
+            elif side1: index = side1.pop(0)
+            if index not in range(len(input_doc)):
+                index = None
+            return index
+
+        def draw_page(row, col, index, rotate=False):
+            if (page_num is not None) and (page_num != sheet_num):
+                return
+            
+            rect = fitz.Rect(
+                get_cords_rect(col, row, params.cols, 
+                                params.rows, params.margin)
+            )
+        
+            if index is not None:
+                if rotate:
+                    page.show_pdf_page(rect, input_doc, index, 
+                                        keep_proportion=True, rotate=180)
+                else: page.show_pdf_page(rect, input_doc, index, 
+                                            keep_proportion=True)
+
+            if params.margin:
+                page.draw_rect(rect, color=params.cut_color, 
+                                width=1, dashes="[4 2] 0", fill=None)
+            else:
+                v_line = get_cords_vertical_line(col, params.cols, params.rows)
+                h_line = get_cords_horizontal_line(row, params.cols, params.rows)
+                page.draw_line(fitz.Point(*v_line[0]), fitz.Point(*v_line[1]),
+                                color=params.cut_color, width=1,
+                                dashes="[4 2] 0")
+                page.draw_line(fitz.Point(*h_line[0]), fitz.Point(*h_line[1]),
+                                color=params.cut_color, width=1,
+                                dashes="[4 2] 0")
+
+        if is_vertical:
+            if sheet_num % 2 == 1:
+                for col in range(params.cols):
+                    for row in range(params.rows):
+                        index = get_index()
+                        draw_page(row, col, index)
+            else:
+                for col in range(params.cols)[::-1]:
+                    for row in range(params.rows):
+                        index = get_index()
+                        draw_page(row, col, index, rotate=True)
+        else:      
+            for row in range(params.rows):
+                for col in range(params.cols):
+                    index = get_index()
+                    draw_page(row, col, index)
+    if (page_num is not None) and (page_num > sheet_num):
+        raise ValueError("Not found page #{n}".format(n=page_num))
+    
+    return output_doc

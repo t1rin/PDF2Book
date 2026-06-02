@@ -2,9 +2,8 @@
 import fitz
 from dataclasses import dataclass
 
+from core.calculate import *
 
-PAGE_WIDTH = 595
-PAGE_HEIGHT = 842
 
 @dataclass
 class BookParams:
@@ -45,8 +44,6 @@ class PDFImposer():
             self.output_doc.close()
         self.output_doc = fitz.open()
 
-        cell_width = PAGE_WIDTH / self.params.cols
-        cell_height = PAGE_HEIGHT / self.params.rows
         pages_per_sheet = self.params.rows * self.params.cols
         total_sheets = (len(self.input_doc) + pages_per_sheet - 1) // pages_per_sheet
 
@@ -57,12 +54,10 @@ class PDFImposer():
                 for col in range(self.params.cols):
                     index = sheet_num * pages_per_sheet + row * self.params.cols + col
 
-                    x0 = col * cell_width + self.params.margin
-                    y0 = row * cell_height + self.params.margin
-                    x1 = (col + 1) * cell_width - self.params.margin
-                    y1 = (row + 1) * cell_height - self.params.margin
-                    
-                    rect = fitz.Rect(x0, y0, x1, y1)
+                    rect = fitz.Rect(
+                        get_cords_rect(col, row, self.params.cols, 
+                                       self.params.rows, self.params.margin)
+                    )
                 
                     page.show_pdf_page(rect, self.input_doc, index, 
                                         keep_proportion=True)
@@ -71,12 +66,12 @@ class PDFImposer():
                         page.draw_rect(rect, color=self.params.cut_color, 
                                         width=1, dashes="[4 2] 0", fill=None)
                     else:
-                        page.draw_line(fitz.Point((col + 1) * cell_width, 0), 
-                                    fitz.Point((col + 1) * cell_width, PAGE_HEIGHT),
+                        v_line = get_cords_vertical_line(col, self.params.cols, self.params.rows)
+                        h_line = get_cords_horizontal_line(row, self.params.cols, self.params.rows)
+                        page.draw_line(fitz.Point(*v_line[0]), fitz.Point(*v_line[1]),
                                         color=self.params.cut_color, width=1,
                                         dashes="[4 2] 0")
-                        page.draw_line(fitz.Point(0, (row + 1) * cell_height), 
-                                    fitz.Point(PAGE_WIDTH, (row + 1) * cell_height),
+                        page.draw_line(fitz.Point(*h_line[0]), fitz.Point(*h_line[1]),
                                         color=self.params.cut_color, width=1,
                                         dashes="[4 2] 0")
 

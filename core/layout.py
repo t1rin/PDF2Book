@@ -12,6 +12,7 @@ class BookParams:
     margin: int
     cut_lines: bool
     cut_color: tuple[int]
+    blocks_are_vertical: bool
 
 class PDFImposer():
     def __init__(self):
@@ -28,8 +29,14 @@ class PDFImposer():
         self.update_doc()
 
     def update_params(self, rows=2, cols=2, margin=2, cut_lines=True, 
-                      cut_color=(0.5, 0.5, 0.5)):
-        self.params = BookParams(rows, cols, margin, cut_lines, cut_color)
+                      cut_color=(0.5, 0.5, 0.5), blocks_are_vertical=False):
+        if rows*cols % 2 == 1:
+            raise ValueError("Not found blocks of pages")
+        if (blocks_are_vertical and (rows % 2 == 1)) or \
+            (not blocks_are_vertical and (cols % 2 == 1)):
+            raise ValueError("Incorrectly specified blocks_are_vertical")
+        self.params = BookParams(rows, cols, margin, cut_lines, cut_color,
+                                 blocks_are_vertical)
 
     def get_preview(self, index):
         if self.input_doc is None:
@@ -44,11 +51,7 @@ class PDFImposer():
             self.output_doc.close()
         self.output_doc = fitz.open()
 
-        pages_per_sheet = self.params.rows * self.params.cols
-        if pages_per_sheet % 2 == 1:
-            raise ValueError("Not found blocks of pages")
-
-        is_vertical = bool(self.params.cols % 2)
+        is_vertical = self.params.blocks_are_vertical
         new_positions = get_positions_pages(len(self.input_doc), is_vertical=is_vertical)
         side0, side1 = [], []
         for i in range(len(new_positions)):
@@ -62,17 +65,25 @@ class PDFImposer():
         while side0 or side1:
             page = self.output_doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
         
-            def draw_page(row, col, index):
+            def draw_page(row, col, rotate=False):
+                index = None
+                if sheet_num % 2 == 0:
+                    if side0: index = side0.pop(0)
+                elif side1: index = side1.pop(0)
                 if index not in range(len(self.input_doc)):
-                    return
-                
+                    index = None
+                    
                 rect = fitz.Rect(
                     get_cords_rect(col, row, self.params.cols, 
                                     self.params.rows, self.params.margin)
                 )
             
-                page.show_pdf_page(rect, self.input_doc, index, 
-                                    keep_proportion=True)
+                if index is not None:
+                    if rotate:
+                        page.show_pdf_page(rect, self.input_doc, index, 
+                                           keep_proportion=True, rotate=180)
+                    else: page.show_pdf_page(rect, self.input_doc, index, 
+                                             keep_proportion=True)
 
                 if self.params.margin:
                     page.draw_rect(rect, color=self.params.cut_color, 
@@ -87,18 +98,19 @@ class PDFImposer():
                                     color=self.params.cut_color, width=1,
                                     dashes="[4 2] 0")
 
-            if self.params.cols % 2 == 0:
+            if is_vertical:
+                if sheet_num % 2 == 0:
+                    for col in range(self.params.cols):
+                        for row in range(self.params.rows):
+                            draw_page(row, col)
+                else:
+                    for col in range(self.params.cols)[::-1]:
+                        for row in range(self.params.rows):
+                            draw_page(row, col, rotate=True)
+            else:      
                 for row in range(self.params.rows):
                     for col in range(self.params.cols):
-                        if sheet_num % 2 == 0: 
-                            if side0: draw_page(row, col, side0.pop(0))
-                        elif side1: draw_page(row, col, side1.pop(0))
-            else:
-                for col in range(self.params.cols):
-                    for row in range(self.params.rows):
-                        if sheet_num % 2 == 0:
-                            if side0: draw_page(row, col, side0.pop(0))
-                        elif side1: draw_page(row, col, side1.pop(0))        
+                        draw_page(row, col)
             sheet_num += 1
 
     def export_doc(self, path):

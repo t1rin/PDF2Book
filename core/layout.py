@@ -72,4 +72,5 @@ class PDFImposer():
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
+        self.update_doc()
         self.output_doc.save(path, garbage=4, deflate=True)

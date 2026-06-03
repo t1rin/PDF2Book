@@ -10,8 +10,8 @@ def register_callbacks(app):
     dpg.set_item_callback("load_file_btn", lambda: load_file(app))
     dpg.set_item_callback("arrow_left", lambda: arrow_left_callback(app))
     dpg.set_item_callback("arrow_right", lambda: arrow_right_callback(app))
-    dpg.set_item_callback("rows_input", lambda: edit_params(app))
-    dpg.set_item_callback("cols_input", lambda: edit_params(app))
+    dpg.set_item_callback("rows_input", lambda: edit_rows_and_cols_inputs(app))
+    dpg.set_item_callback("cols_input", lambda: edit_rows_and_cols_inputs(app))
     dpg.set_item_callback("margin_input", lambda: edit_params(app))
     dpg.set_item_callback("show_dividing_line", lambda: edit_params(app))
     dpg.set_item_callback("show_line_with_indentation", lambda: edit_params(app))
@@ -73,6 +73,22 @@ def arrow_right_callback(app):
     app.current_page += 1
     update_preview(app)
 
+def edit_rows_and_cols_inputs(app):
+    rows = dpg.get_value("rows_input")
+    cols = dpg.get_value("cols_input")
+    if (rows <= 0):
+        dpg.set_value("rows_input", 1)
+        return
+    if (cols <= 0):
+        dpg.set_value("cols_input", 1)
+        return
+    if app.pdf_path is None:
+        log_message("Файл PDF не загружен")
+        dpg.set_value("rows_input", 2)
+        dpg.set_value("cols_input", 2)
+        return
+    edit_params(app)
+
 def edit_params(app):
     rows = dpg.get_value("rows_input")
     cols = dpg.get_value("cols_input")
@@ -82,14 +98,9 @@ def edit_params(app):
     color = [i/255 for i in list(dpg.get_value("color_picker"))[0:3]]
     blocks_are_vertical = dpg.get_value("radio_btn") == "Сверху"
     
-    if (rows <= 0):
-        dpg.set_value("rows_input", 1)
-        return
-    if (cols <= 0):
-        dpg.set_value("cols_input", 1)
-        return
+    
     if (margin < 0):
-        dpg.set_value("margin_input", 1)
+        dpg.set_value("margin_input", 0)
         return
     
 
@@ -103,6 +114,7 @@ def edit_params(app):
     if app.pdf_path is None:
         log_message("Файл PDF не загружен")
         return
+    
     log_message()
     app.pdf_imposer.update_params(rows, cols, margin, 
                                   show_line_indent, color, blocks_are_vertical)

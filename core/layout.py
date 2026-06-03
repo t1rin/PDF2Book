@@ -42,12 +42,12 @@ class PDFImposer():
             page = temp[0]
             
             matrix = fitz.Matrix(scale, scale)
-            pix = page.get_pixmap(matrix=matrix, alpha=True)
+            pix = page.get_pixmap(matrix=matrix, alpha=False)
             
             width, height = pix.width, pix.height
             
             img_array = np.frombuffer(pix.samples, dtype=np.uint8)
-            img_array = img_array.reshape(height, width, pix.n)
+            img_array = img_array.reshape(height, width, 3)
             
             img_float = img_array.astype(np.float32) / 255.0
             

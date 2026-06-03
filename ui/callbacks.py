@@ -140,5 +140,5 @@ def export_file(app):
     if app.pdf_path is None:
         log_message("Исходный файл не выбран")
         return
-    path = sanitize_filename(dpg.get_value("lineedit_output_file"))
+    path = dpg.get_value("lineedit_output_file")
     app.pdf_imposer.export_doc(path)

@@ -28,7 +28,7 @@ def get_positions_pages(quentity, is_vertical=False, _list=None):
     for i in range(len(_list)-4):
         if (i % 4 == 0) or (i % 4 == 3):
             _list[i] += 4
-    return get_positions_pages(quentity, _list=_list)
+    return get_positions_pages(quentity, is_vertical=is_vertical, _list=_list)
 
 
 def get_cell_size(cols, rows):

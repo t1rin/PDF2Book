@@ -1,6 +1,6 @@
 viewport_options = {
     "title": "PDF2Book",
-    "height": 700,
+    "height": 740,
     "width": 800,
     "max_width": -1,
     "min_width": -1,
@@ -11,3 +11,5 @@ viewport_options = {
 parametrs_window_on_the_left = False
 
 default_panel_width = 250
+
+scale = 2

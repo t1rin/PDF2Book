@@ -15,8 +15,9 @@ class BookParams:
     cut_color: tuple[int]
     blocks_are_vertical: bool
 
-def get_positions_pages(quentity, is_vertical=False, _list=[3, 0, 1, 2]):
+def get_positions_pages(quentity, is_vertical=False, _list=None):
     """получение списка индексов для расположение в порядке для разреза"""
+    if _list is None: _list = [3, 0, 1, 2]
     if quentity <= len(_list):
         if is_vertical:
             _list[2::4], _list[3::4] = _list[3::4], _list[2::4]
@@ -27,7 +28,7 @@ def get_positions_pages(quentity, is_vertical=False, _list=[3, 0, 1, 2]):
     for i in range(len(_list)-4):
         if (i % 4 == 0) or (i % 4 == 3):
             _list[i] += 4
-    return get_positions_pages(quentity, _list)
+    return get_positions_pages(quentity, _list=_list)
 
 
 def get_cell_size(cols, rows):
@@ -61,11 +62,10 @@ def get_cords_horizontal_line(row, cols, rows):
     return (point0, point1)
 
 
-def calculate_doc(input_doc, output_doc, params: BookParams, page_num=None):
+def calculate_doc(input_doc, params: BookParams, page_num=None):
     if input_doc is None:
         raise ValueError("No PDF document loaded")
     
-    if output_doc: output_doc.close()
     output_doc = fitz.open()
 
     is_vertical = params.blocks_are_vertical
@@ -142,4 +142,4 @@ def calculate_doc(input_doc, output_doc, params: BookParams, page_num=None):
     if (page_num is not None) and (page_num > sheet_num):
         raise ValueError("Not found page #{n}".format(n=page_num))
     
-    return output_doc
+    return output_doc, sheet_num

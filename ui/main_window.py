@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
+from ui.callbacks import set_default_values
 import ui.config as conf
 
 
@@ -25,25 +26,27 @@ def create_parametrs_window(app):
 
         dpg.add_separator(label="Параметры")
         dpg.add_text("Количество строк:")
-        dpg.add_input_int(tag="rows_input", default_value=2, min_value=1)
+        dpg.add_input_int(tag="rows_input", min_value=1)
         dpg.add_text("Количество столбцов:")
-        dpg.add_input_int(tag="cols_input", default_value=2, min_value=1)
+        dpg.add_input_int(tag="cols_input", min_value=1)
         dpg.add_text("Отступ:")
-        dpg.add_input_int(tag="margin_input", default_value=2, min_value=0)
-        dpg.add_checkbox(tag="show_dividing_line", label="Показ разделяющего пунктира", default_value=True)
-        dpg.add_checkbox(tag="show_line_with_indentation", label="Показ пунктира с отступом", default_value=True)
+        dpg.add_input_int(tag="margin_input", min_value=0)
+        dpg.add_checkbox(tag="show_dividing_line", label="Показ разделяющего пунктира")
+        dpg.add_checkbox(tag="show_line_with_indentation", label="Показ пунктира с отступом")
         dpg.add_text("Цвет пунктира:")
         dpg.add_color_edit((125, 125, 125), tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
         dpg.add_text("Место переплета:")
-        dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True, default_value="Слева")
+        dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
 
         dpg.add_separator(label="Export")
         dpg.add_text("Выходной файл PDF")
-        dpg.add_input_text(tag="lineedit_output_file", hint="enter path to directory")
+        dpg.add_input_text(tag="lineedit_output_file", hint="enter path")
         with dpg.group(horizontal=True):
             dpg.add_button(tag="choice_output_file_btn", label="Выбрать")
             dpg.add_button(tag="export_file_btn", label="Экспорт")
         dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
+
+        set_default_values(app)
 
 def create_plot_window(app):
     with dpg.child_window():

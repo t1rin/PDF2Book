@@ -6,13 +6,21 @@ from tkinter import filedialog, Tk
 import fitz
 
 class FileDialogHelper:
-    """Управление диалогами выбора файлов через tkinter"""
+    _root = None
     
-    @staticmethod
-    def open_pdf_file():
-        root = Tk()
-        root.withdraw()
-        root.attributes('-topmost', True)
+    @classmethod
+    def _get_root(cls):
+        if cls._root is None:
+            cls._root = Tk()
+            cls._root.withdraw()
+            cls._root.attributes('-topmost', True)
+        return cls._root
+    
+    @classmethod
+    def open_pdf_file(cls):
+        root = cls._get_root()
+        root.lift()
+        root.focus_force()
         
         filepath = filedialog.askopenfilename(
             title="Выберите PDF файл",
@@ -22,14 +30,13 @@ class FileDialogHelper:
             ]
         )
         
-        root.destroy()
         return filepath if filepath else None
     
-    @staticmethod
-    def save_pdf_file(default_name="output.pdf"):
-        root = Tk()
-        root.withdraw()
-        root.attributes('-topmost', True)
+    @classmethod
+    def save_pdf_file(cls, default_name="output.pdf"):
+        root = cls._get_root()
+        root.lift()
+        root.focus_force()
         
         filepath = filedialog.asksaveasfilename(
             title="Сохранить PDF как",
@@ -38,8 +45,14 @@ class FileDialogHelper:
             initialfile=default_name
         )
         
-        root.destroy()
         return filepath if filepath else None
+    
+    @classmethod
+    def cleanup(cls):
+        """Вызовите при завершении программы"""
+        if cls._root:
+            cls._root.destroy()
+            cls._root = None
 
 
 class PDFInfo:

@@ -34,7 +34,7 @@ def create_parametrs_window(app):
         dpg.add_checkbox(tag="show_dividing_line", label="Показ разделяющего пунктира")
         dpg.add_checkbox(tag="show_line_with_indentation", label="Показ пунктира с отступом")
         dpg.add_text("Цвет пунктира:")
-        dpg.add_color_edit((125, 125, 125), tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
+        dpg.add_color_edit(tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
         dpg.add_text("Место переплета:")
         dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
 

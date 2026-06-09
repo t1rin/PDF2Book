@@ -38,10 +38,10 @@ def check_path_to_input_file(app):
 
 def choice_path_to_input_file(app):
     path = FileDialogHelper.open_pdf_file()
-    if not path: return
-    _, err = PDFInfo.validate_and_get_info(path)
-    log_message(err)
-    if not err: dpg.set_value("lineedit_input_file", path)
+    if path is None: return
+    #_, err = PDFInfo.validate_and_get_info(path)
+    #log_message(err)
+    #if not err: dpg.set_value("lineedit_input_file", path)
 
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
@@ -80,6 +80,7 @@ def set_default_values(app):
     dpg.set_value("radio_btn", "Слева")
     dpg.set_value("show_dividing_line", True)
     dpg.set_value("show_line_with_indentation", True)
+    dpg.set_value("color_picker", (125, 125, 125))
 
 def edit_params(app):
     rows = dpg.get_value("rows_input")

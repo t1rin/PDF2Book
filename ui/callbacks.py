@@ -39,9 +39,9 @@ def check_path_to_input_file(app):
 def choice_path_to_input_file(app):
     path = FileDialogHelper.open_pdf_file()
     if path is None: return
-    #_, err = PDFInfo.validate_and_get_info(path)
-    #log_message(err)
-    #if not err: dpg.set_value("lineedit_input_file", path)
+    _, err = PDFInfo.validate_and_get_info(path)
+    log_message(err)
+    if not err: dpg.set_value("lineedit_input_file", path)
 
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")

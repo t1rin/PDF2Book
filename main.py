@@ -10,6 +10,7 @@ class PDF2BookApp:
         self.pdf_imposer = PDFImposer()
 
         self.theme = conf.selected_theme
+        self.font = conf.selected_font
         self.current_page = 1
         
     def log_message(self, msg=None):

@@ -4,9 +4,6 @@ import dearpygui.dearpygui as dpg
 import ui.config as conf
 
 
-global_font_path = "./assets/fonts/DeleddaOpen.ttf"
-
-
 def register_theme(app):
     name = app.theme
     with dpg.theme(tag="global_theme"):
@@ -70,13 +67,13 @@ def register_theme(app):
     
 def register_font(app):
     with dpg.font_registry():
-        with dpg.font(global_font_path, size=14, tag="global_font"): pass
+        with dpg.font(app.font, size=14, tag="global_font"): pass
 
 def register_all(app):
     register_theme(app)
     dpg.bind_theme("global_theme")
-    if not os.path.exists(global_font_path):
-        app.log_message(f"Warning: Font file not found: {global_font_path}")
+    if not os.path.exists(app.font):
+        app.log_message(f"Warning: Font file not found: {app.font}")
     else:
         register_font(app)
         dpg.bind_font("global_font")

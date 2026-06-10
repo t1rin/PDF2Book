@@ -8,6 +8,7 @@ viewport_options = {
     "min_height": -1,
 }
 
+selected_font = "./assets/fonts/Nunito.ttf"
 selected_theme = "light"
 
 theme = {

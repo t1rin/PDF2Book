@@ -7,8 +7,10 @@ from ui import *
 class PDF2BookApp:
     def __init__(self):
         self.pdf_path = None
-        self.current_page = 1
         self.pdf_imposer = PDFImposer()
+        #self.theme = conf.selected_theme
+
+        self.current_page = 1
         
     def run(self):
         dpg.create_context()

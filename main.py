@@ -12,6 +12,10 @@ class PDF2BookApp:
         self.theme = conf.selected_theme
         self.current_page = 1
         
+    def log_message(self, msg=None):
+        if msg: dpg.set_value("log_output", msg)
+        else: dpg.set_value("log_output", "")
+
     def run(self):
         dpg.create_context()
         

@@ -4,10 +4,6 @@ from utils import *
 import ui.config as conf
 
 
-def log_message(msg=None):
-    if msg: dpg.set_value("log_output", msg)
-    else: dpg.set_value("log_output", "")
-
 def update_preview(app):
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, scale=conf.scale)
     dpg.set_value("preview_pdf_texture", img_data)
@@ -17,13 +13,13 @@ def update_preview(app):
 def check_path_to_input_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
-    log_message(err)
+    app.log_message(err)
 
 def open_file(app):
     path = FileDialogHelper.open_pdf_file()
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
-    log_message(err)
+    app.log_message(err)
     if not err:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
@@ -31,7 +27,7 @@ def open_file(app):
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
-    log_message(err)
+    app.log_message(err)
     if err: return
     app.pdf_path = path
     app.pdf_imposer.load_doc(path)
@@ -41,7 +37,7 @@ def arrow_left_callback(app):
     if (app.current_page == 1): 
         return
     if (app.pdf_path is None):
-        log_message("Файл PDF не загружен")
+        app.log_message("Файл PDF не загружен")
         return
     dpg.set_value("page_label", int(dpg.get_value("page_label"))-1)
     app.current_page -= 1
@@ -49,7 +45,7 @@ def arrow_left_callback(app):
 
 def arrow_right_callback(app):
     if (app.pdf_path is None):
-        log_message("Файл PDF не загружен")
+        app.log_message("Файл PDF не загружен")
         return
     if (app.pdf_imposer.output_doc is not None) and \
         (app.current_page == app.pdf_imposer.quantity_page): 
@@ -80,7 +76,7 @@ def edit_params(app):
         dpg.set_value("cols_input", 1)
         return
     if app.pdf_path is None:
-        log_message("Файл PDF не загружен")
+        app.log_message("Файл PDF не загружен")
         set_default_values(app)
         return
 
@@ -97,15 +93,15 @@ def edit_params(app):
         return
 
     if (blocks_are_vertical and (rows % 2 == 1)):
-        log_message("В указанное количество строк не помещаются блоки по два")
+        app.log_message("В указанное количество строк не помещаются блоки по два")
         return
 
     if (not blocks_are_vertical and (cols % 2 == 1)):
-        log_message("В указанное количество столбцов не помещаются блоки по два")
+        app.log_message("В указанное количество столбцов не помещаются блоки по два")
         return
 
     if app.pdf_path is None:
-        log_message("Файл PDF не загружен")
+        app.log_message("Файл PDF не загружен")
         return
 
     pattern_code = pattern.split()
@@ -114,7 +110,7 @@ def edit_params(app):
 
     pattern = f"[{pattern}] 0"
 
-    log_message()
+    app.log_message()
     app.pdf_imposer.update_params(rows=rows, cols=cols, margin=margin, 
                                   show_cut_lines=show_cut_lines,
                                   show_margin_lines=show_margin_lines, 
@@ -127,14 +123,14 @@ def check_path_to_output_file(app):
     path = dpg.get_value("lineedit_output_file")
     if not path: return
     if not is_type(path, "pdf"):
-        log_message("Файл некорректного типа")
+        app.log_message("Файл некорректного типа")
         return
 
 def save_as_file_btn(app):
     path = FileDialogHelper.save_pdf_file()
     if path is None: return
     if not is_type(path, "pdf"):
-        log_message("Файл некорректного типа")
+        app.log_message("Файл некорректного типа")
         return
     dpg.set_value("lineedit_output_file", path)
     save_file_btn(app)
@@ -142,11 +138,11 @@ def save_as_file_btn(app):
 def save_file_btn(app):
     check_path_to_output_file(app)
     if app.pdf_path is None:
-        log_message("Исходный файл не выбран")
+        app.log_message("Исходный файл не выбран")
         return
     path = dpg.get_value("lineedit_output_file")
     app.pdf_imposer.export_doc(path)
-    log_message("Файл сохранен")
+    app.log_message("Файл сохранен")
 
 def lineedit_pattern_btn(app):
     pattern = dpg.get_value("lineedit_pattern")
@@ -154,7 +150,7 @@ def lineedit_pattern_btn(app):
     if (len(pattern_code) % 2 == 0) and all(s.isdigit() for s in pattern_code):
         edit_params(app)
     else:
-        log_message("Некорректный формат паттерна")
+        app.log_message("Некорректный формат паттерна")
 
 
 def register_callbacks(app):

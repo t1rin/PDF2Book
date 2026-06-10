@@ -5,15 +5,10 @@ import ui.config as conf
 
 
 global_font_path = "./assets/fonts/DeleddaOpen.ttf"
-if not os.path.exists(global_font_path):
-    print(f"Warning: Font file not found: {global_font_path}")
+
 
 def register_theme(app):
     name = app.theme
-
-    with dpg.font_registry():
-        with dpg.font(global_font_path, size=14, tag="global_font"): pass
-
     with dpg.theme(tag="global_theme"):
         with dpg.theme_component(dpg.mvAll):
             dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 8, 8)
@@ -73,6 +68,19 @@ def register_theme(app):
             dpg.add_theme_color(dpg.mvThemeCol_FrameBg, conf.theme[name]["bg_color"])
             dpg.add_theme_color(dpg.mvPlotCol_Selection, conf.theme[name]["plot_selection_color"])
     
+def register_font(app):
+    with dpg.font_registry():
+        with dpg.font(global_font_path, size=14, tag="global_font"): pass
+
+def register_all(app):
+    register_theme(app)
+    dpg.bind_theme("global_theme")
+    if not os.path.exists(global_font_path):
+        app.log_message(f"Warning: Font file not found: {global_font_path}")
+    else:
+        register_font(app)
+        dpg.bind_font("global_font")
+
 def update_theme(app):
     if dpg.does_item_exist("global_theme"):
         dpg.delete_item("global_theme")
@@ -80,14 +88,11 @@ def update_theme(app):
     if dpg.does_item_exist("global_font"):
         dpg.delete_item("global_font")
     
-    register_theme(app)
-    
-    dpg.bind_theme("global_theme")
-    dpg.bind_font("global_font")
+    register_all(app)
     
     dpg.split_frame()
 
+    app.log_message()
+
 def register_themes(app):
-    register_theme(app)
-    dpg.bind_theme("global_theme")
-    dpg.bind_font("global_font")
+    register_all(app)

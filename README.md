@@ -18,7 +18,7 @@
 
 загружает исходный файл PDF
 
-#### `PDFImposer().update_params(rows=2, cols=2, margin=2, cut_lines=True, cut_color=(0.5, 0.5, 0.5), blocks_are_vertical=False)`
+#### `PDFImposer().update_params(self, rows=2, cols=2, margin=15, show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", blocks_are_vertical=False)`
 
 обновляет параметры расшивки
 
@@ -39,6 +39,8 @@
 позволяет взаимодействовать с `PDFImposer()` посредствам пользовательского интерфейса
 
 UI реализован с помощью модуля `dearpygui`
+
+В программе реализованы обработчики элементов интерфейса и комбинаций клавиш. Поддерживается динамическое сохранение параметров интерфейса — тем и шрифтов; их можно переключать по нажатию F1 и F2 соответственно
 
 # Подключение
 

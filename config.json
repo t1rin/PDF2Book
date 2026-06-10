@@ -9,7 +9,7 @@
         "min_height": -1
     },
     "selected_font": "./assets/fonts/DeleddaOpen.ttf",
-    "selected_theme": "dark",
+    "selected_theme": "light",
     "theme": {
         "dark": {
             "window_color": [

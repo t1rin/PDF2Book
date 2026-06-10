@@ -8,7 +8,7 @@ class PDF2BookApp:
     def __init__(self):
         self.pdf_path = None
         self.pdf_imposer = PDFImposer()
-        #self.theme = conf.selected_theme
+        self.theme = conf.selected_theme
 
         self.current_page = 1
         
@@ -19,7 +19,8 @@ class PDF2BookApp:
 
         create_main_window(self)
         register_callbacks(self)
-        apply_theme()
+        register_keyboards(self)
+        register_themes(self)
         
         dpg.set_primary_window("primary_window", True)
         

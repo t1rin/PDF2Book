@@ -4,24 +4,6 @@ from utils import *
 import ui.config as conf
 
 
-def register_callbacks(app):
-    dpg.set_item_callback("lineedit_input_file", lambda: check_path_to_input_file(app))
-    dpg.set_item_callback("choice_input_file_btn", lambda: choice_path_to_input_file(app))
-    dpg.set_item_callback("load_file_btn", lambda: load_file(app))
-    dpg.set_item_callback("arrow_left", lambda: arrow_left_callback(app))
-    dpg.set_item_callback("arrow_right", lambda: arrow_right_callback(app))
-    dpg.set_item_callback("rows_input", lambda: edit_params(app))
-    dpg.set_item_callback("cols_input", lambda: edit_params(app))
-    dpg.set_item_callback("margin_input", lambda: edit_params(app))
-    dpg.set_item_callback("show_margin_lines", lambda: edit_params(app))
-    dpg.set_item_callback("show_blocks_lines", lambda: edit_params(app))
-    dpg.set_item_callback("show_cut_lines", lambda: edit_params(app))
-    dpg.set_item_callback("color_picker", lambda: edit_params(app))
-    dpg.set_item_callback("radio_btn", lambda: edit_params(app))
-    dpg.set_item_callback("lineedit_output_file", lambda: check_path_to_output_file(app))
-    dpg.set_item_callback("choice_output_file_btn", lambda: choice_path_to_output_file(app))
-    dpg.set_item_callback("export_file_btn", lambda: export_file(app))
-
 def log_message(msg=None):
     if msg: dpg.set_value("log_output", msg)
     else: dpg.set_value("log_output", "")
@@ -37,12 +19,14 @@ def check_path_to_input_file(app):
     _, err = PDFInfo.validate_and_get_info(path)
     log_message(err)
 
-def choice_path_to_input_file(app):
+def open_file(app):
     path = FileDialogHelper.open_pdf_file()
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
     log_message(err)
-    if not err: dpg.set_value("lineedit_input_file", path)
+    if not err:
+        dpg.set_value("lineedit_input_file", path)
+        load_file(app)
 
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
@@ -137,15 +121,16 @@ def check_path_to_output_file(app):
         log_message("Файл некорректного типа")
         return
 
-def choice_path_to_output_file(app):
+def save_as_file_btn(app):
     path = FileDialogHelper.save_pdf_file()
     if path is None: return
     if not is_type(path, "pdf"):
         log_message("Файл некорректного типа")
         return
     dpg.set_value("lineedit_output_file", path)
+    save_file_btn(app)
 
-def export_file(app):
+def save_file_btn(app):
     check_path_to_output_file(app)
     if app.pdf_path is None:
         log_message("Исходный файл не выбран")
@@ -153,3 +138,22 @@ def export_file(app):
     path = dpg.get_value("lineedit_output_file")
     app.pdf_imposer.export_doc(path)
     log_message("Файл сохранен")
+
+
+def register_callbacks(app):
+    dpg.set_item_callback("lineedit_input_file", lambda: check_path_to_input_file(app))
+    dpg.set_item_callback("open_file_btn", lambda: open_file(app))
+    dpg.set_item_callback("load_file_btn", lambda: load_file(app))
+    dpg.set_item_callback("arrow_left", lambda: arrow_left_callback(app))
+    dpg.set_item_callback("arrow_right", lambda: arrow_right_callback(app))
+    dpg.set_item_callback("rows_input", lambda: edit_params(app))
+    dpg.set_item_callback("cols_input", lambda: edit_params(app))
+    dpg.set_item_callback("margin_input", lambda: edit_params(app))
+    dpg.set_item_callback("show_margin_lines", lambda: edit_params(app))
+    dpg.set_item_callback("show_blocks_lines", lambda: edit_params(app))
+    dpg.set_item_callback("show_cut_lines", lambda: edit_params(app))
+    dpg.set_item_callback("color_picker", lambda: edit_params(app))
+    dpg.set_item_callback("radio_btn", lambda: edit_params(app))
+    dpg.set_item_callback("lineedit_output_file", lambda: check_path_to_output_file(app))
+    dpg.set_item_callback("save_as_file_btn", lambda: save_as_file_btn(app))
+    dpg.set_item_callback("save_file_btn", lambda: save_file_btn(app))

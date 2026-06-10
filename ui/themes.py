@@ -3,11 +3,14 @@ import dearpygui.dearpygui as dpg
 
 import ui.config as conf
 
+
 global_font_path = "./assets/fonts/DeleddaOpen.ttf"
 if not os.path.exists(global_font_path):
     print(f"Warning: Font file not found: {global_font_path}")
 
-def register_theme(name):
+def register_theme(app):
+    name = app.theme
+
     with dpg.font_registry():
         with dpg.font(global_font_path, size=14, tag="global_font"): pass
 
@@ -70,32 +73,21 @@ def register_theme(name):
             dpg.add_theme_color(dpg.mvThemeCol_FrameBg, conf.theme[name]["bg_color"])
             dpg.add_theme_color(dpg.mvPlotCol_Selection, conf.theme[name]["plot_selection_color"])
     
-def switch_theme(name):
+def update_theme(app):
     if dpg.does_item_exist("global_theme"):
         dpg.delete_item("global_theme")
     
     if dpg.does_item_exist("global_font"):
         dpg.delete_item("global_font")
     
-    register_theme(name)
+    register_theme(app)
     
     dpg.bind_theme("global_theme")
     dpg.bind_font("global_font")
     
     dpg.split_frame()
 
-"""
-def key_callback():
-    themes = list(conf.theme.keys())
-    new_theme = themes[themes.index(conf.selected_theme)-1]
-    switch_theme(new_theme)
-
-def register_keyboards():
-    with dpg.handler_registry():
-        dpg.add_key_press_handler(dpg.mvKey_F1, callback=key_callback)"""
-
-def apply_theme():
-    register_theme(conf.selected_theme)
-    #register_keyboards()
+def register_themes(app):
+    register_theme(app)
     dpg.bind_theme("global_theme")
     dpg.bind_font("global_font")

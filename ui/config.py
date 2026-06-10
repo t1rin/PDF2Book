@@ -1,6 +1,6 @@
 viewport_options = {
     "title": "PDF2Book",
-    "height": 700,
+    "height": 730,
     "width": 770,
     "max_width": -1,
     "min_width": -1,

@@ -14,7 +14,8 @@ class BookParams:
     show_cut_lines: bool
     show_margin_lines: bool
     show_blocks_lines: bool
-    lines_color: tuple[int]
+    thickness_lines: int
+    color_lines: tuple[int]
     dashes_pattern: str
     blocks_are_vertical: bool
 
@@ -69,7 +70,6 @@ def is_cut_line(cord, is_vertical, is_row=True):
     else:
         return (not is_vertical and (cord % 2 == 1)) or is_vertical
     
-
 def calculate_doc(input_doc, params: BookParams, page_num=None):
     if input_doc is None:
         raise ValueError("No PDF document loaded")
@@ -116,7 +116,8 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                                             keep_proportion=True)
 
             if params.show_margin_lines and params.margin:
-                page.draw_rect(rect, color=params.lines_color, width=1, fill=None)
+                page.draw_rect(rect, color=params.color_lines, 
+                               width=params.thickness_lines, fill=None)
 
                 
             is_cut_lines = [params.show_cut_lines and is_cut_line(row, is_vertical, is_row=True),
@@ -126,7 +127,7 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
             for i, cord in enumerate([row, col]):
                 if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
                     page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
-                                    color=params.lines_color, width=1,
+                                    color=params.color_lines, width=params.thickness_lines,
                                     dashes=(params.dashes_pattern 
                                             if is_cut_lines[i] else None))
                     drawn_lines[i].append(cord)

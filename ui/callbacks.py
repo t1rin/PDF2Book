@@ -63,6 +63,7 @@ def set_default_values(app):
     dpg.set_value("show_blocks_lines", False)
     dpg.set_value("show_cut_lines", True)
     dpg.set_value("color_picker", (125, 125, 125))
+    dpg.set_value("thickness_input", 1)
     dpg.set_value("lineedit_pattern", "4 2")
 
 def edit_params(app):
@@ -86,10 +87,18 @@ def edit_params(app):
     show_cut_lines = dpg.get_value("show_cut_lines")
     color = [i/255 for i in list(dpg.get_value("color_picker"))[0:3]]
     blocks_are_vertical = dpg.get_value("radio_btn") == "Сверху"
+    thickness = dpg.get_value("thickness_input")
     pattern = dpg.get_value("lineedit_pattern")
     
     if (margin < 0):
         dpg.set_value("margin_input", 0)
+        return
+    
+    if (thickness < 0):
+        dpg.set_value("thickness_input", 0)
+        return
+    elif (thickness > 5):
+        dpg.set_value("thickness_input", 5)
         return
 
     if (blocks_are_vertical and (rows % 2 == 1)):
@@ -116,7 +125,8 @@ def edit_params(app):
                                   show_margin_lines=show_margin_lines, 
                                   show_blocks_lines=show_blocks_lines, 
                                   blocks_are_vertical=blocks_are_vertical,
-                                  lines_color=color, dashes_pattern=pattern)
+                                  thickness_lines=thickness, color_lines=color, 
+                                  dashes_pattern=pattern)
     update_preview(app)
 
 def check_path_to_output_file(app):
@@ -152,7 +162,6 @@ def lineedit_pattern_btn(app):
     else:
         app.log_message("Некорректный формат паттерна")
 
-
 def register_callbacks(app):
     dpg.set_item_callback("lineedit_input_file", lambda: check_path_to_input_file(app))
     dpg.set_item_callback("open_file_btn", lambda: open_file(app))
@@ -170,4 +179,5 @@ def register_callbacks(app):
     dpg.set_item_callback("lineedit_output_file", lambda: check_path_to_output_file(app))
     dpg.set_item_callback("save_as_file_btn", lambda: save_as_file_btn(app))
     dpg.set_item_callback("save_file_btn", lambda: save_file_btn(app))
+    dpg.set_item_callback("thickness_input", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))

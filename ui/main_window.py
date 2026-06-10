@@ -50,6 +50,8 @@ def create_parametrs_window(app):
                 dpg.add_checkbox(tag="show_cut_lines", label="Показ разделяющего пунктира")
                 dpg.add_text("Цвет пунктира:")
                 dpg.add_color_edit(tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
+                dpg.add_text("Толщина линий:")
+                dpg.add_input_int(tag="thickness_input", min_value=1)
                 dpg.add_text("Паттерн пунктира:")
                 dpg.add_input_text(tag="lineedit_pattern", hint="enter pattern")
 

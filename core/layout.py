@@ -20,8 +20,8 @@ class PDFImposer():
 
     def update_params(self, rows=2, cols=2, margin=15, show_cut_lines=True,
                       show_margin_lines=True, show_blocks_lines=False,
-                      lines_color=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0",
-                      blocks_are_vertical=False):
+                      thickness_lines=1, color_lines=(0.5, 0.5, 0.5),
+                      dashes_pattern="[4 2] 0", blocks_are_vertical=False):
         if rows*cols % 2 == 1:
             raise ValueError("Not found blocks of pages")
         if (blocks_are_vertical and (rows % 2 == 1)) or \
@@ -29,7 +29,7 @@ class PDFImposer():
             raise ValueError("Incorrectly specified blocks_are_vertical")
         self.params = BookParams(rows, cols, margin, show_cut_lines,
                                  show_margin_lines, show_blocks_lines,
-                                 lines_color, dashes_pattern,
+                                 thickness_lines, color_lines, dashes_pattern,
                                  blocks_are_vertical)
 
     def get_preview(self, page_num, scale=1):

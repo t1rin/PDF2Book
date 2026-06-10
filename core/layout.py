@@ -1,4 +1,7 @@
+
 import numpy as np
+import threading
+import uuid
 
 from core.calculate import *
 
@@ -8,15 +11,31 @@ class PDFImposer():
         self.input_doc = None
         self.output_doc = None
         self.quantity_page = None
+
+        self._current_task = None
+        self._cancel_flag = threading.Event()
+        self._lock = threading.Lock()
+        self._current_task_id = None
+
         self.update_params()
 
     def __del__(self):
-        if self.input_doc is None: return
+        if self.input_doc is None: 
+            return
         self.input_doc.close()
 
+        if self.output_doc:
+            try:
+                self.output_doc.close()
+            except:
+                pass
+
     def load_doc(self, path):
+        self._cancel_async_task()
+        
         self.input_doc = fitz.open(path)
-        self.update_doc()
+        
+        self.update_doc_async()
 
     def update_params(self, rows=2, cols=2, margin=15, show_cut_lines=True,
                       show_margin_lines=True, show_blocks_lines=False,
@@ -35,6 +54,9 @@ class PDFImposer():
     def get_preview(self, page_num, scale=1):
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
+        
+        if self.output_doc is None and self._current_task and self._current_task.is_alive():
+            self._current_task.join()
         
         temp, q = calculate_doc(self.input_doc, self.params, page_num=page_num)
         self.quantity_page = q
@@ -69,6 +91,10 @@ class PDFImposer():
             except: pass
 
     def update_doc(self):
+        if self._current_task and self._current_task.is_alive():
+            self._current_task.join()
+            return
+        
         self.output_doc, q = calculate_doc(self.input_doc, self.params)
         self.quantity_page = q
 
@@ -78,3 +104,63 @@ class PDFImposer():
         
         self.update_doc()
         self.output_doc.save(path, garbage=4, deflate=True)
+    
+    def update_doc_async(self, callback=None):
+        """
+        Асинхронное обновление. Заменяет предыдущую задачу.
+        callback вызывается с (success: bool, error: str)
+        """
+        if self.input_doc is None:
+            if callback:
+                callback(False, "No PDF document loaded")
+            return
+        
+        self._cancel_async_task()
+        
+        task_id = str(uuid.uuid4())
+        self._current_task_id = task_id
+        
+        params_copy = self.params
+        
+        def worker():
+            try:
+                if self._cancel_flag.is_set() or task_id != self._current_task_id:
+                    return
+                
+                output_doc, quantity = calculate_doc(self.input_doc, params_copy)
+                
+                with self._lock:
+                    if task_id == self._current_task_id and not self._cancel_flag.is_set():
+                        if self.output_doc:
+                            try: self.output_doc.close()
+                            except: pass
+                        
+                        self.output_doc = output_doc
+                        self.quantity_page = quantity
+                        
+                        if callback: callback(True, None)
+                    else: output_doc.close()
+                        
+            except Exception as e:
+                if callback: callback(False, str(e))
+            finally:
+                with self._lock:
+                    if task_id == self._current_task_id:
+                        self._current_task = None
+        
+        self._cancel_flag.clear()
+        self._current_task = threading.Thread(target=worker, daemon=True)
+        self._current_task.start()
+
+    def _cancel_async_task(self):
+        if self._current_task and self._current_task.is_alive():
+            self._cancel_flag.set()
+
+    def wait_for_completion(self, timeout=None):
+        if self._current_task and self._current_task.is_alive():
+            self._current_task.join(timeout=timeout)
+            return not self._current_task.is_alive()
+        return True
+    
+    def is_processing(self):
+        return self._current_task is not None and self._current_task.is_alive()

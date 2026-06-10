@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-import ui.config as conf
+from ui.config import conf
 
 
 def update_preview(app):

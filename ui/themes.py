@@ -1,7 +1,7 @@
 import os
 import dearpygui.dearpygui as dpg
 
-import ui.config as conf
+from ui.config import conf
 
 
 def register_theme(app):

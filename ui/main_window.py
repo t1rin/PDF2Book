@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.callbacks import set_default_values
-import ui.config as conf
+from ui.config import conf
 
 
 def create_parametrs_window(app):

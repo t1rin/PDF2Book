@@ -1,44 +1,32 @@
-viewport_options = {
-    "title": "PDF2Book",
-    "height": 730,
-    "width": 770,
-    "max_width": -1,
-    "min_width": -1,
-    "max_height": -1,
-    "min_height": -1,
-}
+import json
+import os
 
-selected_font = "./assets/fonts/Nunito.ttf"
-selected_theme = "light"
+class Config:    
+    def __init__(self, json_path='config.json'):
+        self._path = json_path
+        self._data = self._load()
+    
+    def _load(self):
+        if os.path.exists(self._path):
+            with open(self._path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        else: return {}
+    
+    def __getattr__(self, name):
+        if name in self._data:
+            return self._data[name]
+        print(self._data)
+        raise AttributeError(f"Конфигурация не содержит поле '{name}'")
+    
+    def __setattr__(self, name, value):
+        if name.startswith('_'):
+            super().__setattr__(name, value)
+        else:
+            self._data[name] = value
+    
+    def save(self):
+        with open(self._path, 'w', encoding='utf-8') as f:
+            json.dump(self._data, f, indent=4, ensure_ascii=False)
 
-theme = {
-    "dark": {
-        "window_color": (16, 16, 16),
-        "bg_color": (28, 28, 28),
-        "widget_color": (50, 50, 55),
-        "text_color": (225, 225, 225),
-        "text_disabled_color": (110, 110, 120),
-        "text_selected_color": (255, 255, 255),
-        "hovered_color": (60, 120, 200),
-        "selected_color": (40, 80, 160),
-        "plot_selection_color": (0, 120, 215),
-        "border_color": (85, 85, 95),
-    },
-    "light": {
-        "window_color": (228, 228, 234),
-        "bg_color": (243, 243, 248),
-        "widget_color": (220, 220, 225),
-        "text_color": (20, 20, 25),
-        "text_disabled_color": (120, 120, 130),
-        "hovered_color": (135, 190, 250),
-        "selected_color": (43, 169, 245),
-        "plot_selection_color": (0, 120, 215),
-        "border_color": (190, 190, 198),
-    }
-}
 
-parametrs_window_on_the_left = False
-
-default_panel_width = 250
-
-scale = 2
+conf = Config()

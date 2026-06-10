@@ -2,8 +2,8 @@ import glob
 import dearpygui.dearpygui as dpg
 
 from ui.themes import update_theme
+from ui.config import conf
 import ui.callbacks as cb
-import ui.config as conf
 
 
 def switch_theme(app):

@@ -22,6 +22,8 @@ class PDF2BookApp:
         
         dpg.create_viewport(**conf.viewport_options)
 
+        dpg.set_exit_callback(self.close)
+
         create_main_window(self)
         register_callbacks(self)
         register_keyboards(self)
@@ -33,6 +35,14 @@ class PDF2BookApp:
         dpg.show_viewport()
         dpg.start_dearpygui()
         dpg.destroy_context()
+    
+    def close(self):
+        conf.selected_font = self.font
+        conf.selected_theme = self.theme
+        conf.save()
+        print("Завершение...")
+        
+        dpg.stop_dearpygui()
 
 
 if __name__ == "__main__":

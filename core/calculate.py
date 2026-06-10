@@ -11,8 +11,11 @@ class BookParams:
     rows: int
     cols: int
     margin: int
-    cut_lines: bool
-    cut_color: tuple[int]
+    show_cut_lines: bool
+    show_margin_lines: bool
+    show_blocks_lines: bool
+    lines_color: tuple[int]
+    dashes_pattern: str
     blocks_are_vertical: bool
 
 def get_positions_pages(quentity, is_vertical=False, _list=None):
@@ -29,7 +32,6 @@ def get_positions_pages(quentity, is_vertical=False, _list=None):
         if (i % 4 == 0) or (i % 4 == 3):
             _list[i] += 4
     return get_positions_pages(quentity, is_vertical=is_vertical, _list=_list)
-
 
 def get_cell_size(cols, rows):
     """получение размеров ячейки"""
@@ -61,6 +63,12 @@ def get_cords_horizontal_line(row, cols, rows):
     point1 = (PAGE_WIDTH, (row + 1) * cell_height)
     return (point0, point1)
 
+def is_cut_line(cord, is_vertical, is_row=True):
+    if is_row:
+        return (is_vertical and (cord % 2 == 1)) or not is_vertical
+    else:
+        return (not is_vertical and (cord % 2 == 1)) or is_vertical
+    
 
 def calculate_doc(input_doc, params: BookParams, page_num=None):
     if input_doc is None:
@@ -76,9 +84,9 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
             side0.append(new_positions[i])
         else:
             side1.append(new_positions[i])
-    
 
     sheet_num = 0
+    drawn_lines = None
     while side0 or side1:
         sheet_num += 1
         
@@ -98,31 +106,32 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
             if (page_num is not None) and (page_num != sheet_num):
                 return
             
-            rect = fitz.Rect(
-                get_cords_rect(col, row, params.cols, 
-                                params.rows, params.margin)
-            )
+            rect = fitz.Rect(get_cords_rect(col, row, params.cols, 
+                                            params.rows, params.margin))
         
             if index is not None:
-                if rotate:
-                    page.show_pdf_page(rect, input_doc, index, 
-                                        keep_proportion=True, rotate=180)
+                if rotate: page.show_pdf_page(rect, input_doc, index,
+                                              keep_proportion=True, rotate=180)
                 else: page.show_pdf_page(rect, input_doc, index, 
                                             keep_proportion=True)
 
-            if params.margin:
-                page.draw_rect(rect, color=params.cut_color, 
-                                width=1, dashes="[4 2] 0", fill=None)
-            else:
-                v_line = get_cords_vertical_line(col, params.cols, params.rows)
-                h_line = get_cords_horizontal_line(row, params.cols, params.rows)
-                page.draw_line(fitz.Point(*v_line[0]), fitz.Point(*v_line[1]),
-                                color=params.cut_color, width=1,
-                                dashes="[4 2] 0")
-                page.draw_line(fitz.Point(*h_line[0]), fitz.Point(*h_line[1]),
-                                color=params.cut_color, width=1,
-                                dashes="[4 2] 0")
+            if params.show_margin_lines and params.margin:
+                page.draw_rect(rect, color=params.lines_color, width=1, fill=None)
 
+                
+            is_cut_lines = [params.show_cut_lines and is_cut_line(row, is_vertical, is_row=True),
+                            params.show_cut_lines and is_cut_line(col, is_vertical, is_row=False)]
+            cords_of_lines = [get_cords_horizontal_line(row, params.cols, params.rows),
+                              get_cords_vertical_line(col, params.cols, params.rows)]
+            for i, cord in enumerate([row, col]):
+                if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
+                    page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
+                                    color=params.lines_color, width=1,
+                                    dashes=(params.dashes_pattern 
+                                            if is_cut_lines[i] else None))
+                    drawn_lines[i].append(cord)
+
+        drawn_lines = [[], []]
         if is_vertical:
             if sheet_num % 2 == 1:
                 for col in range(params.cols):

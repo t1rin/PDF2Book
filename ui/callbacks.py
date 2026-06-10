@@ -13,8 +13,9 @@ def register_callbacks(app):
     dpg.set_item_callback("rows_input", lambda: edit_params(app))
     dpg.set_item_callback("cols_input", lambda: edit_params(app))
     dpg.set_item_callback("margin_input", lambda: edit_params(app))
-    dpg.set_item_callback("show_dividing_line", lambda: edit_params(app))
-    dpg.set_item_callback("show_line_with_indentation", lambda: edit_params(app))
+    dpg.set_item_callback("show_margin_lines", lambda: edit_params(app))
+    dpg.set_item_callback("show_blocks_lines", lambda: edit_params(app))
+    dpg.set_item_callback("show_cut_lines", lambda: edit_params(app))
     dpg.set_item_callback("color_picker", lambda: edit_params(app))
     dpg.set_item_callback("radio_btn", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_output_file", lambda: check_path_to_output_file(app))
@@ -75,11 +76,12 @@ def arrow_right_callback(app):
 
 def set_default_values(app):
     dpg.set_value("rows_input", 2)
-    dpg.set_value("cols_input", 2)
-    dpg.set_value("margin_input", 2)
+    dpg.set_value("cols_input", 2)    
+    dpg.set_value("margin_input", 15)
     dpg.set_value("radio_btn", "Слева")
-    dpg.set_value("show_dividing_line", True)
-    dpg.set_value("show_line_with_indentation", True)
+    dpg.set_value("show_margin_lines", True)
+    dpg.set_value("show_blocks_lines", False)
+    dpg.set_value("show_cut_lines", True)
     dpg.set_value("color_picker", (125, 125, 125))
 
 def edit_params(app):
@@ -98,16 +100,15 @@ def edit_params(app):
         return
 
     margin = dpg.get_value("margin_input")
-    show_div_line = dpg.get_value("show_dividing_line")
-    show_line_indent = dpg.get_value("show_line_with_indentation")
+    show_margin_lines = dpg.get_value("show_margin_lines")
+    show_blocks_lines = dpg.get_value("show_blocks_lines")
+    show_cut_lines = dpg.get_value("show_cut_lines")
     color = [i/255 for i in list(dpg.get_value("color_picker"))[0:3]]
-    blocks_are_vertical = dpg.get_value("radio_btn") == "Сверху"
-    
+    blocks_are_vertical = dpg.get_value("radio_btn") == "Сверху"   
     
     if (margin < 0):
         dpg.set_value("margin_input", 0)
         return
-    
 
     if (blocks_are_vertical and (rows % 2 == 1)):
         log_message("В указанное количество строк не помещаются блоки по два")
@@ -121,8 +122,12 @@ def edit_params(app):
         return
     
     log_message()
-    app.pdf_imposer.update_params(rows, cols, margin, 
-                                  show_line_indent, color, blocks_are_vertical)
+    app.pdf_imposer.update_params(rows=rows, cols=cols, margin=margin, 
+                                  show_cut_lines=show_cut_lines,
+                                  show_margin_lines=show_margin_lines, 
+                                  show_blocks_lines=show_blocks_lines, 
+                                  blocks_are_vertical=blocks_are_vertical,
+                                  lines_color=color)
     update_preview(app)
 
 def check_path_to_output_file(app):

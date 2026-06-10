@@ -14,6 +14,13 @@ def create_parametrs_window(app):
             dpg.add_button(tag="choice_input_file_btn", label="Выбрать")
             dpg.add_button(tag="load_file_btn", label="Загрузить")
         
+        dpg.add_separator(label="Export")
+        dpg.add_text("Выходной файл PDF")
+        dpg.add_input_text(tag="lineedit_output_file", hint="enter path")
+        with dpg.group(horizontal=True):
+            dpg.add_button(tag="choice_output_file_btn", label="Выбрать")
+            dpg.add_button(tag="export_file_btn", label="Экспорт")
+
         dpg.add_separator(label="Вид")
         with dpg.group(horizontal=True):
             dpg.add_text("Страница: ")
@@ -31,19 +38,14 @@ def create_parametrs_window(app):
         dpg.add_input_int(tag="cols_input", min_value=1)
         dpg.add_text("Отступ:")
         dpg.add_input_int(tag="margin_input", min_value=0)
-        dpg.add_checkbox(tag="show_dividing_line", label="Показ разделяющего пунктира")
-        dpg.add_checkbox(tag="show_line_with_indentation", label="Показ пунктира с отступом")
+        dpg.add_checkbox(tag="show_margin_lines", label="Показ линии с отступом")
+        dpg.add_checkbox(tag="show_blocks_lines", label="Показ линии блоков")
+        dpg.add_checkbox(tag="show_cut_lines", label="Показ разделяющего пунктира")
         dpg.add_text("Цвет пунктира:")
         dpg.add_color_edit(tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
         dpg.add_text("Место переплета:")
         dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
-
-        dpg.add_separator(label="Export")
-        dpg.add_text("Выходной файл PDF")
-        dpg.add_input_text(tag="lineedit_output_file", hint="enter path")
-        with dpg.group(horizontal=True):
-            dpg.add_button(tag="choice_output_file_btn", label="Выбрать")
-            dpg.add_button(tag="export_file_btn", label="Экспорт")
+        
         dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
 
         set_default_values(app)

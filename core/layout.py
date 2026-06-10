@@ -18,14 +18,18 @@ class PDFImposer():
         self.input_doc = fitz.open(path)
         self.update_doc()
 
-    def update_params(self, rows=2, cols=2, margin=2, cut_lines=True, 
-                      cut_color=(0.5, 0.5, 0.5), blocks_are_vertical=False):
+    def update_params(self, rows=2, cols=2, margin=15, show_cut_lines=True,
+                      show_margin_lines=True, show_blocks_lines=False,
+                      lines_color=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0",
+                      blocks_are_vertical=False):
         if rows*cols % 2 == 1:
             raise ValueError("Not found blocks of pages")
         if (blocks_are_vertical and (rows % 2 == 1)) or \
             (not blocks_are_vertical and (cols % 2 == 1)):
             raise ValueError("Incorrectly specified blocks_are_vertical")
-        self.params = BookParams(rows, cols, margin, cut_lines, cut_color,
+        self.params = BookParams(rows, cols, margin, show_cut_lines,
+                                 show_margin_lines, show_blocks_lines,
+                                 lines_color, dashes_pattern,
                                  blocks_are_vertical)
 
     def get_preview(self, page_num, scale=1):

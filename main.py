@@ -42,6 +42,7 @@ class PDF2BookApp:
         conf.save()
         print("Завершение...")
         
+        del self.pdf_imposer
         dpg.stop_dearpygui()
 
 

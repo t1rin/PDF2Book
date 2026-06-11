@@ -11,10 +11,13 @@ def update_preview(app):
     if app.pdf_imposer.output_doc is not None:
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
 
-def check_path_to_input_file(app):
+def is_ok_input_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
-    app.log_message(err)
+    if path:
+        app.log_message(err)
+    else:
+        app.log_message()
 
 def open_file(app):
     path = FileDialogHelper.open_pdf_file()
@@ -140,12 +143,15 @@ def edit_params(app):
                                   dashes_pattern=pattern)
     update_preview(app)
 
-def check_path_to_output_file(app):
+def is_ok_output_file(app):
     path = dpg.get_value("lineedit_output_file")
-    if not path: return
+    if not path:
+        app.log_message()
+        return False
     if not is_type(path, "pdf"):
         app.log_message("Файл некорректного типа")
-        return
+        return False
+    return True
 
 def save_as_file_btn(app):
     path = FileDialogHelper.save_pdf_file()
@@ -157,7 +163,7 @@ def save_as_file_btn(app):
     save_file_btn(app)
 
 def save_file_btn(app):
-    check_path_to_output_file(app)
+    if not is_ok_output_file(app): return
     if app.pdf_path is None:
         app.log_message("Исходный файл не выбран")
         return
@@ -178,7 +184,7 @@ def move_panel(app):
     update_theme(app, rebuild=True)
 
 def register_callbacks(app):
-    dpg.set_item_callback("lineedit_input_file", lambda: check_path_to_input_file(app))
+    dpg.set_item_callback("lineedit_input_file", lambda: is_ok_input_file(app))
     dpg.set_item_callback("open_file_btn", lambda: open_file(app))
     dpg.set_item_callback("load_file_btn", lambda: load_file(app))
     dpg.set_item_callback("arrow_left", lambda: arrow_left_callback(app))
@@ -191,7 +197,7 @@ def register_callbacks(app):
     dpg.set_item_callback("show_cut_lines", lambda: edit_params(app))
     dpg.set_item_callback("color_picker", lambda: edit_params(app))
     dpg.set_item_callback("radio_btn", lambda: edit_params(app))
-    dpg.set_item_callback("lineedit_output_file", lambda: check_path_to_output_file(app))
+    dpg.set_item_callback("lineedit_output_file", lambda: is_ok_output_file(app))
     dpg.set_item_callback("save_as_file_btn", lambda: save_as_file_btn(app))
     dpg.set_item_callback("save_file_btn", lambda: save_file_btn(app))
     dpg.set_item_callback("thickness_input", lambda: edit_params(app))

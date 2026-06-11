@@ -1,9 +1,7 @@
 import fitz
 from dataclasses import dataclass
 
-
-PAGE_WIDTH = 595
-PAGE_HEIGHT = 842
+import core.config as conf
 
 
 @dataclass
@@ -11,6 +9,7 @@ class BookParams:
     rows: int
     cols: int
     margin: int
+    format: str
     show_cut_lines: bool
     show_margin_lines: bool
     show_blocks_lines: bool
@@ -34,15 +33,15 @@ def get_positions_pages(quentity, is_vertical=False, _list=None):
             _list[i] += 4
     return get_positions_pages(quentity, is_vertical=is_vertical, _list=_list)
 
-def get_cell_size(cols, rows):
+def get_cell_size(cols, rows, page_size):
     """получение размеров ячейки"""
-    cell_width = PAGE_WIDTH / cols
-    cell_height = PAGE_HEIGHT / rows
+    cell_width = page_size[0] / cols
+    cell_height = page_size[1] / rows
     return (cell_width, cell_height)
 
-def get_cords_rect(col, row, cols, rows, margin):
+def get_cords_rect(col, row, cols, rows, margin, page_size):
     """получение области размещения страницы"""
-    cell_width, cell_height = get_cell_size(cols, rows)
+    cell_width, cell_height = get_cell_size(cols, rows, page_size)
     x0 = col * cell_width + margin
     y0 = row * cell_height + margin
     x1 = (col + 1) * cell_width - margin
@@ -50,18 +49,18 @@ def get_cords_rect(col, row, cols, rows, margin):
 
     return (x0, y0, x1, y1)
 
-def get_cords_vertical_line(col, cols, rows):
+def get_cords_vertical_line(col, cols, rows, page_size):
     """получение координат размещения вертикальной линии сетки"""
-    cell_width, _ = get_cell_size(cols, rows)
+    cell_width, _ = get_cell_size(cols, rows, page_size)
     point0 = ((col + 1) * cell_width, 0)
-    point1 = ((col + 1) * cell_width, PAGE_HEIGHT)
+    point1 = ((col + 1) * cell_width, page_size[1])
     return (point0, point1)
 
-def get_cords_horizontal_line(row, cols, rows):
+def get_cords_horizontal_line(row, cols, rows, page_size):
     """получение координат размещения горизонтальной линии сетки"""
-    _, cell_height = get_cell_size(cols, rows)
+    _, cell_height = get_cell_size(cols, rows, page_size)
     point0 = (0, (row + 1) * cell_height)
-    point1 = (PAGE_WIDTH, (row + 1) * cell_height)
+    point1 = (page_size[0], (row + 1) * cell_height)
     return (point0, point1)
 
 def is_cut_line(cord, is_vertical, is_row=True):
@@ -74,6 +73,8 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
     if input_doc is None:
         raise ValueError("No PDF document loaded")
     
+    page_size = conf.formats[params.format]
+
     output_doc = fitz.open()
 
     is_vertical = params.blocks_are_vertical
@@ -91,7 +92,7 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
         sheet_num += 1
         
         if (page_num is None) or (page_num == sheet_num):
-            page = output_doc.new_page(width=PAGE_WIDTH, height=PAGE_HEIGHT)
+            page = output_doc.new_page(width=page_size[0], height=page_size[1])
 
         def get_index():
             index = None
@@ -102,12 +103,12 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                 index = None
             return index
 
-        def draw_page(row, col, index, rotate=False):
+        def draw_page(row, col, index, page_size, rotate=False):
             if (page_num is not None) and (page_num != sheet_num):
                 return
             
             rect = fitz.Rect(get_cords_rect(col, row, params.cols, 
-                                            params.rows, params.margin))
+                                            params.rows, params.margin, page_size))
         
             if index is not None:
                 if rotate: page.show_pdf_page(rect, input_doc, index,
@@ -122,8 +123,8 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                 
             is_cut_lines = [params.show_cut_lines and is_cut_line(row, is_vertical, is_row=True),
                             params.show_cut_lines and is_cut_line(col, is_vertical, is_row=False)]
-            cords_of_lines = [get_cords_horizontal_line(row, params.cols, params.rows),
-                              get_cords_vertical_line(col, params.cols, params.rows)]
+            cords_of_lines = [get_cords_horizontal_line(row, params.cols, params.rows, page_size),
+                              get_cords_vertical_line(col, params.cols, params.rows, page_size)]
             for i, cord in enumerate([row, col]):
                 if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
                     page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
@@ -138,17 +139,17 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                 for col in range(params.cols):
                     for row in range(params.rows):
                         index = get_index()
-                        draw_page(row, col, index)
+                        draw_page(row, col, index, page_size)
             else:
                 for col in range(params.cols)[::-1]:
                     for row in range(params.rows):
                         index = get_index()
-                        draw_page(row, col, index, rotate=True)
+                        draw_page(row, col, index, page_size, rotate=True)
         else:      
             for row in range(params.rows):
                 for col in range(params.cols):
                     index = get_index()
-                    draw_page(row, col, index)
+                    draw_page(row, col, index, page_size)
     if (page_num is not None) and (page_num > sheet_num):
         raise ValueError("Not found page #{n}".format(n=page_num))
     

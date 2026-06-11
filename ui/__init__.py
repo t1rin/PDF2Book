@@ -1,4 +1,4 @@
-from .main_window import create_main_window
+from .widgets import create_main_window
 from .callbacks import register_callbacks
 from .keyboards import register_keyboards
 from .themes import register_themes

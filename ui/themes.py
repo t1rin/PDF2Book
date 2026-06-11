@@ -80,7 +80,7 @@ def register_themes(app):
     else:
         register_font(app)
         dpg.bind_font("global_font")
-        dpg.bind_item_font("loading_text", "loading_font")
+        #dpg.bind_item_font("loading_text", "loading_font")
 
 def update_theme(app, rebuild=False):
     to_delete = ["global_theme", "global_font", "loading_font"]

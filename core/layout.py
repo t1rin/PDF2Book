@@ -104,7 +104,20 @@ class PDFImposer():
         
         self.update_doc()
         self.output_doc.save(path, garbage=4, deflate=True)
-    
+
+    def get_preview_async(self, page_num, scale=1, callback=None):
+        def worker():
+            try:
+                result = self.get_preview(page_num, scale)
+                if callback:
+                    callback(result)
+            except Exception as e:
+                if callback:
+                    callback(None)
+        
+        thread = threading.Thread(target=worker, daemon=True)
+        thread.start()
+
     def update_doc_async(self, callback=None):
         """
         Асинхронное обновление. Заменяет предыдущую задачу.

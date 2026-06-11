@@ -86,4 +86,27 @@ pi.load_doc("input.pdf")
 pi.export_doc("output.pdf")
 ```
 
+работа на фоне и проверка статуса:
+
+```python
+import time
+
+from core import PDFImposer
+
+
+pi = PDFImposer()
+pi.update_params(blocks_are_vertical=True, rows=2, cols=1)
+pi.load_doc("input.pdf")
+
+start = time.time()
+while pi.is_processing():
+    print("Обработка...")
+    time.sleep(0.1)
+end = time.time()
+
+print(f"Документ готов! [{round(end-start, 3)}c]")
+
+pi.export_doc("output.pdf")
+```
+
 

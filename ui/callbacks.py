@@ -1,8 +1,8 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.config import conf
 from ui.themes import update_theme
+from ui.config import conf
 
 
 def update_preview(app):
@@ -30,9 +30,19 @@ def load_file(app):
     _, err = PDFInfo.validate_and_get_info(path)
     app.log_message(err)
     if err: return
+
+    def on_loading(success, error):
+        if success:
+            update_preview(app)
+        else:
+            app.pdf_path = None
+            app.log_message(error)
+        dpg.configure_item("loading_window", show=False)
+
+    dpg.configure_item("loading_window", show=True)
     app.pdf_path = path
     app.pdf_imposer.load_doc(path)
-    update_preview(app)
+    app.pdf_imposer.update_doc_async(callback=on_loading) 
 
 def arrow_left_callback(app):
     if (app.current_page == 1): 

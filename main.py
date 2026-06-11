@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from core import PDFImposer
-from ui import *
+import ui
 
 
 class PDF2BookApp:
@@ -9,9 +9,9 @@ class PDF2BookApp:
         self.pdf_path = None
         self.pdf_imposer = PDFImposer()
 
-        self.theme = conf.selected_theme
-        self.font = conf.selected_font
-        self.pw_left = conf.parametrs_window_on_the_left
+        self.theme = ui.conf.selected_theme
+        self.font = ui.conf.selected_font
+        self.pw_left = ui.conf.parametrs_window_on_the_left
         self.current_page = 1
         
     def log_message(self, msg=None):
@@ -21,25 +21,40 @@ class PDF2BookApp:
     def run(self):
         dpg.create_context()
         
-        dpg.create_viewport(**conf.viewport_options)
+        dpg.create_viewport(**ui.conf.viewport_options)
 
-        dpg.set_exit_callback(self.close)
+        dpg.set_viewport_resize_callback(self.on_viewport_resize)
+        dpg.set_exit_callback(self.on_exit)
 
-        create_main_window(self)
-        register_callbacks(self)
-        register_keyboards(self)
-        register_themes(self)
+        ui.create_main_window(self)
+        ui.register_callbacks(self)
+        ui.register_keyboards(self)
+        ui.register_themes(self)
         
         dpg.setup_dearpygui()
         dpg.show_viewport()
-        dpg.start_dearpygui()
+        
+        while dpg.is_dearpygui_running():
+            self.on_frame()
+            dpg.render_dearpygui_frame()
+
         dpg.destroy_context()
+
+    def on_frame(self):
+        if dpg.get_frame_count() < 30:
+            ui.resize_update(self)
+        else:
+            showed = self.pdf_imposer.is_processing()
+            dpg.configure_item("loading_window", show=showed)
     
-    def close(self):
-        conf.selected_font = self.font
-        conf.selected_theme = self.theme
-        conf.parametrs_window_on_the_left = self.pw_left
-        conf.save()
+    def on_viewport_resize(self):
+        ui.resize_update(self)
+
+    def on_exit(self):
+        ui.conf.selected_font = self.font
+        ui.conf.selected_theme = self.theme
+        ui.conf.parametrs_window_on_the_left = self.pw_left
+        ui.conf.save()
         print("Завершение...")
         
         del self.pdf_imposer

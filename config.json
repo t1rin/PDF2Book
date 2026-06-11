@@ -113,5 +113,6 @@
         }
     },
     "default_panel_width": 250,
+    "padding_loading_text": 10,
     "scale": 2
 }

@@ -5,6 +5,20 @@ from ui.callbacks import set_default_values
 from ui.config import conf
 
 
+def resize_update(app):
+    viewport_width = dpg.get_viewport_width()
+    viewport_height = dpg.get_viewport_height()
+    widget_width = dpg.get_item_width("loading_window")
+    widget_height = dpg.get_item_height("loading_window")
+    pos_loading_window = ((viewport_width - widget_width) / 2, 
+                          (viewport_height - widget_height) / 2)
+    dpg.configure_item("loading_window", pos=pos_loading_window)
+
+    padding = conf.padding_loading_text
+    text_width, _ = dpg.get_item_rect_size("loading_text")
+    pos_loading_text = ((widget_width - text_width) / 2, widget_width + padding)
+    dpg.configure_item("loading_text", pos=pos_loading_text)
+
 def create_context_menu(app):
     with dpg.window(tag="context_menu", popup=True, show=False, no_title_bar=True, 
                     no_move=True, no_resize=True, autosize=True):
@@ -74,6 +88,14 @@ def create_plot_window(app):
                 texture, size = get_clean_texture("preview_pdf_texture", scale=conf.scale)
                 dpg.add_image_series(texture, [0, 0], size, tag="preview_pdf")
 
+def create_loading_window(app):
+    with dpg.window(tag="loading_window", autosize=True,
+                    show=True, modal=True, no_title_bar=True, 
+                    no_resize=True, no_move=True, no_background=True):
+        with dpg.group(width=-1):
+            dpg.add_loading_indicator(tag="loading_widget", style=2, radius=7)
+            dpg.add_text("Loading...", tag="loading_text")
+
 def create_main_window(app):
     create_context_menu(app)
     with dpg.window(tag="primary_window"):
@@ -93,5 +115,8 @@ def create_main_window(app):
                     create_plot_window(app)
                     if not app.pw_left:
                         create_settings_panel(app)
+    create_loading_window(app)
+
+    resize_update(app)
     
     

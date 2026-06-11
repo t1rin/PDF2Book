@@ -138,6 +138,7 @@ class PDFImposer():
         def worker():
             try:
                 if self._cancel_flag.is_set() or task_id != self._current_task_id:
+                    if callback: callback(False, "Task cancelled")
                     return
                 
                 output_doc, quantity = calculate_doc(self.input_doc, params_copy)
@@ -170,8 +171,13 @@ class PDFImposer():
             self._cancel_flag.set()
 
     def wait_for_completion(self, timeout=None):
-        if self._current_task and self._current_task.is_alive():
+        if self._current_task is None:
+            return True
+        
+        if self._current_task.is_alive():
             self._current_task.join(timeout=timeout)
+        
+        if self._current_task is not None:
             return not self._current_task.is_alive()
         return True
     

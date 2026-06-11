@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.config import conf
+from ui.themes import update_theme
 
 
 def update_preview(app):
@@ -162,6 +163,10 @@ def lineedit_pattern_btn(app):
     else:
         app.log_message("Некорректный формат паттерна")
 
+def move_panel(app):
+    app.pw_left = not app.pw_left
+    update_theme(app, rebuild=True)
+
 def register_callbacks(app):
     dpg.set_item_callback("lineedit_input_file", lambda: check_path_to_input_file(app))
     dpg.set_item_callback("open_file_btn", lambda: open_file(app))
@@ -181,3 +186,4 @@ def register_callbacks(app):
     dpg.set_item_callback("save_file_btn", lambda: save_file_btn(app))
     dpg.set_item_callback("thickness_input", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))
+    dpg.set_item_callback("move_panel_btn", lambda: move_panel(app))

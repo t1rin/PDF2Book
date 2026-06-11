@@ -1,8 +1,6 @@
 import os
 import dearpygui.dearpygui as dpg
 
-from ui.widgets import create_main_window
-from ui.callbacks import register_callbacks
 from ui.config import conf
 
 
@@ -89,13 +87,16 @@ def update_theme(app, rebuild=False):
             dpg.delete_item(item)
         
     if rebuild:
-        to_delete = ["primary_window", "loading_window"]
+        import ui
+
+        to_delete = ["primary_window", "loading_window", "context_menu"]
         for item in to_delete:
             if dpg.does_item_exist(item):
                 dpg.delete_item(item)
-
-        create_main_window(app)
-        register_callbacks(app)
+        
+        ui.create_main_window(app)
+        ui.register_callbacks(app)
+        ui.register_keyboards(app)
     
     register_themes(app)
     

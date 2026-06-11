@@ -5,8 +5,13 @@ from ui.callbacks import set_default_values
 from ui.config import conf
 
 
-def create_parametrs_window(app):
-    with dpg.child_window():
+def create_context_menu(app):
+    with dpg.window(tag="context_menu", popup=True, show=False, no_title_bar=True, 
+                    no_move=True, no_resize=True, autosize=True):
+        dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
+
+def create_settings_panel(app):
+    with dpg.child_window(tag="settings_panel"):
         dpg.add_separator(label="PDF2Book")
         dpg.add_text("Исходный файл PDF")
         dpg.add_input_text(tag="lineedit_input_file", hint="enter path to file")
@@ -70,6 +75,7 @@ def create_plot_window(app):
                 dpg.add_image_series(texture, [0, 0], size, tag="preview_pdf")
 
 def create_main_window(app):
+    create_context_menu(app)
     with dpg.window(tag="primary_window"):
         dpg.set_primary_window("primary_window", True)
         with dpg.group():
@@ -83,9 +89,9 @@ def create_main_window(app):
                             init_width_or_weight=conf.default_panel_width)
                 with dpg.table_row():
                     if app.pw_left:
-                        create_parametrs_window(app)
+                        create_settings_panel(app)
                     create_plot_window(app)
                     if not app.pw_left:
-                        create_parametrs_window(app)
+                        create_settings_panel(app)
     
     

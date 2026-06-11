@@ -1,6 +1,7 @@
 import os
 import dearpygui.dearpygui as dpg
 
+from ui.main_window import create_main_window
 from ui.config import conf
 
 
@@ -78,12 +79,20 @@ def register_all(app):
         register_font(app)
         dpg.bind_font("global_font")
 
-def update_theme(app):
+def update_theme(app, rebuild=False):
     if dpg.does_item_exist("global_theme"):
         dpg.delete_item("global_theme")
     
     if dpg.does_item_exist("global_font"):
         dpg.delete_item("global_font")
+    
+    if rebuild:
+        if dpg.does_item_exist("primary_window"):
+            dpg.delete_item("primary_window")
+        
+        create_main_window(app)
+
+        dpg.set_primary_window("primary_window", True)
     
     register_all(app)
     

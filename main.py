@@ -11,6 +11,7 @@ class PDF2BookApp:
 
         self.theme = conf.selected_theme
         self.font = conf.selected_font
+        self.pw_left = conf.parametrs_window_on_the_left
         self.current_page = 1
         
     def log_message(self, msg=None):
@@ -29,8 +30,6 @@ class PDF2BookApp:
         register_keyboards(self)
         register_themes(self)
         
-        dpg.set_primary_window("primary_window", True)
-        
         dpg.setup_dearpygui()
         dpg.show_viewport()
         dpg.start_dearpygui()
@@ -39,6 +38,7 @@ class PDF2BookApp:
     def close(self):
         conf.selected_font = self.font
         conf.selected_theme = self.theme
+        conf.parametrs_window_on_the_left = self.pw_left
         conf.save()
         print("Завершение...")
         

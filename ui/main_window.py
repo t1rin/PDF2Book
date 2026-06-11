@@ -71,20 +71,21 @@ def create_plot_window(app):
 
 def create_main_window(app):
     with dpg.window(tag="primary_window"):
+        dpg.set_primary_window("primary_window", True)
         with dpg.group():
             with dpg.table(header_row=False, hideable=True, resizable=True):
-                if conf.parametrs_window_on_the_left:
+                if app.pw_left:
                     dpg.add_table_column(width_fixed=True, 
                         init_width_or_weight=conf.default_panel_width)
                 dpg.add_table_column()
-                if not conf.parametrs_window_on_the_left:
+                if not app.pw_left:
                         dpg.add_table_column(width_fixed=True, 
                             init_width_or_weight=conf.default_panel_width)
                 with dpg.table_row():
-                    if conf.parametrs_window_on_the_left:
+                    if app.pw_left:
                         create_parametrs_window(app)
                     create_plot_window(app)
-                    if not conf.parametrs_window_on_the_left:
+                    if not app.pw_left:
                         create_parametrs_window(app)
     
     

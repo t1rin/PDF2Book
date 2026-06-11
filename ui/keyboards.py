@@ -16,6 +16,10 @@ def switch_font(app):
     app.font = fonts[fonts.index(app.font)-1]
     update_theme(app)
 
+def move_panel(app):
+    app.pw_left = not app.pw_left
+    update_theme(app, rebuild=True)
+
 def open_file(app):
     if dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl):
         cb.open_file(app)
@@ -37,6 +41,7 @@ def register_keyboards(app):
     with dpg.handler_registry():
         dpg.add_key_press_handler(dpg.mvKey_F1, callback=lambda: switch_theme(app))
         dpg.add_key_press_handler(dpg.mvKey_F2, callback=lambda: switch_font(app))
+        dpg.add_key_press_handler(dpg.mvKey_F3, callback=lambda: move_panel(app))
         dpg.add_key_press_handler(dpg.mvKey_O, callback=lambda: open_file(app))
         dpg.add_key_press_handler(dpg.mvKey_S, callback=lambda: save_file(app))
         dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda: back_page(app))

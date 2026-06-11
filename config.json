@@ -10,6 +10,7 @@
     },
     "selected_font": "./assets/fonts/DeleddaOpen.ttf",
     "selected_theme": "light",
+    "parametrs_window_on_the_left": false,
     "theme": {
         "dark": {
             "window_color": [
@@ -111,7 +112,6 @@
             ]
         }
     },
-    "parametrs_window_on_the_left": false,
     "default_panel_width": 250,
     "scale": 2
 }

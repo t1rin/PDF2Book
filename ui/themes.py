@@ -1,7 +1,8 @@
 import os
 import dearpygui.dearpygui as dpg
 
-from ui.main_window import create_main_window
+from ui.widgets import create_main_window
+from ui.callbacks import register_callbacks
 from ui.config import conf
 
 
@@ -69,8 +70,9 @@ def register_theme(app):
 def register_font(app):
     with dpg.font_registry():
         with dpg.font(app.font, size=14, tag="global_font"): pass
+        with dpg.font(app.font, size=20, tag="loading_font"): pass
 
-def register_all(app):
+def register_themes(app):
     register_theme(app)
     dpg.bind_theme("global_theme")
     if not os.path.exists(app.font):
@@ -78,27 +80,26 @@ def register_all(app):
     else:
         register_font(app)
         dpg.bind_font("global_font")
+        dpg.bind_item_font("loading_text", "loading_font")
 
 def update_theme(app, rebuild=False):
-    if dpg.does_item_exist("global_theme"):
-        dpg.delete_item("global_theme")
-    
-    if dpg.does_item_exist("global_font"):
-        dpg.delete_item("global_font")
-    
-    if rebuild:
-        if dpg.does_item_exist("primary_window"):
-            dpg.delete_item("primary_window")
+    to_delete = ["global_theme", "global_font", "loading_font"]
+    for item in to_delete:
+        if dpg.does_item_exist(item):
+            dpg.delete_item(item)
         
-        create_main_window(app)
+    if rebuild:
+        to_delete = ["primary_window", "loading_window"]
+        for item in to_delete:
+            if dpg.does_item_exist(item):
+                dpg.delete_item(item)
 
-        dpg.set_primary_window("primary_window", True)
+        create_main_window(app)
+        register_callbacks(app)
     
-    register_all(app)
+    register_themes(app)
     
     dpg.split_frame()
 
     app.log_message()
-
-def register_themes(app):
-    register_all(app)
+    

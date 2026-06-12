@@ -45,7 +45,8 @@ class PDF2BookApp:
             ui.resize_update(self)
         else:
             showed = self.pdf_imposer.is_processing()
-            dpg.configure_item("loading_window", show=showed)
+            if dpg.does_item_exist("loading_window"):
+                dpg.configure_item("loading_window", show=showed)
     
     def on_viewport_resize(self):
         ui.resize_update(self)

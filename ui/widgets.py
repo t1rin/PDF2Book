@@ -35,7 +35,8 @@ def create_context_menu(app):
             dpg.add_button(label="2.25", tag="scale_2.25_btn")
             dpg.add_button(label="2.5", tag="scale_2.5_btn")
             dpg.add_button(label="3", tag="scale_2.75_btn")
-        dpg.add_text("При выборе необходимо будет перезапустить программу", wrap=0)
+        dpg.add_text("При выборе необходимо будет перезапустить программу", 
+                     wrap=0, color=(150, 150, 60))
 
 def create_settings_panel(app):
     with dpg.child_window(tag="settings_panel"):
@@ -50,9 +51,10 @@ def create_settings_panel(app):
         dpg.add_text("Выходной файл PDF")
         dpg.add_input_text(tag="lineedit_output_file", hint="enter path")
         with dpg.group(horizontal=True):
-            dpg.add_button(tag="save_as_file_btn", label="Сохранить как")
+            dpg.add_button(tag="save_as_file_btn", label="Экспорт")
             dpg.add_button(tag="save_file_btn", label="Сохранить")
-
+            with dpg.popup("save_as_file_btn"):
+                dpg.add_checkbox(tag="split_file_checkbox", label="Разделять файл для печати")
         dpg.add_separator(label="View")
         with dpg.group(horizontal=True):
             dpg.add_text("Страница: ")

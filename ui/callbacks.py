@@ -26,15 +26,6 @@ def is_ok_input_file(app):
     else:
         app.log_message()
 
-def open_file(app):
-    path = FileDialogHelper.open_pdf_file()
-    if path is None: return
-    _, err = PDFInfo.validate_and_get_info(path)
-    app.log_message(err)
-    if not err:
-        dpg.set_value("lineedit_input_file", path)
-        load_file(app)
-
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
@@ -50,6 +41,15 @@ def load_file(app):
 
     app.pdf_path = path
     app.pdf_imposer.load_doc(path, on_loading)
+
+def open_file(app):
+    path = FileDialogHelper.open_pdf_file()
+    if path is None: return
+    _, err = PDFInfo.validate_and_get_info(path)
+    app.log_message(err)
+    if not err:
+        dpg.set_value("lineedit_input_file", path)
+        load_file(app)
 
 def arrow_left_callback(app):
     if (app.current_page == 1): 
@@ -87,6 +87,7 @@ def set_default_values(app):
     dpg.set_value("color_picker", [int(c * 255) for c in app.pdf_imposer.params.color_lines])
     dpg.set_value("thickness_input", app.pdf_imposer.params.thickness_lines)
     dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
+    dpg.set_value("split_file_checkbox", app.is_split_file)
 
     items = [*formats.keys()]
     dpg.configure_item("combo_formats", items=items)
@@ -168,23 +169,28 @@ def is_ok_output_file(app):
         return False
     return True
 
-def save_as_file_btn(app):
+def save_as_file(app):
     path = FileDialogHelper.save_pdf_file()
     if path is None: return
     if not is_type(path, "pdf"):
         app.log_message("Файл некорректного типа")
         return
     dpg.set_value("lineedit_output_file", path)
-    save_file_btn(app)
+    save_file(app)
 
-def save_file_btn(app):
+def save_file(app):
     if not is_ok_output_file(app): return
     if app.pdf_path is None:
         app.log_message("Исходный файл не выбран")
         return
     path = dpg.get_value("lineedit_output_file")
-    app.pdf_imposer.export_doc(path)
-    app.log_message("Файл сохранен")
+    split = app.is_split_file
+    app.pdf_imposer.export_doc(path, split)
+    if split: app.log_message("Файлы сохранены")
+    else: app.log_message("Файл сохранен")
+
+def split_file(app):
+    app.is_split_file = dpg.get_value("split_file_checkbox")
 
 def lineedit_pattern_btn(app):
     pattern = dpg.get_value("lineedit_pattern")
@@ -223,8 +229,8 @@ def edit_scale(app, sender):
 
 def register_callbacks(app):
     dpg.set_item_callback("lineedit_input_file", lambda: is_ok_input_file(app))
-    dpg.set_item_callback("open_file_btn", lambda: open_file(app))
     dpg.set_item_callback("load_file_btn", lambda: load_file(app))
+    dpg.set_item_callback("open_file_btn", lambda: open_file(app))
     dpg.set_item_callback("arrow_left", lambda: arrow_left_callback(app))
     dpg.set_item_callback("arrow_right", lambda: arrow_right_callback(app))
     dpg.set_item_callback("rows_input", lambda: edit_params(app))
@@ -236,8 +242,9 @@ def register_callbacks(app):
     dpg.set_item_callback("color_picker", lambda: edit_params(app))
     dpg.set_item_callback("radio_btn", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_output_file", lambda: is_ok_output_file(app))
-    dpg.set_item_callback("save_as_file_btn", lambda: save_as_file_btn(app))
-    dpg.set_item_callback("save_file_btn", lambda: save_file_btn(app))
+    dpg.set_item_callback("save_as_file_btn", lambda: save_as_file(app))
+    dpg.set_item_callback("save_file_btn", lambda: save_file(app))
+    dpg.set_item_callback("split_file_checkbox", lambda: split_file(app))
     dpg.set_item_callback("thickness_input", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))
     dpg.set_item_callback("move_panel_btn", lambda: move_panel(app))

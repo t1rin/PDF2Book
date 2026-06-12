@@ -128,7 +128,7 @@ class PDFImposer():
         
         self.update_doc()
         if split:
-            name = path.split(".")[:-1]
+            name = "".join(path.split(".")[:-1])
             output_docs = self._get_split()
             for i, output in enumerate(output_docs):
                 output.save(f"{name}_{i}.pdf", garbage=4, deflate=True)

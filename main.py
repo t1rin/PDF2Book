@@ -13,6 +13,8 @@ class PDF2BookApp:
         self.font = ui.conf.selected_font
         self.pw_left = ui.conf.parametrs_window_on_the_left
         self.scale = ui.conf.scale
+        
+        self.is_split_file = False
         self.current_page = 1
         
     def log_message(self, msg=None):

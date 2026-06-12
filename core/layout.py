@@ -111,12 +111,30 @@ class PDFImposer():
         self.output_doc, total_pages = calculate_doc(self.input_doc, self.params)
         self.quantity_page = total_pages
 
-    def export_doc(self, path):
+    def _get_split(self):
+        output_1 = fitz.open()
+        output_2 = fitz.open()
+
+        for i in range(0, self.quantity_page, 2):
+            ind_1, ind_2 = i, self.quantity_page-i-1
+            output_1.insert_pdf(self.output_doc, from_page=ind_1, to_page=ind_1)
+            output_2.insert_pdf(self.output_doc, from_page=ind_2, to_page=ind_2)
+        
+        return output_1, output_2
+
+    def export_doc(self, path, split=False):
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
         self.update_doc()
-        self.output_doc.save(path, garbage=4, deflate=True)
+        if split:
+            name = path.split(".")[:-1]
+            output_docs = self._get_split()
+            for i, output in enumerate(output_docs):
+                output.save(f"{name}_{i}.pdf", garbage=4, deflate=True)
+                output.close()
+        else:
+            self.output_doc.save(path, garbage=4, deflate=True)
 
     def get_preview_async(self, page_num, scale=1, callback=None):
         def worker():

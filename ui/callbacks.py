@@ -187,6 +187,12 @@ def save_file_btn(app):
 def lineedit_pattern_btn(app):
     pattern = dpg.get_value("lineedit_pattern")
     pattern_code = pattern.split()
+
+    if app.pdf_path is None:
+        dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
+        app.log_message("Файл PDF не загружен")
+        return
+
     if (len(pattern_code) % 2 == 0) and all(s.isdigit() for s in pattern_code):
         edit_params(app)
     else:

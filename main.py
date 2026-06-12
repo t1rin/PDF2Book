@@ -12,6 +12,7 @@ class PDF2BookApp:
         self.theme = ui.conf.selected_theme
         self.font = ui.conf.selected_font
         self.pw_left = ui.conf.parametrs_window_on_the_left
+        self.scale = ui.conf.scale
         self.current_page = 1
         
     def log_message(self, msg=None):
@@ -55,10 +56,12 @@ class PDF2BookApp:
         ui.conf.selected_font = self.font
         ui.conf.selected_theme = self.theme
         ui.conf.parametrs_window_on_the_left = self.pw_left
+        ui.conf.scale = self.scale
         ui.conf.save()
         print("Завершение...")
         
-        del self.pdf_imposer
+        if self.pdf_imposer:
+            del self.pdf_imposer
         dpg.stop_dearpygui()
 
 

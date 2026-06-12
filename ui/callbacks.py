@@ -2,14 +2,13 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.themes import update_theme
-from ui.config import conf
 from core.config import formats
 
 
 def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
-                                                 scale=conf.scale)
+                                                 scale=app.scale)
     update_texture(texture_tag, img_data)
     if align:
         dpg.fit_axis_data("x_axis")
@@ -42,7 +41,7 @@ def load_file(app):
 
     def on_loading(success, error):
         if success:
-            update_preview(app)
+            update_preview(app, align=True)
         else:
             app.pdf_path = None
             app.log_message(error)
@@ -197,6 +196,13 @@ def move_panel(app):
     app.pw_left = not app.pw_left
     update_theme(app, rebuild=True)
 
+def edit_scale(app, sender):
+    scale = float(dpg.get_item_label(sender))
+    app.scale = scale
+    dpg.hide_item("context_menu")
+    #update_theme(app, rebuild=True)
+    app.on_exit()
+
 def register_callbacks(app):
     dpg.set_item_callback("lineedit_input_file", lambda: is_ok_input_file(app))
     dpg.set_item_callback("open_file_btn", lambda: open_file(app))
@@ -218,3 +224,9 @@ def register_callbacks(app):
     dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))
     dpg.set_item_callback("move_panel_btn", lambda: move_panel(app))
     dpg.set_item_callback("combo_formats", lambda: edit_params(app))
+    for det in range(150, 300, 25):
+        btn = f"scale_{det/100}_btn"
+        dpg.set_item_callback(
+            btn, lambda s, a, d: 
+            edit_scale(app, s)
+        )

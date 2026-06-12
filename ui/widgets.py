@@ -24,6 +24,16 @@ def create_context_menu(app):
     with dpg.window(tag="context_menu", popup=True, show=False, no_title_bar=True, 
                     no_move=True, no_resize=True, autosize=True):
         dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
+        dpg.add_text("Детализация: ", tag="scale_text")
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="1.5", tag="scale_1.5_btn")
+            dpg.add_button(label="1.75", tag="scale_1.75_btn")
+            dpg.add_button(label="2", tag="scale_2.0_btn")
+        with dpg.group(horizontal=True):
+            dpg.add_button(label="2.25", tag="scale_2.25_btn")
+            dpg.add_button(label="2.5", tag="scale_2.5_btn")
+            dpg.add_button(label="3", tag="scale_2.75_btn")
+        dpg.add_text("При выборе необходимо будет перезапустить программу", wrap=0)
 
 def create_settings_panel(app):
     with dpg.child_window(tag="settings_panel"):
@@ -87,10 +97,10 @@ def create_plot_window(app):
             options = {"no_gridlines": True, "no_tick_marks": True, "no_tick_labels": True}
             dpg.add_plot_axis(dpg.mvXAxis, tag="x_axis", **options) 
             with dpg.plot_axis(dpg.mvYAxis, tag="y_axis", **options):
-                create_dynamic_textures(formats, scale=conf.scale)
+                create_dynamic_textures(formats, scale=app.scale)
                 texture_tag = app.pdf_imposer.params.format
-                dpg.add_image_series(texture_tag, [0, 0], [0, 0], tag="preview_pdf")
-                update_texture(texture_tag)
+                _, size = get_dynamic_texture(texture_tag, only_size=True)
+                dpg.add_image_series(texture_tag, [0, 0], size, tag="preview_pdf")
                 dpg.fit_axis_data(dpg.top_container_stack())
             dpg.fit_axis_data("x_axis")
 

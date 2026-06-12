@@ -48,6 +48,7 @@ def right_click(app):
         if not is_over_widget:
             mouse_pos = dpg.get_mouse_pos(local=False)
             dpg.set_item_pos("context_menu", mouse_pos)
+            dpg.configure_item("scale_text", default_value="Детализация: " + str(app.scale))
             dpg.show_item("context_menu")
 
 def register_keyboards(app):

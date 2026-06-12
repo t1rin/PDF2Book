@@ -31,12 +31,13 @@ class PDFImposer():
             except:
                 pass
 
-    def load_doc(self, path):
+    def load_doc(self, path, callback=None):
         self._cancel_async_task()
         
+        if self.input_doc:
+            self.input_doc.close()
         self.input_doc = fitz.open(path)
-        
-        self.update_doc_async()
+        self.update_doc_async(callback)
 
     def update_params(self, rows=2, cols=2, margin=15, format="A4_portrait",
                       show_cut_lines=True, show_margin_lines=True, 
@@ -117,7 +118,7 @@ class PDFImposer():
                 if callback:
                     callback(None)
         
-        thread = threading.Thread(target=worker, daemon=True)
+        thread = threading.Thread(target=worker, daemon=False)
         thread.start()
 
     def update_doc_async(self, callback=None):
@@ -165,7 +166,7 @@ class PDFImposer():
                         self._current_task = None
         
         self._cancel_flag.clear()
-        self._current_task = threading.Thread(target=worker, daemon=True)
+        self._current_task = threading.Thread(target=worker, daemon=False)
         self._current_task.start()
 
     def _cancel_async_task(self):

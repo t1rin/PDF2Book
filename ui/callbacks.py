@@ -6,11 +6,14 @@ from ui.config import conf
 from core.config import formats
 
 
-def update_preview(app):
+def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
                                                  scale=conf.scale)
     update_texture(texture_tag, img_data)
+    if align:
+        dpg.fit_axis_data("x_axis")
+        dpg.fit_axis_data("y_axis")
     if app.pdf_imposer.output_doc is not None:
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
 
@@ -136,6 +139,8 @@ def edit_params(app):
         app.log_message("Файл PDF не загружен")
         return
 
+    align = (format != app.pdf_imposer.params.format)
+
     pattern_code = pattern.split()
     if (len(pattern_code) % 2 != 0) or not all(s.isdigit() for s in pattern_code):
         pattern = "4 2"
@@ -150,7 +155,7 @@ def edit_params(app):
                                   blocks_are_vertical=blocks_are_vertical,
                                   thickness_lines=thickness, color_lines=color, 
                                   dashes_pattern=pattern)
-    update_preview(app)
+    update_preview(app, align)
 
 def is_ok_output_file(app):
     path = dpg.get_value("lineedit_output_file")

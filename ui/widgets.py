@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.callbacks import set_default_values
+from core.config import formats
 from ui.config import conf
 
 
@@ -54,6 +55,7 @@ def create_settings_panel(app):
 
         with dpg.tab_bar():
             with dpg.tab(label="Основные"):
+                dpg.add_combo(tag="combo_formats", height_mode=dpg.mvComboHeight_Largest)
                 dpg.add_text("Количество строк:")
                 dpg.add_input_int(tag="rows_input", min_value=1)
                 dpg.add_text("Количество столбцов:")
@@ -83,10 +85,15 @@ def create_plot_window(app):
         with dpg.plot(width=-1, height=-1, equal_aspects=True, 
                         no_mouse_pos=True, no_menus=True):
             options = {"no_gridlines": True, "no_tick_marks": True, "no_tick_labels": True}
-            dpg.add_plot_axis(dpg.mvXAxis, **options) 
+            x_axis = dpg.add_plot_axis(dpg.mvXAxis, **options) 
             with dpg.plot_axis(dpg.mvYAxis, **options):
-                texture, size = get_clean_texture("preview_pdf_texture", scale=conf.scale)
-                dpg.add_image_series(texture, [0, 0], size, tag="preview_pdf")
+                create_dynamic_textures(formats, scale=conf.scale)
+                texture_tag = app.pdf_imposer.params.format
+                _, size = get_dynamic_texture(texture_tag)
+                if size: dpg.add_image_series(texture_tag, [0, 0], size, tag="preview_pdf")
+                else: print("Texture is None")
+                dpg.fit_axis_data(dpg.top_container_stack())
+            dpg.fit_axis_data(x_axis)
 
 def create_loading_window(app):
     with dpg.window(tag="loading_window", autosize=True,

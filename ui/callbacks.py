@@ -3,11 +3,14 @@ import dearpygui.dearpygui as dpg
 from utils import *
 from ui.themes import update_theme
 from ui.config import conf
+from core.config import formats
 
 
 def update_preview(app):
-    img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, scale=conf.scale)
-    dpg.set_value("preview_pdf_texture", img_data)
+    texture_tag = app.pdf_imposer.params.format
+    img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
+                                                 scale=conf.scale)
+    update_texture(texture_tag, img_data)
     if app.pdf_imposer.output_doc is not None:
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
 
@@ -40,12 +43,9 @@ def load_file(app):
         else:
             app.pdf_path = None
             app.log_message(error)
-        dpg.configure_item("loading_window", show=False)
 
-    dpg.configure_item("loading_window", show=True)
     app.pdf_path = path
-    app.pdf_imposer.load_doc(path)
-    app.pdf_imposer.update_doc_async(callback=on_loading) 
+    app.pdf_imposer.load_doc(path, on_loading)
 
 def arrow_left_callback(app):
     if (app.current_page == 1): 
@@ -69,16 +69,24 @@ def arrow_right_callback(app):
     update_preview(app)
 
 def set_default_values(app):
-    dpg.set_value("rows_input", 2)
-    dpg.set_value("cols_input", 2)    
-    dpg.set_value("margin_input", 15)
-    dpg.set_value("radio_btn", "Слева")
-    dpg.set_value("show_margin_lines", True)
-    dpg.set_value("show_blocks_lines", False)
-    dpg.set_value("show_cut_lines", True)
-    dpg.set_value("color_picker", (125, 125, 125))
-    dpg.set_value("thickness_input", 1)
-    dpg.set_value("lineedit_pattern", "4 2")
+    if app.pdf_path:
+        dpg.set_value("lineedit_input_file", app.pdf_path)
+    dpg.set_value("page_label", app.current_page)
+    dpg.set_value("rows_input", app.pdf_imposer.params.rows)
+    dpg.set_value("cols_input", app.pdf_imposer.params.cols)    
+    dpg.set_value("margin_input", app.pdf_imposer.params.margin)
+    dpg.set_value("radio_btn", "Сверху" 
+                  if app.pdf_imposer.params.blocks_are_vertical else "Слева")
+    dpg.set_value("show_margin_lines", app.pdf_imposer.params.show_margin_lines)
+    dpg.set_value("show_blocks_lines", app.pdf_imposer.params.show_blocks_lines)
+    dpg.set_value("show_cut_lines", app.pdf_imposer.params.show_cut_lines)
+    dpg.set_value("color_picker", [int(c * 255) for c in app.pdf_imposer.params.color_lines])
+    dpg.set_value("thickness_input", app.pdf_imposer.params.thickness_lines)
+    dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
+
+    items = [*formats.keys()]
+    dpg.configure_item("combo_formats", items=items)
+    dpg.set_value("combo_formats", app.pdf_imposer.params.format)
 
 def edit_params(app):
     rows = dpg.get_value("rows_input")
@@ -96,6 +104,7 @@ def edit_params(app):
         return
 
     margin = dpg.get_value("margin_input")
+    format = dpg.get_value("combo_formats")
     show_margin_lines = dpg.get_value("show_margin_lines")
     show_blocks_lines = dpg.get_value("show_blocks_lines")
     show_cut_lines = dpg.get_value("show_cut_lines")
@@ -134,8 +143,8 @@ def edit_params(app):
     pattern = f"[{pattern}] 0"
 
     app.log_message()
-    app.pdf_imposer.update_params(rows=rows, cols=cols, margin=margin, 
-                                  show_cut_lines=show_cut_lines,
+    app.pdf_imposer.update_params(rows=rows, cols=cols, margin=margin,
+                                  format=format, show_cut_lines=show_cut_lines,
                                   show_margin_lines=show_margin_lines, 
                                   show_blocks_lines=show_blocks_lines, 
                                   blocks_are_vertical=blocks_are_vertical,
@@ -203,3 +212,4 @@ def register_callbacks(app):
     dpg.set_item_callback("thickness_input", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))
     dpg.set_item_callback("move_panel_btn", lambda: move_panel(app))
+    dpg.set_item_callback("combo_formats", lambda: edit_params(app))

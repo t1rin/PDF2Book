@@ -17,15 +17,9 @@ def create_dynamic_textures(papers_data, scale=1):
             img_data = [220, 220, 220, 255] * (width * height)
             dpg.add_dynamic_texture(width, height, img_data, tag=tag)
 
-def get_dynamic_texture(tag):
-    global _data, _scale
-    if (_data is None) or (_scale is None) or (tag not in _data.keys()):
-        return None, None
-    width, height = _data[tag]
-    img_data = [220, 220, 220, 255] * (width * height)
-    return img_data, (width, height)
-
-def update_texture(tag, img_data):
+def update_texture(tag, img_data=None):
+    if img_data is None:
+        img_data = [220, 220, 220, 255] * (_data[tag][0] * _data[tag][1])
     if dpg.does_item_exist("preview_pdf"):
         dpg.configure_item("preview_pdf", texture_tag=tag, bounds_max=_data[tag])
     if dpg.does_item_exist(tag):

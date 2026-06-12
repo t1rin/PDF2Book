@@ -61,19 +61,29 @@ class PDFImposer():
         if self.output_doc is None and self._current_task and self._current_task.is_alive():
             self._current_task.join()
         
-        temp, q = calculate_doc(self.input_doc, self.params, page_num=page_num)
-        self.quantity_page = q
-        
-        if temp is None or len(temp) == 0:
+        temp_doc, total_pages = calculate_doc(self.input_doc, self.params, page_num=page_num)
+        self.quantity_page = total_pages
+
+        if temp_doc is None or len(temp_doc) == 0:
             return None, None
         
         try:
-            page = temp[0]
+            page = temp_doc[0]
+
+            right_width, right_height = conf.formats[self.params.format]
+            right_width = int(right_width * scale)
+            right_height = int(right_height * scale)
             
-            matrix = fitz.Matrix(scale, scale)
+            scale_x = right_width / page.rect.width
+            scale_y = right_height / page.rect.height
+            
+            matrix = fitz.Matrix(scale_x, scale_y)
             pix = page.get_pixmap(matrix=matrix, alpha=False)
-            
+
             width, height = pix.width, pix.height
+
+            if right_width != width or right_height != height:
+                print("Sizes are not equel")
             
             img_array = np.frombuffer(pix.samples, dtype=np.uint8)
             img_array = img_array.reshape(height, width, 3)
@@ -90,7 +100,7 @@ class PDFImposer():
             
         finally:
             try: 
-                if temp: temp.close()
+                if temp_doc: temp_doc.close()
             except: pass
 
     def update_doc(self):
@@ -98,8 +108,8 @@ class PDFImposer():
             self._current_task.join()
             return
         
-        self.output_doc, q = calculate_doc(self.input_doc, self.params)
-        self.quantity_page = q
+        self.output_doc, total_pages = calculate_doc(self.input_doc, self.params)
+        self.quantity_page = total_pages
 
     def export_doc(self, path):
         if self.input_doc is None:

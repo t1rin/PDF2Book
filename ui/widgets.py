@@ -85,15 +85,14 @@ def create_plot_window(app):
         with dpg.plot(width=-1, height=-1, equal_aspects=True, 
                         no_mouse_pos=True, no_menus=True):
             options = {"no_gridlines": True, "no_tick_marks": True, "no_tick_labels": True}
-            x_axis = dpg.add_plot_axis(dpg.mvXAxis, **options) 
-            with dpg.plot_axis(dpg.mvYAxis, **options):
+            dpg.add_plot_axis(dpg.mvXAxis, tag="x_axis", **options) 
+            with dpg.plot_axis(dpg.mvYAxis, tag="y_axis", **options):
                 create_dynamic_textures(formats, scale=conf.scale)
                 texture_tag = app.pdf_imposer.params.format
-                _, size = get_dynamic_texture(texture_tag)
-                if size: dpg.add_image_series(texture_tag, [0, 0], size, tag="preview_pdf")
-                else: print("Texture is None")
+                dpg.add_image_series(texture_tag, [0, 0], [0, 0], tag="preview_pdf")
+                update_texture(texture_tag)
                 dpg.fit_axis_data(dpg.top_container_stack())
-            dpg.fit_axis_data(x_axis)
+            dpg.fit_axis_data("x_axis")
 
 def create_loading_window(app):
     with dpg.window(tag="loading_window", autosize=True,

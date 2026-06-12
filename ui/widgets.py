@@ -24,6 +24,8 @@ def create_context_menu(app):
     with dpg.window(tag="context_menu", popup=True, show=False, no_title_bar=True, 
                     no_move=True, no_resize=True, autosize=True):
         dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
+        dpg.add_menu_item(label="Сменить тему", tag="switch_theme_btn")
+        dpg.add_menu_item(label="Сменить шрифт", tag="switch_font_btn")
         dpg.add_text("Детализация: ", tag="scale_text")
         with dpg.group(horizontal=True):
             dpg.add_button(label="1.5", tag="scale_1.5_btn")

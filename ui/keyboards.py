@@ -1,20 +1,13 @@
-import glob
 import dearpygui.dearpygui as dpg
 
-from ui.themes import update_theme
-from ui.config import conf
 import ui.callbacks as cb
 
 
 def switch_theme(app):
-    themes = list(conf.theme.keys())
-    app.theme = themes[themes.index(app.theme)-1]
-    update_theme(app)
+    cb.switch_theme(app)
 
 def switch_font(app):
-    fonts = glob.glob("./assets/fonts/*.ttf")
-    app.font = fonts[fonts.index(app.font)-1]
-    update_theme(app)
+    cb.switch_font(app)
 
 def open_file(app):
     if dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl):

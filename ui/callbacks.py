@@ -1,8 +1,10 @@
+import glob
 import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.themes import update_theme
 from core.config import formats
+from ui.config import conf
 
 
 def update_preview(app, align=False):
@@ -202,6 +204,16 @@ def move_panel(app):
     app.pw_left = not app.pw_left
     update_theme(app, rebuild=True)
 
+def switch_theme(app):
+    themes = list(conf.theme.keys())
+    app.theme = themes[themes.index(app.theme)-1]
+    update_theme(app)
+
+def switch_font(app):
+    fonts = glob.glob("./assets/fonts/*.ttf")
+    app.font = fonts[fonts.index(app.font)-1]
+    update_theme(app)
+
 def edit_scale(app, sender):
     scale = float(dpg.get_item_label(sender))
     app.scale = scale
@@ -229,6 +241,8 @@ def register_callbacks(app):
     dpg.set_item_callback("thickness_input", lambda: edit_params(app))
     dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))
     dpg.set_item_callback("move_panel_btn", lambda: move_panel(app))
+    dpg.set_item_callback("switch_theme_btn", lambda: switch_theme(app))
+    dpg.set_item_callback("switch_font_btn", lambda: switch_font(app))
     dpg.set_item_callback("combo_formats", lambda: edit_params(app))
     for det in range(150, 300, 25):
         btn = f"scale_{det/100}_btn"

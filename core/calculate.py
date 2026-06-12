@@ -1,4 +1,4 @@
-import fitz
+import pymupdf as fitz
 from dataclasses import dataclass
 
 import core.config as conf

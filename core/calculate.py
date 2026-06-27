@@ -1,3 +1,4 @@
+import math
 import pymupdf as fitz
 from dataclasses import dataclass
 
@@ -17,6 +18,8 @@ class BookParams:
     color_lines: tuple[int]
     dashes_pattern: str
     blocks_are_vertical: bool
+    quantity_pages_for_part: int
+    
 
 def get_positions_pages(quentity, is_vertical=False, _list=None):
     """получение списка индексов для расположение в порядке для разреза"""
@@ -78,7 +81,22 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
     output_doc = fitz.open()
 
     is_vertical = params.blocks_are_vertical
-    new_positions = get_positions_pages(len(input_doc), is_vertical=is_vertical)
+    
+    if params.quantity_pages_for_part and (len(input_doc) < params.quantity_pages_for_part):
+        raise ValueError("Incorrectly specified quantity_pages_for_part")
+    
+    new_positions = []
+    if params.quantity_pages_for_part == 0:
+        positions_pages = get_positions_pages(len(input_doc), 
+                                        is_vertical=is_vertical)
+        new_positions += positions_pages
+    else:
+        positions_pages = get_positions_pages(params.quantity_pages_for_part, 
+                                              is_vertical=is_vertical)
+        for i in range((len(input_doc) - 1) // params.quantity_pages_for_part + 1):
+            positions = [params.quantity_pages_for_part*i+page for page in positions_pages]
+            new_positions += positions
+        
     side0, side1 = [], []
     for i in range(len(new_positions)):
         if (i // 2) % 2 == 0:

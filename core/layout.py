@@ -43,16 +43,19 @@ class PDFImposer():
                       show_cut_lines=True, show_margin_lines=True, 
                       show_blocks_lines=False, thickness_lines=1, 
                       color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", 
-                      blocks_are_vertical=False):
+                      blocks_are_vertical=False, quantity_pages_for_part=0):
         if rows*cols % 2 == 1:
             raise ValueError("Not found blocks of pages")
         if (blocks_are_vertical and (rows % 2 == 1)) or \
             (not blocks_are_vertical and (cols % 2 == 1)):
             raise ValueError("Incorrectly specified blocks_are_vertical")
+        q = quantity_pages_for_part
+        if (q < 0) or (q % 4 != 0):
+            raise ValueError("Incorrectly specified quantity_pages_for_part")
         self.params = BookParams(rows, cols, margin, format, show_cut_lines,
                                  show_margin_lines, show_blocks_lines,
                                  thickness_lines, color_lines, dashes_pattern,
-                                 blocks_are_vertical)
+                                 blocks_are_vertical, quantity_pages_for_part)
 
     def get_preview(self, page_num, scale=1):
         if self.input_doc is None:

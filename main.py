@@ -23,7 +23,7 @@ class PDF2BookApp:
 
     def run(self):
         dpg.create_context()
-        
+
         dpg.create_viewport(**ui.conf.viewport_options)
 
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
@@ -33,6 +33,7 @@ class PDF2BookApp:
         ui.register_callbacks(self)
         ui.register_keyboards(self)
         ui.register_themes(self)
+        ui.create_drag_and_drop(self)
         
         dpg.setup_dearpygui()
         dpg.show_viewport()

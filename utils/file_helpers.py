@@ -3,6 +3,7 @@
 import os
 import sys
 import glob
+import platform
 from pathlib import Path
 from tkinter import filedialog, Tk
 import pymupdf as fitz
@@ -140,6 +141,9 @@ def resource_path(relative_path):
     except ValueError:pass
     
     return str(final_path)
+
+def os_type():
+    return platform.system()
 
 def is_type(path, type):
     return path.split(".")[-1] == type

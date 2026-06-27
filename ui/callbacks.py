@@ -49,6 +49,15 @@ def open_file(app):
     if not err:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
+        
+def drop_handler(app, data):
+    path = data[0]
+    if path is None: return
+    _, err = PDFInfo.validate_and_get_info(path)
+    app.log_message(err)
+    if not err:
+        dpg.set_value("lineedit_input_file", path)
+        load_file(app)
 
 def arrow_left_callback(app):
     if (app.current_page == 1): 

@@ -1,9 +1,12 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.callbacks import set_default_values
+from ui.callbacks import set_default_values, drop_handler
 from core.config import formats
 from ui.config import conf
+
+if os_type() == "Windows":
+    import ui.DearPyGui_DragAndDrop as dpg_dnd
 
 
 def resize_update(app):
@@ -137,5 +140,10 @@ def create_main_window(app):
     create_loading_window(app)
 
     resize_update(app)
-    
+
+def create_drag_and_drop(app):
+    if os_type() == "Windows":
+        dpg_dnd.initialize()
+        dpg_dnd.set_drop(lambda data, keys: 
+                         drop_handler(app, data))
     

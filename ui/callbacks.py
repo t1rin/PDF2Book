@@ -96,6 +96,8 @@ def set_default_values(app):
     dpg.set_value("thickness_input", app.pdf_imposer.params.thickness_lines)
     dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
     dpg.set_value("split_file_checkbox", app.is_split_file)
+    dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
+    dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
 
     items = [*formats.keys()]
     dpg.configure_item("combo_formats", items=items)
@@ -115,9 +117,10 @@ def edit_params(app):
         app.log_message("Файл PDF не загружен")
         set_default_values(app)
         return
-
+        
     margin = dpg.get_value("margin_input")
     format = dpg.get_value("combo_formats")
+    size_part = dpg.get_value("size_part_input")
     show_margin_lines = dpg.get_value("show_margin_lines")
     show_blocks_lines = dpg.get_value("show_blocks_lines")
     show_cut_lines = dpg.get_value("show_cut_lines")
@@ -128,6 +131,21 @@ def edit_params(app):
     
     if (margin < 0):
         dpg.set_value("margin_input", 0)
+        return
+
+    if size_part % 4 != 0:
+        _round = lambda x: int(x) + (0 if x % 1 >= 0.5 else 1)
+        size_part = int(_round(size_part / 4) * 4)
+        dpg.set_value("size_part_input", size_part)
+        
+    if (size_part < 0):
+        dpg.set_value("size_part_input", 0)
+        return
+    
+    q_pages = len(app.pdf_imposer.input_doc)
+    if q_pages < size_part:
+        size_part = q_pages - (q_pages % 4)
+        dpg.set_value("size_part_input", size_part)
         return
     
     if (thickness < 0):
@@ -145,10 +163,6 @@ def edit_params(app):
         app.log_message("В указанное количество столбцов не помещаются блоки по два")
         return
 
-    if app.pdf_path is None:
-        app.log_message("Файл PDF не загружен")
-        return
-
     align = (format != app.pdf_imposer.params.format)
 
     pattern_code = pattern.split()
@@ -164,7 +178,7 @@ def edit_params(app):
                                   show_blocks_lines=show_blocks_lines, 
                                   blocks_are_vertical=blocks_are_vertical,
                                   thickness_lines=thickness, color_lines=color, 
-                                  dashes_pattern=pattern)
+                                  dashes_pattern=pattern, quantity_pages_for_part=size_part)
     update_preview(app, align)
 
 def is_ok_output_file(app):
@@ -229,6 +243,20 @@ def switch_font(app):
     app.font = fonts[fonts.index(app.font)-1]
     update_theme(app)
 
+def separate(app):
+    if app.pdf_path is None:
+        app.log_message("Файл PDF не загружен")
+        set_default_values(app)
+        return
+    value = dpg.get_value("separate_checkbox")
+    dpg.configure_item("part_options", show=value)
+    if not value:
+        app.pdf_imposer.params.quantity_pages_for_part = 0
+    else:
+        app.pdf_imposer.params.quantity_pages_for_part = \
+            dpg.get_value("size_part_input")
+    update_preview(app)
+
 def edit_scale(app, sender):
     scale = float(dpg.get_item_label(sender))
     app.scale = scale
@@ -260,6 +288,8 @@ def register_callbacks(app):
     dpg.set_item_callback("switch_theme_btn", lambda: switch_theme(app))
     dpg.set_item_callback("switch_font_btn", lambda: switch_font(app))
     dpg.set_item_callback("combo_formats", lambda: edit_params(app))
+    dpg.set_item_callback("separate_checkbox", lambda: separate(app))
+    dpg.set_item_callback("size_part_input", lambda: edit_params(app))
     for det in range(150, 300, 25):
         btn = f"scale_{det/100}_btn"
         dpg.set_item_callback(

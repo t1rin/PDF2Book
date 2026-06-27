@@ -73,13 +73,19 @@ def create_settings_panel(app):
             with dpg.tab(label="Основные"):
                 dpg.add_combo(tag="combo_formats", height_mode=dpg.mvComboHeight_Largest)
                 dpg.add_text("Количество строк:")
-                dpg.add_input_int(tag="rows_input", min_value=1)
+                dpg.add_input_int(tag="rows_input")
                 dpg.add_text("Количество столбцов:")
-                dpg.add_input_int(tag="cols_input", min_value=1)
+                dpg.add_input_int(tag="cols_input")
                 dpg.add_text("Отступ:")
-                dpg.add_input_int(tag="margin_input", min_value=0)
+                dpg.add_input_int(tag="margin_input")
+
+            with dpg.tab(label="Сшивка"):
                 dpg.add_text("Место переплета:")
                 dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
+                dpg.add_checkbox(tag="separate_checkbox", label="Делить на секции")
+                with dpg.group(tag="part_options"):
+                    dpg.add_text("Размер секции:")
+                    dpg.add_input_int(tag="size_part_input")
 
             with dpg.tab(label="Линии"):
                 dpg.add_checkbox(tag="show_margin_lines", label="Показ линии с отступом")
@@ -88,7 +94,7 @@ def create_settings_panel(app):
                 dpg.add_text("Цвет пунктира:")
                 dpg.add_color_edit(tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
                 dpg.add_text("Толщина линий:")
-                dpg.add_input_int(tag="thickness_input", min_value=1)
+                dpg.add_input_int(tag="thickness_input")
                 dpg.add_text("Паттерн пунктира:")
                 dpg.add_input_text(tag="lineedit_pattern", hint="enter pattern")
 

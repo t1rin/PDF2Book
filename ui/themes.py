@@ -89,7 +89,8 @@ def update_theme(app, rebuild=False):
     if rebuild:
         import ui
 
-        to_delete = ["primary_window", "loading_window", "context_menu"]
+        to_delete = ["primary_window", "loading_window", "context_menu",
+                     "split_file_checkbox"]
         for item in to_delete:
             if dpg.does_item_exist(item):
                 dpg.delete_item(item)

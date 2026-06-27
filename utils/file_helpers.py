@@ -119,17 +119,12 @@ class PDFInfo:
 def normalize_path(path):
     return path.replace('\\', os.sep).replace('/', os.sep)
 
-def get_fonts():
-    paths2fonts = glob.glob(os.path.join(".", "assets", "fonts", "*.ttf"))
-    fonts = [resource_path(font) for font in paths2fonts]
-    return fonts
-
 def resource_path(relative_path):
     try:
         base_path = Path(sys._MEIPASS)
     except AttributeError:
         base_path = Path(__file__).resolve().parent.parent
-
+        
     path = Path(normalize_path(relative_path))
     
     clean_parts = [part for part in path.parts if part not in ('.', '..', '')]
@@ -137,10 +132,14 @@ def resource_path(relative_path):
     
     final_path = base_path / clean_path
     
-    try: final_path = final_path.relative_to(base_path)
-    except ValueError:pass
+    final_path = os.path.abspath(final_path)
     
-    return str(final_path)
+    return final_path
+
+def get_fonts():
+    paths2fonts = glob.glob(resource_path(os.path.join("assets", "fonts", "*.ttf")))
+    fonts = [resource_path(font) for font in paths2fonts]
+    return fonts
 
 def os_type():
     return platform.system()

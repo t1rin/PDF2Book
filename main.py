@@ -45,7 +45,7 @@ class PDF2BookApp:
         dpg.destroy_context()
 
     def on_frame(self):
-        if dpg.get_frame_count() < 30:
+        if dpg.get_frame_count() < 25:
             ui.resize_update(self)
         else:
             showed = self.pdf_imposer.is_processing()

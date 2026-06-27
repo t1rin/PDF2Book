@@ -239,7 +239,6 @@ def switch_theme(app):
 
 def switch_font(app):
     fonts = get_fonts()
-    print(fonts)
     app.font = fonts[fonts.index(app.font)-1]
     update_theme(app)
 

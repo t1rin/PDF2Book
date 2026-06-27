@@ -67,7 +67,10 @@ class PDF2BookApp:
             del self.pdf_imposer
         dpg.stop_dearpygui()
 
-
-if __name__ == "__main__":
+def main():
     app = PDF2BookApp()
     app.run()
+
+
+if __name__ == "__main__":
+    main()

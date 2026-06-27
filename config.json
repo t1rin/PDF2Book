@@ -2,13 +2,9 @@
     "viewport_options": {
         "title": "PDF2Book",
         "height": 750,
-        "width": 770,
-        "max_width": -1,
-        "min_width": -1,
-        "max_height": -1,
-        "min_height": -1
+        "width": 770
     },
-    "selected_font": "assets/fonts/DeleddaOpen.ttf",
+    "selected_font": "assets\\fonts\\DeleddaOpen.ttf",
     "selected_theme": "light",
     "parametrs_window_on_the_left": false,
     "theme": {

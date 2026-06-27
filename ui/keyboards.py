@@ -16,9 +16,9 @@ def open_file(app):
 def save_file(app):
     if (dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl)) and \
         dpg.is_key_down(dpg.mvKey_LShift) or dpg.is_key_down(dpg.mvKey_RShift):
-        cb.save_as_file_btn(app)
+        cb.save_as_file(app)
     elif dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl):
-        cb.save_file_btn(app)                                                     
+        cb.save_file(app)                                                     
 
 def back_page(app):
     cb.arrow_left_callback(app)

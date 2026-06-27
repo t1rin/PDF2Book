@@ -1,6 +1,9 @@
 import json
 import os
 
+from utils import resource_path
+
+
 class Config:    
     def __init__(self, json_path='config.json'):
         self._path = json_path
@@ -14,6 +17,8 @@ class Config:
     
     def __getattr__(self, name):
         if name in self._data:
+            if name == "selected_font":
+                return resource_path(self._data[name])
             return self._data[name]
         print(self._data)
         raise AttributeError(f"Конфигурация не содержит поле '{name}'")

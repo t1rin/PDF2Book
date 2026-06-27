@@ -1,4 +1,3 @@
-import glob
 import dearpygui.dearpygui as dpg
 
 from utils import *
@@ -216,7 +215,8 @@ def switch_theme(app):
     update_theme(app)
 
 def switch_font(app):
-    fonts = glob.glob("./assets/fonts/*.ttf")
+    fonts = get_fonts()
+    print(fonts)
     app.font = fonts[fonts.index(app.font)-1]
     update_theme(app)
 

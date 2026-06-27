@@ -6,7 +6,7 @@ from utils import resource_path
 
 class Config:    
     def __init__(self, json_path='config.json'):
-        self._path = json_path
+        self._path = resource_path(json_path)
         self._data = self._load()
     
     def _load(self):

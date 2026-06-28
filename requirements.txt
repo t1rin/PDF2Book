@@ -1,4 +1,4 @@
-pywin32
-dearpygui>=2.3.1
-PyMuPDF>=1.27.2.3
-numpy>=2.4.6
+dearpygui==2.3.1
+PyMuPDF==1.27.2.3
+numpy==2.5.0
+pywin32==312 # iqnore if linux

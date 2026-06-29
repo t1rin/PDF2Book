@@ -58,14 +58,15 @@ class PDFImposer():
                                  thickness_lines, color_lines, dashes_pattern,
                                  blocks_are_vertical, quantity_pages_for_part)
 
-    def get_preview(self, page_num, scale=1):
+    def get_preview(self, page_num, scale=1, indexation=False):
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
         if self.output_doc is None and self._current_task and self._current_task.is_alive():
             self._current_task.join()
         
-        temp_doc, total_pages = calculate_doc(self.input_doc, self.params, page_num=page_num)
+        temp_doc, total_pages = calculate_doc(self.input_doc, self.params, 
+                                              page_num=page_num, indexation=indexation)
         self.quantity_page = total_pages
 
         if temp_doc is None or len(temp_doc) == 0:
@@ -143,10 +144,10 @@ class PDFImposer():
         else:
             self.output_doc.save(path, garbage=4, deflate=True)
 
-    def get_preview_async(self, page_num, scale=1, callback=None):
+    def get_preview_async(self, page_num, scale=1, indexation=False, callback=None):
         def worker():
             try:
-                result = self.get_preview(page_num, scale)
+                result = self.get_preview(page_num, scale, indexation)
                 if callback:
                     callback(result)
             except Exception as e:

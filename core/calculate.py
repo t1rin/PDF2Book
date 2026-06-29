@@ -125,7 +125,7 @@ def calculate_doc(input_doc, params: BookParams, page_num=None, indexation=False
                 index = None
             return index
 
-        def draw_page(row, col, index, page_size, rotate=False, indexation=False):
+        def draw_page(row, col, index, page_size, indexation=False, rotate=False):
             if (page_num is not None) and (page_num != sheet_num):
                 return
             

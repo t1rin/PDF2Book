@@ -239,7 +239,7 @@ def switch_theme(app):
 
 def switch_font(app):
     fonts = get_fonts()
-    app.font = fonts[fonts.index(app.font)-1]
+    app.font = fonts[fonts.index(normalize_path(app.font))-1]
     update_theme(app)
 
 def separate(app):

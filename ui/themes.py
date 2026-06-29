@@ -75,7 +75,7 @@ def register_font(app):
 def register_themes(app):
     register_theme(app)
     dpg.bind_theme("global_theme")
-    if not os.path.exists(app.font):
+    if not os.path.exists(resource_path(app.font)):
         app.log_message(f"Warning: Font file not found: {app.font}")
     else:
         register_font(app)

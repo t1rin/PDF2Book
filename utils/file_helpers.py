@@ -153,7 +153,6 @@ def resource_path(relative_path):
 def get_fonts():
     paths2fonts = glob.glob(resource_path(os.path.join("assets", "fonts", "*.ttf")))
     fonts = [os.sep.join(font.split(os.sep)[-3::1]) for font in paths2fonts]
-    print(fonts)
     return fonts
 
 def os_type():

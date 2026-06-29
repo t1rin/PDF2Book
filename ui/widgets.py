@@ -29,6 +29,7 @@ def create_context_menu(app):
         dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
         dpg.add_menu_item(label="Сменить тему", tag="switch_theme_btn")
         dpg.add_menu_item(label="Сменить шрифт", tag="switch_font_btn")
+        dpg.add_checkbox(label="Индексы страниц", tag="indexes_pages_checkbox")
         dpg.add_text("Детализация: ", tag="scale_text")
         with dpg.group(horizontal=True):
             dpg.add_button(label="1.5", tag="scale_1.5_btn")

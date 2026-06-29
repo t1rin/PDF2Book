@@ -66,13 +66,17 @@ def get_cords_horizontal_line(row, cols, rows, page_size):
     point1 = (page_size[0], (row + 1) * cell_height)
     return (point0, point1)
 
+def get_point_center(rect):
+    return (min(rect.x0, rect.x1) + (rect.x1-rect.x0)//2,
+            min(rect.y0, rect.y1) + (rect.y1-rect.y0)//2)
+
 def is_cut_line(cord, is_vertical, is_row=True):
     if is_row:
         return (is_vertical and (cord % 2 == 1)) or not is_vertical
     else:
         return (not is_vertical and (cord % 2 == 1)) or is_vertical
     
-def calculate_doc(input_doc, params: BookParams, page_num=None):
+def calculate_doc(input_doc, params: BookParams, page_num=None, indexation=False):
     if input_doc is None:
         raise ValueError("No PDF document loaded")
     
@@ -121,7 +125,7 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                 index = None
             return index
 
-        def draw_page(row, col, index, page_size, rotate=False):
+        def draw_page(row, col, index, page_size, rotate=False, indexation=False):
             if (page_num is not None) and (page_num != sheet_num):
                 return
             
@@ -133,6 +137,9 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                                               keep_proportion=True, rotate=180)
                 else: page.show_pdf_page(rect, input_doc, index, 
                                             keep_proportion=True)
+                if indexation:
+                    page.insert_text(get_point_center(rect), str(index), 
+                                     fontsize=64)
 
             if params.show_margin_lines and params.margin:
                 page.draw_rect(rect, color=params.color_lines, 
@@ -157,17 +164,18 @@ def calculate_doc(input_doc, params: BookParams, page_num=None):
                 for col in range(params.cols):
                     for row in range(params.rows):
                         index = get_index()
-                        draw_page(row, col, index, page_size)
+                        draw_page(row, col, index, page_size, indexation)
             else:
                 for col in range(params.cols)[::-1]:
                     for row in range(params.rows):
                         index = get_index()
-                        draw_page(row, col, index, page_size, rotate=True)
+                        draw_page(row, col, index, page_size, 
+                                  rotate=True, indexation=indexation)
         else:      
             for row in range(params.rows):
                 for col in range(params.cols):
                     index = get_index()
-                    draw_page(row, col, index, page_size)
+                    draw_page(row, col, index, page_size, indexation)
     if (page_num is not None) and (page_num > sheet_num):
         raise ValueError("Not found page #{n}".format(n=page_num))
     

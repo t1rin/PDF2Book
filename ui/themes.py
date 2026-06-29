@@ -2,6 +2,7 @@ import os
 import dearpygui.dearpygui as dpg
 
 from ui.config import conf
+from utils import resource_path
 
 
 def register_theme(app):
@@ -66,9 +67,10 @@ def register_theme(app):
             dpg.add_theme_color(dpg.mvPlotCol_Selection, conf.theme[name]["plot_selection_color"])
     
 def register_font(app):
+    font = resource_path(app.font)
     with dpg.font_registry():
-        with dpg.font(app.font, size=14, tag="global_font"): pass
-        with dpg.font(app.font, size=20, tag="loading_font"): pass
+        with dpg.font(font, size=14, tag="global_font"): pass
+        with dpg.font(font, size=20, tag="loading_font"): pass
 
 def register_themes(app):
     register_theme(app)

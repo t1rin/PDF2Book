@@ -17,8 +17,6 @@ class Config:
     
     def __getattr__(self, name):
         if name in self._data:
-            if name == "selected_font":
-                return resource_path(self._data[name])
             return self._data[name]
         raise AttributeError(f"Конфигурация не содержит поле '{name}'")
     

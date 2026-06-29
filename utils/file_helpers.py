@@ -8,6 +8,7 @@ from pathlib import Path
 from tkinter import filedialog, Tk
 import pymupdf as fitz
 
+
 class FileDialogHelper:
     _root = None
     
@@ -134,11 +135,12 @@ def resource_path(relative_path):
     
     final_path = os.path.abspath(final_path)
     
-    return final_path
+    return str(final_path)
 
 def get_fonts():
     paths2fonts = glob.glob(resource_path(os.path.join("assets", "fonts", "*.ttf")))
-    fonts = [resource_path(font) for font in paths2fonts]
+    fonts = [os.sep.join(font.split(os.sep)[-3::1]) for font in paths2fonts]
+    print(fonts)
     return fonts
 
 def os_type():

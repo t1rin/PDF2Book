@@ -2,6 +2,7 @@
 import numpy as np
 import threading
 import uuid
+import os
 
 from core.calculate import *
 import core.config as conf
@@ -131,10 +132,13 @@ class PDFImposer():
         
         self.update_doc()
         if split:
-            name = "".join(path.split(".")[:-1])
+            name = path.split(os.sep)[-1]
+            if not os.path.exists(path): 
+                os.mkdir(path)
             output_docs = self._get_split()
             for i, output in enumerate(output_docs):
-                output.save(f"{name}_{i}.pdf", garbage=4, deflate=True)
+                name_pdf = f"{name}_{i}.pdf"
+                output.save(os.sep.join([path, name_pdf]), garbage=4, deflate=True)
                 output.close()
         else:
             self.output_doc.save(path, garbage=4, deflate=True)

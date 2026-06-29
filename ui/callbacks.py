@@ -39,6 +39,7 @@ def load_file(app):
             app.log_message(error)
 
     app.pdf_path = path
+    app.pdf_imposer.update_params()
     app.pdf_imposer.load_doc(path, on_loading)
 
 def open_file(app):

@@ -51,7 +51,7 @@ def create_settings_panel(app):
             dpg.add_button(tag="load_file_btn", label="Загрузить")
         
         dpg.add_text("Выходной файл PDF")
-        dpg.add_input_text(tag="lineedit_output_file", hint="enter path")
+        dpg.add_input_text(tag="lineedit_output", hint="enter path")
         with dpg.group(horizontal=True):
             dpg.add_button(tag="save_as_file_btn", label="Экспорт")
             dpg.add_button(tag="save_file_btn", label="Сохранить")

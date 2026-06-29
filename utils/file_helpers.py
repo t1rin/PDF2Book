@@ -52,6 +52,19 @@ class FileDialogHelper:
         return filepath if filepath else None
     
     @classmethod
+    def save_folder(cls, default_name="output"):
+        root = cls._get_root()
+        root.lift()
+        root.focus_force()
+        
+        filepath = filedialog.askdirectory(
+            title="Сохранить как",
+            initialdir=default_name
+        )
+        
+        return filepath if filepath else None
+    
+    @classmethod
     def cleanup(cls):
         """Вызовите при завершении программы"""
         if cls._root:

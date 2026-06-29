@@ -181,31 +181,35 @@ def edit_params(app):
                                   dashes_pattern=pattern, quantity_pages_for_part=size_part)
     update_preview(app, align)
 
-def is_ok_output_file(app):
-    path = dpg.get_value("lineedit_output_file")
+def is_ok_output(app):
+    path = dpg.get_value("lineedit_output")
     if not path:
         app.log_message()
         return False
-    if not is_type(path, "pdf"):
+    if (not app.is_split_file) and (not is_type(path, "pdf")):
         app.log_message("Файл некорректного типа")
         return False
     return True
 
 def save_as_file(app):
-    path = FileDialogHelper.save_pdf_file()
-    if path is None: return
-    if not is_type(path, "pdf"):
-        app.log_message("Файл некорректного типа")
-        return
-    dpg.set_value("lineedit_output_file", path)
+    if app.is_split_file:
+        path = FileDialogHelper.save_folder()
+        if path is None: return
+    else:
+        path = FileDialogHelper.save_pdf_file()
+        if path is None: return
+        if not is_type(path, "pdf"):
+            app.log_message("Файл некорректного типа")
+            return
+    dpg.set_value("lineedit_output", path)
     save_file(app)
 
 def save_file(app):
-    if not is_ok_output_file(app): return
+    if not is_ok_output(app): return
     if app.pdf_path is None:
         app.log_message("Исходный файл не выбран")
         return
-    path = dpg.get_value("lineedit_output_file")
+    path = dpg.get_value("lineedit_output")
     split = app.is_split_file
     app.pdf_imposer.export_doc(path, split)
     if split: app.log_message("Файлы сохранены")
@@ -277,7 +281,7 @@ def register_callbacks(app):
     dpg.set_item_callback("show_cut_lines", lambda: edit_params(app))
     dpg.set_item_callback("color_picker", lambda: edit_params(app))
     dpg.set_item_callback("radio_btn", lambda: edit_params(app))
-    dpg.set_item_callback("lineedit_output_file", lambda: is_ok_output_file(app))
+    dpg.set_item_callback("lineedit_output", lambda: is_ok_output(app))
     dpg.set_item_callback("save_as_file_btn", lambda: save_as_file(app))
     dpg.set_item_callback("save_file_btn", lambda: save_file(app))
     dpg.set_item_callback("split_file_checkbox", lambda: split_file(app))

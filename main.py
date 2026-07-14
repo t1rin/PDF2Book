@@ -17,6 +17,8 @@ class PDF2BookApp:
         self.is_indexation = False
         self.is_split_file = False
         self.current_page = 1
+
+        self._old_size_drawlist = None
         
     def log_message(self, msg=None):
         if msg: dpg.set_value("log_output", msg)
@@ -52,6 +54,16 @@ class PDF2BookApp:
             showed = self.pdf_imposer.is_processing()
             if dpg.does_item_exist("loading_window"):
                 dpg.configure_item("loading_window", show=showed)
+
+            size_drawlist = dpg.get_item_rect_size("drawlist_window")
+            if self._old_size_drawlist is None:
+                self._old_size_drawlist = size_drawlist
+                return
+            if self._old_size_drawlist != size_drawlist:
+                padding = 2 * ui.conf.padding_drawlist
+                dpg.configure_item("drawlist_3d", 
+                                   width=size_drawlist[0]-padding,
+                                   height=size_drawlist[1]-padding)
     
     def on_viewport_resize(self):
         ui.resize_update(self)

@@ -103,8 +103,20 @@ def create_settings_panel(app):
 
         set_default_values(app)
 
+def create_drawlist_window(app):
+    with dpg.child_window(tag="drawlist_window", show=False):
+        with dpg.group(pos=[conf.padding_drawlist, conf.padding_drawlist]):
+            with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
+                with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
+                                    perspective_divide=True):
+                    dpg.set_clip_space(dpg.last_item(), 0, 0, 500, 500, -1.0, 1.0)
+                    with dpg.draw_node(tag="plane_node"):
+                        dpg.draw_line([0, 0, 0], [3, 0, 0], color=[255, 0, 0, 255], thickness=2)
+                        dpg.draw_line([0, 0, 0], [0, 3, 0], color=[0, 255, 0, 255], thickness=2)
+                        dpg.draw_line([0, 0, 0], [0, 0, 3], color=[0, 0, 255, 255], thickness=2)
+
 def create_plot_window(app):
-    with dpg.child_window():
+    with dpg.child_window(tag="plot_window"):
         with dpg.plot(width=-1, height=-1, equal_aspects=True, 
                         no_mouse_pos=True, no_menus=True):
             options = {"no_gridlines": True, "no_tick_marks": True, 
@@ -126,10 +138,20 @@ def create_loading_window(app):
             dpg.add_loading_indicator(tag="loading_widget", style=2, radius=7)
             dpg.add_text("Loading...", tag="loading_text")
 
+def create_menu_bar(app):
+    with dpg.menu_bar():
+        with dpg.menu(label="Режим"):
+            dpg.add_menu_item(label="Страница", check=True, default_value=True,
+                              tag="page_mode_button", user_data="page")
+            dpg.add_menu_item(label="Визуализация", check=True, 
+                              tag="visualization_mode_button", 
+                              user_data="visualization")
+
 def create_main_window(app):
     create_context_menu(app)
     with dpg.window(tag="primary_window"):
         dpg.set_primary_window("primary_window", True)
+        create_menu_bar(app)
         with dpg.group():
             with dpg.table(header_row=False, hideable=True, resizable=True):
                 if app.pw_left:
@@ -142,7 +164,9 @@ def create_main_window(app):
                 with dpg.table_row():
                     if app.pw_left:
                         create_settings_panel(app)
-                    create_plot_window(app)
+                    with dpg.group():
+                        create_drawlist_window(app)
+                        create_plot_window(app)
                     if not app.pw_left:
                         create_settings_panel(app)
     create_loading_window(app)

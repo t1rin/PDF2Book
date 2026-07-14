@@ -248,6 +248,14 @@ def switch_font(app):
     app.font = fonts[fonts.index(normalize_path(app.font))-1]
     update_theme(app)
 
+def switch_mode(app, mode):
+    p_mode = (mode == "page")
+    v_mode = (mode == "visualization")
+    dpg.set_value("page_mode_button", p_mode)
+    dpg.set_value("visualization_mode_button", v_mode)
+    dpg.configure_item("plot_window", show=p_mode)
+    dpg.configure_item("drawlist_window", show=v_mode)
+
 def separate(app):
     if app.pdf_path is None:
         app.log_message("Файл PDF не загружен")
@@ -304,6 +312,10 @@ def register_callbacks(app):
     dpg.set_item_callback("separate_checkbox", lambda: separate(app))
     dpg.set_item_callback("size_part_input", lambda: edit_params(app))
     dpg.set_item_callback("indexes_pages_checkbox", lambda: edit_indexation(app))
+    dpg.set_item_callback("page_mode_button", 
+                          lambda _, __, d: switch_mode(app, d))
+    dpg.set_item_callback("visualization_mode_button", 
+                          lambda _, __, d: switch_mode(app, d))
     for det in range(150, 300, 25):
         btn = f"scale_{det/100}_btn"
         dpg.set_item_callback(

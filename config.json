@@ -110,5 +110,6 @@
     },
     "default_panel_width": 250,
     "padding_loading_text": 10,
+    "padding_drawlist": 18,
     "scale": 2
 }

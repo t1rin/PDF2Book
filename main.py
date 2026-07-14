@@ -1,6 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from core import PDFImposer
+from ui.visualization import Scene
 import ui
 
 
@@ -13,6 +14,8 @@ class PDF2BookApp:
         self.font = ui.conf.selected_font
         self.pw_left = ui.conf.parametrs_window_on_the_left
         self.scale = ui.conf.scale
+
+        self.scene = Scene()
 
         self.is_indexation = False
         self.is_split_file = False
@@ -34,10 +37,13 @@ class PDF2BookApp:
 
         ui.create_main_window(self)
         ui.register_callbacks(self)
+        ui.register_mouse_handlers(self)
         ui.register_keyboards(self)
         ui.register_themes(self)
         ui.create_drag_and_drop(self)
         
+        self.scene.update()
+
         dpg.setup_dearpygui()
         dpg.show_viewport()
         

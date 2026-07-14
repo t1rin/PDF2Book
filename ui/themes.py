@@ -99,10 +99,13 @@ def update_theme(app, rebuild=False):
         
         ui.create_main_window(app)
         ui.register_callbacks(app)
+        ui.register_mouse_handlers(app)
         ui.register_keyboards(app)
     
     register_themes(app)
     
+    app.scene.update()
+
     dpg.split_frame()
 
     app.log_message()

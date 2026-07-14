@@ -7,10 +7,24 @@ _is_dragging = False
 _is_panning = False
 _last_mouse_pos = [0, 0]
 
-def _is_mouse_over_drawlist():
-    ...
+
+def _is_mouse_over_drawlist(app):
+    if not dpg.does_item_exist("drawlist_3d"):
+        return False
+    if not dpg.is_item_shown("drawlist_window"):
+        return False
+    pos = dpg.get_item_pos("drawlist_3d")
+    size = dpg.get_item_rect_size("drawlist_3d")
+    point0, point1 = pos, [pos[0]+size[0], pos[1]+size[1]]
+    mouse_pos = dpg.get_mouse_pos()
+    if not (point0[0] < mouse_pos[0] < point1[0] and 
+        point0[1] < mouse_pos[1] < point1[1]):
+        return False
+    return True
 
 def mouse_click_callback(app):
+    if not _is_mouse_over_drawlist(app):
+        return
     global _is_dragging, _last_mouse_pos
     _is_dragging = True
     _last_mouse_pos = dpg.get_mouse_pos()
@@ -21,6 +35,9 @@ def mouse_release_callback(app):
     _is_panning = False
 
 def mouse_move_callback(app):
+    if not _is_mouse_over_drawlist(app):
+        return
+    
     global _is_dragging, _is_panning, _last_mouse_pos
     
     if _is_dragging:
@@ -51,11 +68,17 @@ def mouse_move_callback(app):
         app.scene.update()
 
 def mouse_wheel_callback(app, data):
+    if not _is_mouse_over_drawlist(app):
+        return
+    
     app.scene.camera.distance -= data * 2
     app.scene.camera.distance = max(5.0, min(50.0, app.scene.camera.distance))
     app.scene.update()
 
 def mouse_middle_click_callback(app):
+    if not _is_mouse_over_drawlist(app):
+        return
+    
     global _is_panning, _last_mouse_pos
     _is_panning = True
     _last_mouse_pos = dpg.get_mouse_pos()

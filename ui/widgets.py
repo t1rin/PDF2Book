@@ -108,8 +108,7 @@ def create_plot_window(app):
         with dpg.plot(width=-1, height=-1, equal_aspects=True, 
                         no_mouse_pos=True, no_menus=True):
             options = {"no_gridlines": True, "no_tick_marks": True, 
-                       "no_tick_labels": True, "no_tick_labels": True, 
-                       "auto_fit": True}
+                       "no_tick_labels": True, "no_tick_labels": True}
             dpg.add_plot_axis(dpg.mvXAxis, tag="x_axis", **options) 
             with dpg.plot_axis(dpg.mvYAxis, tag="y_axis", **options):
                 create_dynamic_textures(formats, scale=app.scale)

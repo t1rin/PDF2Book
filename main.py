@@ -14,7 +14,7 @@ class PDF2BookApp:
         self.pw_left = ui.conf.parametrs_window_on_the_left
         self.scale = ui.conf.scale
 
-        self.indexation = False
+        self.is_indexation = False
         self.is_split_file = False
         self.current_page = 1
         

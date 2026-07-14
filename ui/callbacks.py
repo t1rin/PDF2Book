@@ -9,7 +9,7 @@ from ui.config import conf
 def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
-                                              scale=app.scale, indexation=app.indexation)
+                                              scale=app.scale, indexation=app.is_indexation)
     update_texture(texture_tag, img_data)
     if align:
         dpg.fit_axis_data("x_axis")
@@ -98,7 +98,7 @@ def set_default_values(app):
     dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
     dpg.set_value("split_file_checkbox", app.is_split_file)
     dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
-    dpg.set_value("indexes_pages_checkbox", app.indexation)
+    dpg.set_value("indexes_pages_checkbox", app.is_indexation)
     dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
 
     items = [*formats.keys()]
@@ -267,7 +267,7 @@ def edit_indexation(app):
         app.log_message("Файл PDF не загружен")
         set_default_values(app)
         return
-    app.indexation = dpg.get_value("indexes_pages_checkbox")
+    app.is_indexation = dpg.get_value("indexes_pages_checkbox")
     update_preview(app)
 
 def edit_scale(app, sender):

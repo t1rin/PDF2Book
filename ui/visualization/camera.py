@@ -14,6 +14,9 @@ class Camera:
         self.target_x = 0.0
         self.target_y = 0.0
         self.target_z = 0.0
+        self.rot_x = 0.0
+        self.rot_y = 0.0
+        self.rot_z = 0.0
 
     def get_camera_vectors(self):
         forward = np.array([

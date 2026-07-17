@@ -9,10 +9,6 @@ from ..config import conf
 
 class Scene:
     def __init__(self):
-        self.rot_x = 0.0
-        self.rot_y = 0.0
-        self.rot_z = 0.0
-
         self._width = 500
         self._height = 500
 
@@ -50,9 +46,9 @@ class Scene:
                                       thickness=3)
 
     def update(self):
-        rot_x = self.rot_x * math.pi / 180.0
-        rot_y = self.rot_y * math.pi / 180.0
-        rot_z = self.rot_z * math.pi / 180.0
+        rot_x = self.camera.rot_x * math.pi / 180.0
+        rot_y = self.camera.rot_y * math.pi / 180.0
+        rot_z = self.camera.rot_z * math.pi / 180.0
         
         model_matrix = (dpg.create_rotation_matrix(rot_x, [1, 0, 0]) *
                         dpg.create_rotation_matrix(rot_y, [0, 1, 0]) *

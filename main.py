@@ -69,9 +69,11 @@ class PDF2BookApp:
                 return
             if self._old_size_drawlist != size_drawlist:
                 padding = 2 * ui.conf.padding_drawlist
-                dpg.configure_item("drawlist_3d", 
-                                   width=size_drawlist[0]-padding,
-                                   height=size_drawlist[1]-padding)
+                width = size_drawlist[0] - padding
+                height = size_drawlist[1] - padding
+                dpg.configure_item("drawlist_3d", width=width, height=height)
+                self.scene.set_clip_space(width, height)
+                self.scene.update()
     
     def on_viewport_resize(self):
         ui.resize_update(self)

@@ -13,9 +13,18 @@ class Scene:
         self.rot_y = 0.0
         self.rot_z = 0.0
 
+        self._width = 500
+        self._height = 500
+
         self.camera = Camera()
         self.visual_book = VisualBook()
     
+    def set_clip_space(self, width, height):
+        self._width = width
+        self._height = height
+        if dpg.does_item_exist("drawlayer_3d"):
+            dpg.set_clip_space("drawlayer_3d", 0, 0, width, height, -1.0, 1.0)
+
     def clear(self):
         if dpg.does_item_exist("drawlist_window"):
             children = dpg.get_item_children("drawlist_window")
@@ -28,8 +37,7 @@ class Scene:
                                                       conf.padding_drawlist]):
             with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
                 with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
-                                    perspective_divide=True):
-                    dpg.set_clip_space(dpg.last_item(), 0, 0, 500, 500, -1.0, 1.0)
+                                    perspective_divide=True, tag="drawlayer_3d"):
                     with dpg.draw_node(tag="plane_node"):
                         dpg.draw_line([0, 0, 0], [3, 0, 0], 
                                       color=[255, 0, 0, 255], 
@@ -60,6 +68,7 @@ class Scene:
             [0, 1, 0]
         )
         
-        proj_matrix = dpg.create_perspective_matrix(math.pi * 45.0 / 180.0, 500/500, 0.1, 100)
+        proj_matrix = dpg.create_perspective_matrix(math.pi * 45.0 / 180.0, self._width/self._height, 0.1, 100)
         
-        dpg.apply_transform("plane_node", proj_matrix * view_matrix * model_matrix)
+        if dpg.does_item_exist("plane_node"):
+            dpg.apply_transform("plane_node", proj_matrix * view_matrix * model_matrix)

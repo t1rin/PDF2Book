@@ -27,33 +27,32 @@ def with_rule(func):
 class VisualBook:
     def __init__(self, rule=RULE.LOGIC):
         self.rule = rule
-        self._book: Book
+        self.book: Book
 
         self._padding_between_parts = 3
 
-        self.new_book(q_parts=0, q_blocks=0)
+        self.new_book()
 
-    def new_book(self, q_parts=4, q_blocks=5, format=(595, 842)):
-        book = Book(parts=[], format=format, margin=5, side=SIDE.LEFT)
+    def new_book(self, q_parts=0, q_blocks=0, format=(595, 842)):
+        book = Book(parts=[], q_parts=0, q_blocks=0, 
+                    format=format, margin=5, side=SIDE.LEFT)
         for i in range(q_parts):
-            part = BookPart(
-                pos=[i*self._padding_between_parts, 0, format[1]], 
-                blocks=[])
+            part = BookPart(pos=[i*self._padding_between_parts, 0, format[1]], 
+                            blocks=[])
             for j in range(q_blocks):
                 block = BlockPages(
                     pages=[], pos=[0, 0, 0], alpha=0, beta=0)
                 for k in range(4):
-                    page = Page(texture=0)
-                    #page.texture = id(_clean_texture(format))
+                    page = Page(texture=None)
                     block.pages.append(page)
                 part.blocks.append(block)
             book.parts.append(part)
-        self._book = book
+        self.book = book
         self._q_parts = q_parts
         self._q_blocks = q_blocks
         self._format = format
         self._sheets_vertices = []
-    
+
     def load_textures(self, textures: list):
         q_pages_on_block = 4 * self._q_blocks
         positions_pages = []
@@ -65,8 +64,11 @@ class VisualBook:
         for i in range(self._q_parts):
             for j in range(self._q_blocks):
                 for k in range(4):
-                    self._book.parts[i].blocks[j].pages[k].texture = \
-                        textures[positions_pages[idx]]
+                    if positions_pages[idx] < len(textures):
+                        self.book.parts[i].blocks[j].pages[k].texture = \
+                            textures[positions_pages[idx]]
+                    else:
+                        self.book.parts[i].blocks[j].pages[k].texture = None
                     idx += 1
     
     @with_rule
@@ -74,7 +76,7 @@ class VisualBook:
         if self._q_parts <= part_index:
             print("failed editing position of part")
             return
-        self._book.parts[part_index].pos = pos
+        self.book.parts[part_index].pos = pos
 
     @with_rule
     def set_pos_block_pages(self, block_index: int, pos: int):
@@ -83,7 +85,7 @@ class VisualBook:
         if (self._q_parts <= part_index) or (self._q_blocks <= block_index):
             print("failed editing position of block")
             return
-        self._book.parts[part_index].blocks[block_index].pos = pos
+        self.book.parts[part_index].blocks[block_index].pos = pos
 
     @with_rule
     def set_angle_block_pages(self, block_index: int, alpha: int | None = None,
@@ -94,12 +96,12 @@ class VisualBook:
             print("failed editing angle of page of block")
             return
         if alpha is not None:
-            self._book.parts[part_index].blocks[block_index].alpha = alpha
+            self.book.parts[part_index].blocks[block_index].alpha = alpha
         if beta is not None:
-            self._book.parts[part_index].blocks[block_index].beta = beta
+            self.book.parts[part_index].blocks[block_index].beta = beta
         
     def _is_params_normal(self, **kwargs):
-        book_copy = copy.deepcopy(self._book)
+        book_copy = copy.deepcopy(self.book)
         if 'part_index' in kwargs and 'pos' in kwargs:
             book_copy.parts[kwargs['part_index']].pos = kwargs['pos']
         elif 'block_index' in kwargs:
@@ -135,7 +137,7 @@ class VisualBook:
         return True
 
     def solve_visualization(self):
-        sheets_vertices = calculate_vertices(self._book)
+        sheets_vertices = calculate_vertices(self.book)
         if sheets_vertices is None:
             return
         self._sheets_vertices = sheets_vertices

@@ -11,7 +11,7 @@ class SIDE(IntEnum):
 
 @dataclass
 class Page:
-    texture: int
+    texture: int | None
 
 @dataclass
 class BlockPages:
@@ -28,6 +28,8 @@ class BookPart:
 @dataclass
 class Book:
     parts: list[BookPart]
+    q_parts: int
+    q_blocks: int 
     format: tuple[int]
     margin: int
     side: SIDE

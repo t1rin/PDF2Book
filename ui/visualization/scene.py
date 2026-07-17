@@ -3,6 +3,8 @@ import dearpygui.dearpygui as dpg
 import math
 
 from .camera import Camera
+from .core import VisualBook
+from ..config import conf
 
 
 class Scene:
@@ -12,7 +14,33 @@ class Scene:
         self.rot_z = 0.0
 
         self.camera = Camera()
+        self.visual_book = VisualBook()
     
+    def clear(self):
+        if dpg.does_item_exist("drawlist_window"):
+            children = dpg.get_item_children("drawlist_window")
+            
+            if children and len(children) > 1:
+                for child in children[1]:
+                    dpg.delete_item(child)
+            
+        with dpg.group(parent="drawlist_window", pos=[conf.padding_drawlist, 
+                                                      conf.padding_drawlist]):
+            with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
+                with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
+                                    perspective_divide=True):
+                    dpg.set_clip_space(dpg.last_item(), 0, 0, 500, 500, -1.0, 1.0)
+                    with dpg.draw_node(tag="plane_node"):
+                        dpg.draw_line([0, 0, 0], [3, 0, 0], 
+                                      color=[255, 0, 0, 255], 
+                                      thickness=3)
+                        dpg.draw_line([0, 0, 0], [0, 3, 0], 
+                                      color=[0, 255, 0, 255], 
+                                      thickness=3)
+                        dpg.draw_line([0, 0, 0], [0, 0, 3], 
+                                      color=[0, 0, 255, 255], 
+                                      thickness=3)
+
     def update(self):
         rot_x = self.rot_x * math.pi / 180.0
         rot_y = self.rot_y * math.pi / 180.0

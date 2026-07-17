@@ -6,101 +6,192 @@ from .data_structures import Book, SIDE
 
 
 def pages_intersect(page1_vertices, page2_vertices):
-    center1 = np.mean(page1_vertices, axis=0)
-    center2 = np.mean(page2_vertices, axis=0)
+    alpha = get_plane(page1_vertices)
+    beta = get_plane(page2_vertices)
+    line_intersection = get_intersection(alpha, beta)
+    if line_intersection is None:
+        return False
+    edges = get_edges_page(page1_vertices) + get_edges_page(page2_vertices)
+    for edge in edges:
+        if are_lines_equal(edge, line_intersection):
+            return False
+    if is_line_in_rectangle(line_intersection, page1_vertices) and \
+       is_line_in_rectangle(line_intersection, page2_vertices):
+        return True
+    return False
     
-    v1 = np.array(page1_vertices[1]) - np.array(page1_vertices[0])
-    v2 = np.array(page1_vertices[2]) - np.array(page1_vertices[0])
-    normal1 = np.cross(v1, v2)
-    normal1 = normal1 / np.linalg.norm(normal1)
+
+def get_plane(vertices):
+    r0_vector = np.array(vertices[0])
+    vector1 = np.array(vertices[1]) - r0_vector
+    vector2 = np.array(vertices[3]) - r0_vector
+    return (r0_vector, vector1, vector2)
+
+def get_intersection(alpha, beta, tol=1e-8):
+    r1, u, v = alpha
+    r2, p, q = beta
+    n1 = np.cross(u, v)
+    n2 = np.cross(p, q)
+    s = np.cross(n1, n2)
     
-    signs = []
-    for v in page2_vertices:
-        v = np.array(v)
-        diff = v - center1
-        sign = np.dot(diff, normal1)
-        signs.append(sign)
-    
-    if all(s > 0 for s in signs) or all(s < 0 for s in signs):
+    if np.linalg.norm(s) < tol:
+        return
+
+    delta = r2 - r1
+    A = np.column_stack([v, -p, -q])
+    sol, _, _, _ = np.linalg.lstsq(A, delta, rcond=None)
+    t, _, _ = sol
+    r0 = r1 + 0 * u + t * v
+    return r0, s
+
+def get_edges_page(vertices):
+    edges = []
+    for i in range(4):
+        edges.append((
+            np.array(vertices[i]),
+            np.array(vertices[(i+1)%4]) - np.array(vertices[i])
+        ))
+    return edges
+
+def are_lines_equal(line1, line2, tol=1e-8):
+    r0_1, v1 = line1
+    r0_2, v2 = line2
+
+    cross_prod = np.cross(v1, v2)
+    if np.linalg.norm(cross_prod) > tol:
         return False
     
-    v1 = np.array(page2_vertices[1]) - np.array(page2_vertices[0])
-    v2 = np.array(page2_vertices[2]) - np.array(page2_vertices[0])
-    normal2 = np.cross(v1, v2)
-    normal2 = normal2 / np.linalg.norm(normal2)
+    idx = np.argmax(np.abs(v2))
+    if abs(v2[idx]) < tol:
+        return np.linalg.norm(r0_1 - r0_2) < tol
+    t = (r0_1[idx] - r0_2[idx]) / v2[idx]
     
-    signs2 = []
-    for v in page1_vertices:
-        v = np.array(v)
-        diff = v - center2
-        sign = np.dot(diff, normal2)
-        signs2.append(sign)
+    return np.linalg.norm(r0_1 - (r0_2 + t * v2)) < tol
+
+def is_line_in_rectangle(line, rect_vertices, tol=1e-8):
+    r0, d = line
     
-    if all(s > 0 for s in signs2) or all(s < 0 for s in signs2):
+    if np.linalg.norm(d) < tol:
+        return point_in_rectangle(r0, rect_vertices, tol)
+    
+    r1, axis1, axis2 = get_plane(rect_vertices)
+    
+    len1 = np.linalg.norm(axis1)
+    len2 = np.linalg.norm(axis2)
+    
+    if len1 < tol or len2 < tol:
         return False
     
-    return True
+    e1 = axis1 / len1
+    e2 = axis2 / len2
+    
+    normal = np.cross(e1, e2)
+    if abs(np.dot(d, normal)) > tol:
+        return False
+    
+    dist = np.dot(r0 - r1, normal)
+    if abs(dist) > tol:
+        return False
+    
+    u0 = np.dot(r0 - r1, e1)
+    v0 = np.dot(r0 - r1, e2)
+    
+    du = np.dot(d, e1)
+    dv = np.dot(d, e2)
+    
+    t_min = -np.inf
+    t_max = np.inf
+    
+    if abs(du) > tol:
+        t1 = -u0 / du
+        t2 = (len1 - u0) / du
+        t_min = max(t_min, min(t1, t2))
+        t_max = min(t_max, max(t1, t2))
+    else:
+        if u0 < -tol or u0 > len1 + tol:
+            return False
+    
+    if abs(dv) > tol:
+        t1 = -v0 / dv
+        t2 = (len2 - v0) / dv
+        t_min = max(t_min, min(t1, t2))
+        t_max = min(t_max, max(t1, t2))
+    else:
+        if v0 < -tol or v0 > len2 + tol:
+            return False
+    
+    if t_max - t_min > tol:
+        return True
+    
+    return False
+
+def point_in_rectangle(point, rect_vertices, tol=1e-8):
+    r1, axis1, axis2 = get_plane(rect_vertices)
+    
+    len1 = np.linalg.norm(axis1)
+    len2 = np.linalg.norm(axis2)
+    
+    if len1 < tol or len2 < tol:
+        return False
+    
+    e1 = axis1 / len1
+    e2 = axis2 / len2
+    
+    u = np.dot(point - r1, e1)
+    v = np.dot(point - r1, e2)
+    
+    return (-tol <= u <= len1 + tol) and (-tol <= v <= len2 + tol)
 
 def calculate_vertices(book: Book):
-    page_vertices = []
+    sheets_vertices = []
+            
+    page_width, page_height = book.format
+    
+    local_vertices = [
+        [0, 0, 0],
+        [0, page_width, 0],
+        [0, page_width, -page_height],
+        [0, 0, -page_height]
+    ]
             
     for part_idx, part in enumerate(book.parts):
-        part_x = part.pos[0] if len(part.pos) > 0 else 0
-        part_y = part.pos[1] if len(part.pos) > 1 else 0
+        if len(part.pos) != 3:
+            print("Incorrect position")
+            return
         
         for block_idx, block in enumerate(part.blocks):
-            block_x = block.pos[0] if len(block.pos) > 0 else 0
-            block_y = block.pos[1] if len(block.pos) > 1 else 0
-            block_z = block.pos[2] if len(block.pos) > 2 else 0
+            if len(block.pos) != 3:
+                print("Incorrect position")
+                return
             
-            base_x = part_x + block_x
-            base_y = part_y + block_y
+            base = np.array(part.pos) + np.array(block.pos)
             
-            for page_idx, page in enumerate(block.pages):
-                if block.side == SIDE.LEFT:
-                    page_offset_x = page_idx * 2
-                    page_offset_y = 0
-                else:
-                    page_offset_x = 0
-                    page_offset_y = page_idx * 2
-                
-                alpha_rad = math.radians(block.alpha)
-                beta_rad = math.radians(block.beta)
-                
-                page_width = format[0] - 2 * page.margin
-                page_height = format[1] - 2 * page.margin
-                
-                local_vertices = [
-                    [-page_width/2, -page_height/2, 0],
-                    [page_width/2, -page_height/2, 0],
-                    [page_width/2, page_height/2, 0],
-                    [-page_width/2, page_height/2, 0]
-                ]
-                
+            alpha_rad = math.radians(block.alpha)
+            beta_rad = math.radians(block.beta)
+            
+            for angle in set([alpha_rad, beta_rad]):
                 vertices = []
+
                 for v in local_vertices:
-                    x = v[0]
-                    y = v[1] * math.cos(alpha_rad) - v[2] * math.sin(alpha_rad)
-                    z = v[1] * math.sin(alpha_rad) + v[2] * math.cos(alpha_rad)
-                    
-                    x2 = x * math.cos(beta_rad) + z * math.sin(beta_rad)
-                    y2 = y
-                    z2 = -x * math.sin(beta_rad) + z * math.cos(beta_rad)
-                    
-                    final_x = base_x + page_offset_x + x2
-                    final_y = base_y + page_offset_y + y2
-                    final_z = block_z + z2
-                    
-                    vertices.append([final_x, final_y, final_z])
-                
-                page_vertices.append({
+                    match book.side:
+                        case SIDE.LEFT:
+                            final = base + np.array([v[0] * math.sin(angle), 
+                                                    v[1] * math.cos(angle),
+                                                    v[2]])
+                        case SIDE.TOP:
+                            final = base + np.array([v[0] * math.sin(angle), 
+                                                    v[1],
+                                                    v[2] * math.cos(angle)])
+                    vertices.append(final.tolist())
+            
+                block_index = part_idx * len(part.blocks) + block_idx
+
+                sheets_vertices.append({
                     'part_index': part_idx,
-                    'block_index': block_idx,
-                    'page_index': page_idx,
-                    'texture_id': page.texture,
+                    'block_index': block_index,
                     'vertices': vertices,
-                    'alpha': block.alpha,
-                    'beta': block.beta,
-                    'side': block.side
+                    'side': book.side,
+                    'angle': angle
                 })
-    return page_vertices
+                
+    return sheets_vertices

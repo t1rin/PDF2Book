@@ -1,7 +1,13 @@
+from enum import IntEnum
 import json
 import os
 
 from utils import resource_path
+
+
+class MODE(IntEnum):
+    PAGE = 0
+    VISUALIZATION = 1
 
 
 class Config:    

@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from core import PDFImposer
 from ui.visualization import Scene
+from ui.config import MODE
 import ui
 
 
@@ -10,6 +11,7 @@ class PDF2BookApp:
         self.pdf_path = None
         self.pdf_imposer = PDFImposer()
 
+        self.mode = MODE.PAGE
         self.theme = ui.conf.selected_theme
         self.font = ui.conf.selected_font
         self.pw_left = ui.conf.parametrs_window_on_the_left

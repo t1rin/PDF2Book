@@ -70,7 +70,7 @@ def create_settings_panel(app):
 
         dpg.add_separator(label="Settings")
 
-        with dpg.tab_bar():
+        with dpg.tab_bar(tag="tab_bar"):
             with dpg.tab(label="Основные"):
                 dpg.add_combo(tag="combo_formats", height_mode=dpg.mvComboHeight_Largest)
                 dpg.add_text("Количество строк:")
@@ -98,6 +98,9 @@ def create_settings_panel(app):
                 dpg.add_input_int(tag="thickness_input")
                 dpg.add_text("Паттерн пунктира:")
                 dpg.add_input_text(tag="lineedit_pattern", hint="enter pattern")
+
+            with dpg.tab(label="Визуализация", tag="visualization_tab"):
+                dpg.add_button(tag="reset_to_home_btn", label="Домой")
 
         dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
 

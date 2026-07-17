@@ -100,6 +100,8 @@ def set_default_values(app):
     dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
     dpg.set_value("indexes_pages_checkbox", app.is_indexation)
     dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
+    is_vis_active = dpg.get_value("visualization_mode_button")
+    dpg.configure_item("visualization_tab", show=is_vis_active)
 
     items = [*formats.keys()]
     dpg.configure_item("combo_formats", items=items)
@@ -255,6 +257,8 @@ def switch_mode(app, mode):
     dpg.set_value("visualization_mode_button", v_mode)
     dpg.configure_item("plot_window", show=p_mode)
     dpg.configure_item("drawlist_window", show=v_mode)
+    dpg.configure_item("visualization_tab", show=v_mode)
+    if v_mode: dpg.set_value("tab_bar", "visualization_tab")
 
 def separate(app):
     if app.pdf_path is None:
@@ -284,6 +288,10 @@ def edit_scale(app, sender):
     dpg.hide_item("context_menu")
     #update_theme(app, rebuild=True)
     app.on_exit()
+
+def reset_to_home(app):
+    app.scene.camera.home()
+    app.scene.update()
 
 def register_callbacks(app):
     dpg.set_item_callback("lineedit_input_file", lambda: is_ok_input_file(app))
@@ -316,6 +324,7 @@ def register_callbacks(app):
                           lambda _, __, d: switch_mode(app, d))
     dpg.set_item_callback("visualization_mode_button", 
                           lambda _, __, d: switch_mode(app, d))
+    dpg.set_item_callback("reset_to_home_btn", lambda: reset_to_home(app))
     for det in range(150, 300, 25):
         btn = f"scale_{det/100}_btn"
         dpg.set_item_callback(

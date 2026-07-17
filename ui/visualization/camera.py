@@ -5,6 +5,9 @@ import math
 
 class Camera:
     def __init__(self):
+        self.home()
+
+    def home(self):
         self.distance = 25.0
         self.yaw = math.pi / 4
         self.pitch = math.pi / 6

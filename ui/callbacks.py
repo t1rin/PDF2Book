@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 from utils import *
 from ui.themes import update_theme
 from core.config import formats
-from ui.config import conf
+from ui.config import conf, MODE
 
 
 def update_preview(app, align=False):
@@ -16,6 +16,43 @@ def update_preview(app, align=False):
         dpg.fit_axis_data("y_axis")
     if app.pdf_imposer.output_doc is not None:
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
+
+def update_visualization(app, reset=False):
+    q_pages = len(app.pdf_imposer.input_doc)
+    q_pages_for_part = app.pdf_imposer.params.quantity_pages_for_part
+    if q_pages_for_part:
+        q_parts = ((q_pages - 1) // q_pages_for_part + 1)
+        q_blocks = q_pages_for_part // 4
+    else:
+        q_parts = 1
+        q_blocks = ((q_pages - 1) // 4 + 1)
+    format_size = formats[app.pdf_imposer.params.format]
+
+    if (app.scene.visual_book.book.format != format_size) or \
+       (app.scene.visual_book.book.q_parts != q_parts) or \
+       (app.scene.visual_book.book.q_blocks != q_blocks) or reset:
+        app.scene.visual_book.new_book(q_parts, q_blocks, format_size)
+        #app.scene.visual_book.load_texture()
+
+    edit_visualization(app)
+    
+    sheets_vertices = app.scene.visual_book.solve_visualization()
+
+    app.scene.clear()
+
+    for sheet in sheets_vertices:
+        part_index = sheet["part_index"]
+        block_index = sheet["block_index"]
+        surface = sheet["surface"]
+        side = sheet["side"]
+        angle = sheet["angle"]
+        textures = sheet["textures"]
+        vertices = sheet["vertices"]
+        dpg.draw_quad(*vertices, 
+                      color=[0, 205, 0, 255], 
+                      fill=[100, 200, 255, 200],
+                      parent="plane_node",
+                      thickness=3)
 
 def is_ok_input_file(app):
     path = dpg.get_value("lineedit_input_file")
@@ -34,6 +71,7 @@ def load_file(app):
     def on_loading(success, error):
         if success:
             update_preview(app, align=True)
+            update_visualization(app, reset=True)
         else:
             app.pdf_path = None
             app.log_message(error)
@@ -184,6 +222,11 @@ def edit_params(app):
                                   thickness_lines=thickness, color_lines=color, 
                                   dashes_pattern=pattern, quantity_pages_for_part=size_part)
     update_preview(app, align)
+    if app.mode == MODE.VISUALIZATION:
+        update_visualization(app)
+
+def edit_visualization(app):
+    ...
 
 def is_ok_output(app):
     path = dpg.get_value("lineedit_output")
@@ -251,14 +294,22 @@ def switch_font(app):
     update_theme(app)
 
 def switch_mode(app, mode):
-    p_mode = (mode == "page")
-    v_mode = (mode == "visualization")
-    dpg.set_value("page_mode_button", p_mode)
-    dpg.set_value("visualization_mode_button", v_mode)
-    dpg.configure_item("plot_window", show=p_mode)
-    dpg.configure_item("drawlist_window", show=v_mode)
-    dpg.configure_item("visualization_tab", show=v_mode)
-    if v_mode: dpg.set_value("tab_bar", "visualization_tab")
+    if mode == "page": app.mode = MODE.PAGE
+    if mode == "visualization": app.mode = MODE.VISUALIZATION
+    is_mode_p = app.mode == MODE.PAGE
+    is_mode_v = app.mode == MODE.VISUALIZATION
+    dpg.set_value("page_mode_button", is_mode_p)
+    dpg.set_value("visualization_mode_button", is_mode_v)
+    dpg.configure_item("plot_window", show=is_mode_p)
+    dpg.configure_item("drawlist_window", show=is_mode_v)
+    dpg.configure_item("visualization_tab", show=is_mode_v)
+    if is_mode_v: 
+        dpg.set_value("tab_bar", "visualization_tab")
+        if app.pdf_path is None:
+            app.log_message("Файл PDF не загружен")
+            set_default_values(app)
+            return
+        update_visualization(app)
 
 def separate(app):
     if app.pdf_path is None:

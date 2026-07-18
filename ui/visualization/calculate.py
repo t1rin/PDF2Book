@@ -184,6 +184,7 @@ def calculate_vertices(book: Book):
             angles = [alpha_rad, beta_rad]
             for angle in set(angles):
                 vertices = []
+                textures = []
 
                 for v in local_vertices:
                     match book.side:
@@ -196,15 +197,21 @@ def calculate_vertices(book: Book):
                                                     v[1] * math.cos(angle),
                                                     v[2] * math.sin(angle)])
                     vertices.append(final.tolist())
+                
+                surface_id = angles.index(angle)
+                for i, page in enumerate(block.pages):
+                    if surface_id == i // 2:
+                        textures.append(page.texture)
             
                 block_index = part_idx * len(part.blocks) + block_idx
 
                 sheets_vertices.append({
                     'part_index': part_idx,
                     'block_index': block_index,
-                    'surface': angles.index(angle),
+                    'surface': surface_id,
                     'side': book.side,
                     'angle': angle,
+                    'textures': textures,
                     'vertices': vertices
                 })
                 

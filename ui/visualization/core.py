@@ -29,15 +29,16 @@ class VisualBook:
         self.rule = rule
         self.book: Book
 
-        self._padding_between_parts = 3
+        self._padding_between_parts = 30
 
         self.new_book()
 
-    def new_book(self, q_parts=0, q_blocks=0, format=(595, 842)):
+    def new_book(self, q_parts=0, q_blocks=0, format=(841, 1189)):
         book = Book(parts=[], q_parts=0, q_blocks=0, 
                     format=format, margin=5, side=SIDE.LEFT)
         for i in range(q_parts):
-            part = BookPart(pos=[i*self._padding_between_parts, 0, format[1]], 
+            part = BookPart(pos=[-format[0]/2, format[1]/2, 
+                                 i*self._padding_between_parts], 
                             blocks=[])
             for j in range(q_blocks):
                 block = BlockPages(

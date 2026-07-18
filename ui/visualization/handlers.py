@@ -2,6 +2,8 @@ import dearpygui.dearpygui as dpg
 
 import math
 
+from .calculate import get_scale_multiplier
+
 
 _is_dragging = False
 _is_panning = False
@@ -67,12 +69,14 @@ def mouse_move_callback(app):
         _last_mouse_pos = dpg.get_mouse_pos()
         app.scene.update()
 
-def mouse_wheel_callback(app, data):
+def mouse_wheel_callback(app, sign):
     if not _is_mouse_over_drawlist(app):
         return
     
-    app.scene.camera.distance -= data * 2
-    app.scene.camera.distance = max(5.0, min(50.0, app.scene.camera.distance))
+    min_d = app.scene.camera.min_distance
+    max_d = app.scene.camera.max_distance
+    app.scene.camera.distance -= sign * get_scale_multiplier(app.scene.camera.distance)
+    app.scene.camera.distance = max(min_d, min(max_d, app.scene.camera.distance))
     app.scene.update()
 
 def mouse_middle_click_callback(app):

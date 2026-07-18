@@ -5,10 +5,13 @@ import math
 
 class Camera:
     def __init__(self):
+        self.min_distance = 10.0
+        self.max_distance = 20000.0
+        
         self.home()
 
     def home(self):
-        self.distance = 25.0
+        self.distance = 3500.0
         self.yaw = math.pi / 4
         self.pitch = math.pi / 6
         self.target_x = 0.0

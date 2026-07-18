@@ -142,16 +142,28 @@ def point_in_rectangle(point, rect_vertices, tol=1e-8):
     
     return (-tol <= u <= len1 + tol) and (-tol <= v <= len2 + tol)
 
+def get_scale_multiplier(distance):
+    if distance < 100:
+        return distance * 0.03
+    elif distance < 500:
+        return distance * 0.04 
+    elif distance < 2000:
+        return distance * 0.06
+    elif distance < 5000:
+        return distance * 0.1
+    else:
+        return distance * 0.15
+
 def calculate_vertices(book: Book):
     sheets_vertices = []
             
-    page_width, page_height = book.format
+    w, h = book.format
     
     local_vertices = [
         [0, 0, 0],
-        [0, page_width, 0],
-        [0, page_width, -page_height],
-        [0, 0, -page_height]
+        [w, 0, 0],
+        [w, -h, 0],
+        [0, -h, 0]
     ]
             
     for part_idx, part in enumerate(book.parts):
@@ -169,19 +181,20 @@ def calculate_vertices(book: Book):
             alpha_rad = math.radians(block.alpha)
             beta_rad = math.radians(block.beta)
             
-            for angle in set([alpha_rad, beta_rad]):
+            angles = [alpha_rad, beta_rad]
+            for angle in set(angles):
                 vertices = []
 
                 for v in local_vertices:
                     match book.side:
                         case SIDE.LEFT:
-                            final = base + np.array([v[0] * math.sin(angle), 
-                                                    v[1] * math.cos(angle),
-                                                    v[2]])
-                        case SIDE.TOP:
-                            final = base + np.array([v[0] * math.sin(angle), 
+                            final = base + np.array([v[0] * math.cos(angle), 
                                                     v[1],
-                                                    v[2] * math.cos(angle)])
+                                                    v[2] * math.sin(angle)])
+                        case SIDE.TOP:
+                            final = base + np.array([v[0], 
+                                                    v[1] * math.cos(angle),
+                                                    v[2] * math.sin(angle)])
                     vertices.append(final.tolist())
             
                 block_index = part_idx * len(part.blocks) + block_idx
@@ -189,9 +202,10 @@ def calculate_vertices(book: Book):
                 sheets_vertices.append({
                     'part_index': part_idx,
                     'block_index': block_index,
-                    'vertices': vertices,
+                    'surface': angles.index(angle),
                     'side': book.side,
-                    'angle': angle
+                    'angle': angle,
+                    'vertices': vertices
                 })
                 
     return sheets_vertices

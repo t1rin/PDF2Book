@@ -11,6 +11,7 @@ class Scene:
     def __init__(self):
         self._width = 500
         self._height = 500
+        self._axis_size = 5
 
         self.camera = Camera()
         self.visual_book = VisualBook()
@@ -35,15 +36,12 @@ class Scene:
                 with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
                                     perspective_divide=True, tag="drawlayer_3d"):
                     with dpg.draw_node(tag="plane_node"):
-                        dpg.draw_line([0, 0, 0], [3, 0, 0], 
-                                      color=[255, 0, 0, 255], 
-                                      thickness=3)
-                        dpg.draw_line([0, 0, 0], [0, 3, 0], 
-                                      color=[0, 255, 0, 255], 
-                                      thickness=3)
-                        dpg.draw_line([0, 0, 0], [0, 0, 3], 
-                                      color=[0, 0, 255, 255], 
-                                      thickness=3)
+                        dpg.draw_line([0, 0, 0], [self._axis_size, 0, 0], 
+                                      color=[255, 0, 0, 255], thickness=3)
+                        dpg.draw_line([0, 0, 0], [0, self._axis_size, 0], 
+                                      color=[0, 255, 0, 255], thickness=3)
+                        dpg.draw_line([0, 0, 0], [0, 0, self._axis_size], 
+                                      color=[0, 0, 255, 255], thickness=3)
 
     def update(self):
         rot_x = self.camera.rot_x * math.pi / 180.0

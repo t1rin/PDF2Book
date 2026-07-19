@@ -37,25 +37,34 @@ def update_preview(app, align=False):
 def update_visualization(app):
     sheets_vertices = app.scene.visual_book.solve_visualization()
 
-    app.scene.clear()
+    seen_vertices = set()
+    cache = app.scene.visual_book.cache_planes
+    cache_index = 0
 
-    done = []
     for sheet in sheets_vertices:
-        #part_index = sheet["part_index"]
-        #block_index = sheet["block_index"]
-        #surface = sheet["surface"]
-        #side = sheet["side"]
-        #angle = sheet["angle"]
-        #textures = sheet["textures"]
-        vertices = sheet["vertices"]
-        if vertices in done:
+        vertices = tuple(sheet["vertices"])
+        if vertices in seen_vertices:
             continue
-        print(vertices)
-        dpg.draw_quad(*vertices, 
-                      color=[0, 205, 0, 255], 
-                      fill=[100, 200, 255, 200],
-                      parent="plane_node")
-        done.append(vertices)
+        seen_vertices.add(vertices)
+        
+        if cache_index < len(cache):
+            item = cache[cache_index]
+            dpg.configure_item(
+                item=item, show=True,
+                p1=vertices[0], p2=vertices[1],
+                p3=vertices[2], p4=vertices[3])
+        else:
+            item = dpg.draw_quad(*vertices, 
+                        color=[0, 205, 0, 255], 
+                        fill=[100, 200, 255, 200],
+                        parent="plane_node")
+            cache.append(item)
+        cache_index += 1
+
+    while cache_index < len(cache):
+        dpg.configure_item(item=cache[cache_index], show=False)
+        cache_index += 1
+
     app.scene.update()
 
 def reset_visual_book(app):

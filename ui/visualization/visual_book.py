@@ -25,13 +25,14 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, rule=RULE.LOGIC):
+    def __init__(self, rule=RULE.LOGIC, padding=50):
         self.rule = rule
         self._book: Book
 
-        self._padding_between_parts = 50
+        self._padding_between_parts: int = padding
 
-        self.active_block = (0, 0)
+        self.active_block: tuple[int] = (0, 0)
+        self.cache_planes: list[int] = []
 
         self.new_book()
 

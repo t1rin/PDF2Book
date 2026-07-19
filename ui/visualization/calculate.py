@@ -201,7 +201,7 @@ def calculate_vertices(book: Book):
                                 [0, -math.sin(angle), math.cos(angle)]
                             ])
                     final = base + np.dot(rotation_matrix, v)
-                    vertices.append(final.tolist())
+                    vertices.append(tuple(final.tolist()))
                 
                 surface_id = angles.index(angle)
                 for i, page in enumerate(block.pages):

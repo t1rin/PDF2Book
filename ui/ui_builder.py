@@ -118,8 +118,19 @@ def create_settings_panel(app):
         set_values(app)
 
 def create_drawlist_window(app):
-    with dpg.child_window(tag="drawlist_window", show=False): pass
-    app.scene.clear()
+    with dpg.child_window(tag="drawlist_window", show=False):
+        with dpg.group(parent="drawlist_window", pos=[conf.padding_drawlist, 
+                                                      conf.padding_drawlist]):
+            with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
+                with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
+                                    perspective_divide=True, tag="drawlayer_3d"):
+                    with dpg.draw_node(tag="plane_node"):
+                        dpg.draw_line([0, 0, 0], [app.scene._axis_size, 0, 0], 
+                                      color=[255, 0, 0, 255], thickness=3)
+                        dpg.draw_line([0, 0, 0], [0, app.scene._axis_size, 0], 
+                                      color=[0, 255, 0, 255], thickness=3)
+                        dpg.draw_line([0, 0, 0], [0, 0, app.scene._axis_size], 
+                                      color=[0, 0, 255, 255], thickness=3)
 
 def create_plot_window(app):
     with dpg.child_window(tag="plot_window"):

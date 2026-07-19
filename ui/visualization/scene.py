@@ -22,27 +22,6 @@ class Scene:
         if dpg.does_item_exist("drawlayer_3d"):
             dpg.set_clip_space("drawlayer_3d", 0, 0, width, height, -1.0, 1.0)
 
-    def clear(self):
-        if dpg.does_item_exist("drawlist_window"):
-            children = dpg.get_item_children("drawlist_window")
-            
-            if children and len(children) > 1:
-                for child in children[1]:
-                    dpg.delete_item(child)
-            
-        with dpg.group(parent="drawlist_window", pos=[conf.padding_drawlist, 
-                                                      conf.padding_drawlist]):
-            with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
-                with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
-                                    perspective_divide=True, tag="drawlayer_3d"):
-                    with dpg.draw_node(tag="plane_node"):
-                        dpg.draw_line([0, 0, 0], [self._axis_size, 0, 0], 
-                                      color=[255, 0, 0, 255], thickness=3)
-                        dpg.draw_line([0, 0, 0], [0, self._axis_size, 0], 
-                                      color=[0, 255, 0, 255], thickness=3)
-                        dpg.draw_line([0, 0, 0], [0, 0, self._axis_size], 
-                                      color=[0, 0, 255, 255], thickness=3)
-
     def update(self):
         rot_x = self.camera.rot_x * math.pi / 180.0
         rot_y = self.camera.rot_y * math.pi / 180.0

@@ -1,4 +1,4 @@
-from .widgets import create_main_window, resize_update, create_drag_and_drop
+from .ui_builder import create_main_window, resize_update, create_drag_and_drop
 from .callbacks import register_callbacks
 from .keyboards import register_keyboards
 from .themes import register_themes

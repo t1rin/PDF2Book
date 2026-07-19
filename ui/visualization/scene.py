@@ -3,7 +3,7 @@ import dearpygui.dearpygui as dpg
 import math
 
 from .camera import Camera
-from .core import VisualBook
+from .visual_book import VisualBook
 from ..config import conf
 
 

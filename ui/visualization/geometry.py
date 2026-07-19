@@ -5,6 +5,8 @@ import math
 from .data_structures import Book, SIDE
 
 
+TOLERANCE = 1e-8
+
 def pages_intersect(page1_vertices, page2_vertices):
     alpha = get_plane(page1_vertices)
     beta = get_plane(page2_vertices)
@@ -20,14 +22,13 @@ def pages_intersect(page1_vertices, page2_vertices):
         return True
     return False
     
-
 def get_plane(vertices):
     r0_vector = np.array(vertices[0])
     vector1 = np.array(vertices[1]) - r0_vector
     vector2 = np.array(vertices[3]) - r0_vector
     return (r0_vector, vector1, vector2)
 
-def get_intersection(alpha, beta, tol=1e-8):
+def get_intersection(alpha, beta, tol=TOLERANCE):
     r1, u, v = alpha
     r2, p, q = beta
     n1 = np.cross(u, v)
@@ -53,7 +54,7 @@ def get_edges_page(vertices):
         ))
     return edges
 
-def are_lines_equal(line1, line2, tol=1e-8):
+def are_lines_equal(line1, line2, tol=TOLERANCE):
     r0_1, v1 = line1
     r0_2, v2 = line2
 
@@ -68,7 +69,7 @@ def are_lines_equal(line1, line2, tol=1e-8):
     
     return np.linalg.norm(r0_1 - (r0_2 + t * v2)) < tol
 
-def is_line_in_rectangle(line, rect_vertices, tol=1e-8):
+def is_line_in_rectangle(line, rect_vertices, tol=TOLERANCE):
     r0, d = line
     
     if np.linalg.norm(d) < tol:
@@ -125,7 +126,7 @@ def is_line_in_rectangle(line, rect_vertices, tol=1e-8):
     
     return False
 
-def point_in_rectangle(point, rect_vertices, tol=1e-8):
+def point_in_rectangle(point, rect_vertices, tol=TOLERANCE):
     r1, axis1, axis2 = get_plane(rect_vertices)
     
     len1 = np.linalg.norm(axis1)

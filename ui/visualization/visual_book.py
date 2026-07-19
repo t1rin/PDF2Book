@@ -2,7 +2,7 @@ from functools import wraps
 import copy
 
 from core import get_positions_pages
-from .calculate import pages_intersect, calculate_vertices
+from .geometry import pages_intersect, calculate_vertices
 from .data_structures import *
 
 

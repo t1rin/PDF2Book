@@ -2,7 +2,7 @@ import dearpygui.dearpygui as dpg
 
 import math
 
-from .calculate import get_scale_multiplier
+from .geometry import get_scale_multiplier
 
 
 _is_dragging = False

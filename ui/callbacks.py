@@ -70,6 +70,8 @@ def reset_visual_book(app):
     #app.scene.visual_book.load_texture()
     app.scene.visual_book.active_block = (0, 0)
 
+    _set_values_of_visualization(app)
+
 def is_ok_input_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
@@ -153,7 +155,13 @@ def set_values(app):
     dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
     is_vis_active = dpg.get_value("visualization_mode_button")
     dpg.configure_item("visualization_tab", show=is_vis_active)
+    items = [*formats_sizes.keys()]
+    dpg.configure_item("combo_formats", items=items)
+    dpg.set_value("combo_formats", app.pdf_imposer.params.format)
 
+    _set_values_of_visualization(app)
+
+def _set_values_of_visualization(app):
     if app.pdf_imposer.input_doc is not None:
         q_parts = app.scene.visual_book.get('q_parts')
         q_blocks = app.scene.visual_book.get('q_blocks')
@@ -168,10 +176,6 @@ def set_values(app):
     dpg.set_value("combo_blocks", block_index)
     dpg.set_value("alpha_input", alpha)
     dpg.set_value("beta_input", beta)
-
-    items = [*formats_sizes.keys()]
-    dpg.configure_item("combo_formats", items=items)
-    dpg.set_value("combo_formats", app.pdf_imposer.params.format)
 
 def edit_params(app):
     params = {
@@ -385,7 +389,7 @@ def separate(app):
         app.pdf_imposer.params.quantity_pages_for_part = \
             dpg.get_value("size_part_input")
     if app.pdf_imposer.params.quantity_pages_for_part != \
-       app.visual_book.get('q_blocks') * BLOCK_SIZE:
+       app.scene.visual_book.get('q_blocks') * BLOCK_SIZE:
         reset_visual_book(app)
     update(app)
 

@@ -27,18 +27,21 @@ def with_rule(func):
 class VisualBook:
     def __init__(self, rule=RULE.LOGIC):
         self.rule = rule
-        self.book: Book
+        self._book: Book
 
-        self._padding_between_parts = 30
+        self._padding_between_parts = 50
+
+        self.active_block = (0, 0)
 
         self.new_book()
 
-    def new_book(self, q_parts=0, q_blocks=0, format=(841, 1189)):
-        book = Book(parts=[], q_parts=0, q_blocks=0, 
-                    format=format, margin=5, side=SIDE.LEFT)
+    def new_book(self, q_parts=1, q_blocks=1, 
+                 page_size=(841, 1189), side=SIDE.LEFT):
+        book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
+                    page_size=page_size, side=side)
         for i in range(q_parts):
-            part = BookPart(pos=[-format[0]/2, format[1]/2, 
-                                 i*self._padding_between_parts], 
+            part = BookPart(pos=[-page_size[0]/2, page_size[1]/2, 
+                                 -i*self._padding_between_parts], 
                             blocks=[])
             for j in range(q_blocks):
                 block = BlockPages(
@@ -48,10 +51,9 @@ class VisualBook:
                     block.pages.append(page)
                 part.blocks.append(block)
             book.parts.append(part)
-        self.book = book
+        self._book = book
         self._q_parts = q_parts
         self._q_blocks = q_blocks
-        self._format = format
         self._sheets_vertices = []
 
     def load_textures(self, textures: list):
@@ -66,54 +68,81 @@ class VisualBook:
             for j in range(self._q_blocks):
                 for k in range(4):
                     if positions_pages[idx] < len(textures):
-                        self.book.parts[i].blocks[j].pages[k].texture = \
+                        self._book.parts[i].blocks[j].pages[k].texture = \
                             textures[positions_pages[idx]]
                     else:
-                        self.book.parts[i].blocks[j].pages[k].texture = None
+                        self._book.parts[i].blocks[j].pages[k].texture = None
                     idx += 1
     
     @with_rule
-    def set_pos_book_part(self, part_index: int, pos: list[int]):
-        if self._q_parts <= part_index:
-            print("failed editing position of part")
-            return
-        self.book.parts[part_index].pos = pos
+    def set(self, *, part_index: int | None = None, 
+            block_index: int | None = None, page_size: tuple[int] | None = None, 
+            side: SIDE | None = None, pos: list[int] | None = None, 
+            alpha: int | None = None, beta: int | None = None):
+        if part_index is None and block_index is None:
+            if page_size is not None:
+                self._book.page_size = page_size
+            if side is not None:
+                self._book.side = side
+        elif part_index is not None and block_index is None:
+            if not (part_index < self._q_parts):
+                print("failed editing angle of page of block")
+                return
+            if pos is not None:
+                self._book.parts[part_index].pos = pos
+        elif part_index is not None and block_index is not None:
+            if (self._q_parts <= part_index) or (self._q_blocks <= block_index):
+                print("failed editing angle of page of block")
+                return
+            if alpha is not None:
+                self._book.parts[part_index].blocks[block_index].alpha = alpha
+            if beta is not None:
+                self._book.parts[part_index].blocks[block_index].beta = beta
+            if pos is not None:
+                self._book.parts[part_index].blocks[block_index].pos = pos
 
-    @with_rule
-    def set_pos_block_pages(self, block_index: int, pos: int):
-        part_index = block_index // self._q_blocks
-        block_index = block_index % self._q_blocks
-        if (self._q_parts <= part_index) or (self._q_blocks <= block_index):
-            print("failed editing position of block")
-            return
-        self.book.parts[part_index].blocks[block_index].pos = pos
+    def get(self, param: str, 
+            part_ind: int | None = None, 
+            block_ind: int | None = None):
+        params = {
+            'q_parts': self._book.q_parts,
+            'q_blocks': self._book.q_blocks,
+            'page_size': self._book.page_size,
+            'side': self._book.side,
+        }
 
-    @with_rule
-    def set_angle_block_pages(self, block_index: int, alpha: int | None = None,
-                                                      beta: int | None = None):
-        part_index = block_index // self._q_blocks
-        block_index = block_index % self._q_blocks
-        if (self._q_parts <= part_index) or (self._q_blocks <= block_index):
-            print("failed editing angle of page of block")
-            return
-        if alpha is not None:
-            self.book.parts[part_index].blocks[block_index].alpha = alpha
-        if beta is not None:
-            self.book.parts[part_index].blocks[block_index].beta = beta
+        part = None
+        if part_ind is not None and part_ind < len(self._book.parts):
+            part = self._book.parts[part_ind]
         
+        if part:
+            params['part_pos'] = part.pos
+            if block_ind is not None and block_ind < len(part.blocks):
+                block = part.blocks[block_ind]
+                params['block_pos'] = block.pos
+                params['alpha'] = block.alpha
+                params['beta'] = block.beta
+        
+        return params.get(param)
+
     def _is_params_normal(self, **kwargs):
-        book_copy = copy.deepcopy(self.book)
-        if 'part_index' in kwargs and 'pos' in kwargs:
+        book_copy = copy.deepcopy(self._book)
+
+        for attr in ['side', 'margin', 'page_size']:
+            if attr in kwargs:
+                setattr(book_copy, attr, kwargs[attr])
+
+        if 'part_index' not in kwargs and 'block_index' in kwargs:
+            return False
+        elif 'part_index' in kwargs and 'block_index' not in kwargs and 'pos' in kwargs:
             book_copy.parts[kwargs['part_index']].pos = kwargs['pos']
-        elif 'block_index' in kwargs:
-            part_ind = kwargs['block_index'] // self._q_blocks
-            block_ind = kwargs['block_index'] % self._q_blocks
-            if 'pos' in kwargs:
-                book_copy.parts[part_ind].blocks[block_ind].pos = kwargs['pos']
-            elif 'alpha' in kwargs:
-                book_copy.parts[part_ind].blocks[block_ind].alpha = kwargs['alpha']
-            elif 'beta' in kwargs:
-                book_copy.parts[part_ind].blocks[block_ind].beta = kwargs['beta']
+        elif 'part_index' in kwargs and 'block_index' in kwargs:
+            part_ind = kwargs['part_index']
+            block_ind = kwargs['block_index']
+            block = book_copy.parts[part_ind].blocks[block_ind]
+            for attr in ['pos', 'alpha', 'beta']:
+                if attr in kwargs:
+                    setattr(block, attr, kwargs[attr])
 
         for i in range(self._q_parts):
             for j in range(self._q_blocks):
@@ -138,7 +167,7 @@ class VisualBook:
         return True
 
     def solve_visualization(self):
-        sheets_vertices = calculate_vertices(self.book)
+        sheets_vertices = calculate_vertices(self._book)
         if sheets_vertices is None:
             return
         self._sheets_vertices = sheets_vertices

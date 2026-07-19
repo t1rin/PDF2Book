@@ -1,7 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.callbacks import set_default_values, drop_handler
+from ui.callbacks import set_values, drop_handler
 from core.config import formats
 from ui.config import conf
 
@@ -80,14 +80,6 @@ def create_settings_panel(app):
                 dpg.add_text("Отступ:")
                 dpg.add_input_int(tag="margin_input")
 
-            with dpg.tab(label="Сшивка"):
-                dpg.add_text("Место переплета:")
-                dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
-                dpg.add_checkbox(tag="separate_checkbox", label="Делить на секции")
-                with dpg.group(tag="part_options"):
-                    dpg.add_text("Размер секции:")
-                    dpg.add_input_int(tag="size_part_input")
-
             with dpg.tab(label="Линии"):
                 dpg.add_checkbox(tag="show_margin_lines", label="Показ линии с отступом")
                 dpg.add_checkbox(tag="show_blocks_lines", label="Показ линии блоков")
@@ -99,12 +91,31 @@ def create_settings_panel(app):
                 dpg.add_text("Паттерн пунктира:")
                 dpg.add_input_text(tag="lineedit_pattern", hint="enter pattern")
 
+            with dpg.tab(label="Сшивка"):
+                dpg.add_text("Место переплета:")
+                dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
+                dpg.add_checkbox(tag="separate_checkbox", label="Делить на секции")
+                with dpg.group(tag="part_options"):
+                    dpg.add_text("Размер секции:")
+                    dpg.add_input_int(tag="size_part_input")
+
             with dpg.tab(label="Визуализация", tag="visualization_tab"):
                 dpg.add_button(tag="reset_to_home_btn", label="Домой")
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Часть:")
+                    dpg.add_combo(tag="combo_parts", height_mode=dpg.mvComboHeight_Largest)
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Блок:")
+                    dpg.add_combo(tag="combo_blocks", height_mode=dpg.mvComboHeight_Largest)
+                dpg.add_text("Угол первого листа:")
+                dpg.add_input_int(tag="alpha_input")
+                dpg.add_text("Угол второго листа:")
+                dpg.add_input_int(tag="beta_input")
+
 
         dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
 
-        set_default_values(app)
+        set_values(app)
 
 def create_drawlist_window(app):
     with dpg.child_window(tag="drawlist_window", show=False): pass

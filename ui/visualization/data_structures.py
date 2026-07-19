@@ -30,6 +30,5 @@ class Book:
     parts: list[BookPart]
     q_parts: int
     q_blocks: int 
-    format: tuple[int]
-    margin: int
+    page_size: tuple[int]
     side: SIDE

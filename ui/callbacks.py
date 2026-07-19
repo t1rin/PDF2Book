@@ -2,9 +2,26 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.themes import update_theme
-from core.config import formats
 from ui.config import conf, MODE
+from ui.visualization.data_structures import SIDE
+from core.config import formats as formats_sizes
 
+
+BLOCK_SIZE = 4
+
+def require_pdf(func):
+    def wrapper(app, *args, **kwargs):
+        if app.pdf_path is None:
+            app.log_message("Файл PDF не загружен")
+            set_values(app)
+            return
+        return func(app, *args, **kwargs)
+    return wrapper
+
+def update(app, align=False):
+    update_preview(app, align)
+    if app.mode == MODE.VISUALIZATION:
+        update_visualization(app)
 
 def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
@@ -17,42 +34,41 @@ def update_preview(app, align=False):
     if app.pdf_imposer.output_doc is not None:
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
 
-def update_visualization(app, reset=False):
-    q_pages = len(app.pdf_imposer.input_doc)
-    q_pages_for_part = app.pdf_imposer.params.quantity_pages_for_part
-    if q_pages_for_part:
-        q_parts = ((q_pages - 1) // q_pages_for_part + 1)
-        q_blocks = q_pages_for_part // 4
-    else:
-        q_parts = 1
-        q_blocks = ((q_pages - 1) // 4 + 1)
-    format_size = formats[app.pdf_imposer.params.format]
-
-    if (app.scene.visual_book.book.format != format_size) or \
-       (app.scene.visual_book.book.q_parts != q_parts) or \
-       (app.scene.visual_book.book.q_blocks != q_blocks) or reset:
-        app.scene.visual_book.new_book(q_parts, q_blocks, format_size)
-        #app.scene.visual_book.load_texture()
-
-    edit_visualization(app)
-    
+def update_visualization(app):
     sheets_vertices = app.scene.visual_book.solve_visualization()
 
     app.scene.clear()
 
+    done = []
     for sheet in sheets_vertices:
-        part_index = sheet["part_index"]
-        block_index = sheet["block_index"]
-        surface = sheet["surface"]
-        side = sheet["side"]
-        angle = sheet["angle"]
-        textures = sheet["textures"]
+        #part_index = sheet["part_index"]
+        #block_index = sheet["block_index"]
+        #surface = sheet["surface"]
+        #side = sheet["side"]
+        #angle = sheet["angle"]
+        #textures = sheet["textures"]
         vertices = sheet["vertices"]
+        if vertices in done:
+            continue
+        print(vertices)
         dpg.draw_quad(*vertices, 
                       color=[0, 205, 0, 255], 
                       fill=[100, 200, 255, 200],
-                      parent="plane_node",
-                      thickness=3)
+                      parent="plane_node")
+        done.append(vertices)
+    app.scene.update()
+
+def reset_visual_book(app):
+    q_parts, q_blocks = _calculate_parts_blocks(
+        q_pages=len(app.pdf_imposer.input_doc), 
+        size_part=app.pdf_imposer.params.quantity_pages_for_part)
+    format_size = formats_sizes[app.pdf_imposer.params.format]
+    blocks_are_vertical = app.pdf_imposer.params.blocks_are_vertical
+    side = SIDE.TOP if blocks_are_vertical else SIDE.LEFT
+    
+    app.scene.visual_book.new_book(q_parts, q_blocks, format_size, side)
+    #app.scene.visual_book.load_texture()
+    app.scene.visual_book.active_block = (0, 0)
 
 def is_ok_input_file(app):
     path = dpg.get_value("lineedit_input_file")
@@ -70,8 +86,9 @@ def load_file(app):
 
     def on_loading(success, error):
         if success:
-            update_preview(app, align=True)
-            update_visualization(app, reset=True)
+            reset_visual_book(app)
+            update(app, align=True)
+            set_values(app)
         else:
             app.pdf_path = None
             app.log_message(error)
@@ -98,28 +115,24 @@ def drop_handler(app, data):
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
 
+@require_pdf
 def arrow_left_callback(app):
     if (app.current_page == 1): 
         return
-    if (app.pdf_path is None):
-        app.log_message("Файл PDF не загружен")
-        return
     dpg.set_value("page_label", int(dpg.get_value("page_label"))-1)
     app.current_page -= 1
-    update_preview(app)
+    update(app)
 
+@require_pdf
 def arrow_right_callback(app):
-    if (app.pdf_path is None):
-        app.log_message("Файл PDF не загружен")
-        return
     if (app.pdf_imposer.output_doc is not None) and \
         (app.current_page == app.pdf_imposer.quantity_page): 
         return
     dpg.set_value("page_label", int(dpg.get_value("page_label"))+1)
     app.current_page += 1
-    update_preview(app)
+    update(app)
 
-def set_default_values(app):
+def set_values(app):
     if app.pdf_path:
         dpg.set_value("lineedit_input_file", app.pdf_path)
     dpg.set_value("page_label", app.current_page)
@@ -141,92 +154,149 @@ def set_default_values(app):
     is_vis_active = dpg.get_value("visualization_mode_button")
     dpg.configure_item("visualization_tab", show=is_vis_active)
 
-    items = [*formats.keys()]
+    if app.pdf_imposer.input_doc is not None:
+        q_parts = app.scene.visual_book.get('q_parts')
+        q_blocks = app.scene.visual_book.get('q_blocks')
+        dpg.configure_item("combo_parts", items=list(range(q_parts)))
+        dpg.configure_item("combo_blocks", items=list(range(q_blocks)))
+
+    part_index = app.scene.visual_book.active_block[0]
+    block_index = app.scene.visual_book.active_block[1]
+    alpha = app.scene.visual_book.get('alpha', part_index, block_index)
+    beta = app.scene.visual_book.get('beta', part_index, block_index)
+    dpg.set_value("combo_parts", part_index)
+    dpg.set_value("combo_blocks", block_index)
+    dpg.set_value("alpha_input", alpha)
+    dpg.set_value("beta_input", beta)
+
+    items = [*formats_sizes.keys()]
     dpg.configure_item("combo_formats", items=items)
     dpg.set_value("combo_formats", app.pdf_imposer.params.format)
 
 def edit_params(app):
-    rows = dpg.get_value("rows_input")
-    cols = dpg.get_value("cols_input")
+    params = {
+        'rows': dpg.get_value("rows_input"),
+        'cols': dpg.get_value("cols_input"),
+        'margin': dpg.get_value("margin_input"),
+        'format': dpg.get_value("combo_formats"),
+        'show_cut_lines': dpg.get_value("show_cut_lines"),
+        'show_margin_lines': dpg.get_value("show_margin_lines"),
+        'show_blocks_lines': dpg.get_value("show_blocks_lines"),
+        'quantity_pages_for_part': dpg.get_value("size_part_input"),
+        'color_lines': [i/255 for i in list(dpg.get_value("color_picker"))[0:3]],
+        'blocks_are_vertical': dpg.get_value("radio_btn") == "Сверху",
+        'thickness_lines': dpg.get_value("thickness_input"),
+        'dashes_pattern': dpg.get_value("lineedit_pattern"),
+    }
+    
+    if not _validate_params(app, params):
+        return
 
-    if (rows <= 0):
-        dpg.set_value("rows_input", 1)
-        return
-    if (cols <= 0):
-        dpg.set_value("cols_input", 1)
-        return
     if app.pdf_path is None:
         app.log_message("Файл PDF не загружен")
-        set_default_values(app)
-        return
-        
-    margin = dpg.get_value("margin_input")
-    format = dpg.get_value("combo_formats")
-    size_part = dpg.get_value("size_part_input")
-    show_margin_lines = dpg.get_value("show_margin_lines")
-    show_blocks_lines = dpg.get_value("show_blocks_lines")
-    show_cut_lines = dpg.get_value("show_cut_lines")
-    color = [i/255 for i in list(dpg.get_value("color_picker"))[0:3]]
-    blocks_are_vertical = dpg.get_value("radio_btn") == "Сверху"
-    thickness = dpg.get_value("thickness_input")
-    pattern = dpg.get_value("lineedit_pattern")
-    
-    if (margin < 0):
-        dpg.set_value("margin_input", 0)
-        return
-
-    if size_part % 4 != 0:
-        _round = lambda x: int(x) + (0 if x % 1 >= 0.5 else 1)
-        size_part = int(_round(size_part / 4) * 4)
-        dpg.set_value("size_part_input", size_part)
-        
-    if (size_part < 0):
-        dpg.set_value("size_part_input", 0)
+        set_values(app)
         return
     
-    q_pages = len(app.pdf_imposer.input_doc)
-    if q_pages < size_part:
-        size_part = q_pages - (q_pages % 4)
-        dpg.set_value("size_part_input", size_part)
+    if not _is_size_part_normal(app, params):
         return
     
-    if (thickness < 0):
-        dpg.set_value("thickness_input", 0)
-        return
-    elif (thickness > 5):
-        dpg.set_value("thickness_input", 5)
-        return
-
-    if (blocks_are_vertical and (rows % 2 == 1)):
-        app.log_message("В указанное количество строк не помещаются блоки по два")
-        return
-
-    if (not blocks_are_vertical and (cols % 2 == 1)):
-        app.log_message("В указанное количество столбцов не помещаются блоки по два")
-        return
-
-    align = (format != app.pdf_imposer.params.format)
-
-    pattern_code = pattern.split()
-    if (len(pattern_code) % 2 != 0) or not all(s.isdigit() for s in pattern_code):
-        pattern = "4 2"
-
-    pattern = f"[{pattern}] 0"
+    params['dashes_pattern'] = _prepare_pattern(app, params['dashes_pattern'])
 
     app.log_message()
-    app.pdf_imposer.update_params(rows=rows, cols=cols, margin=margin,
-                                  format=format, show_cut_lines=show_cut_lines,
-                                  show_margin_lines=show_margin_lines, 
-                                  show_blocks_lines=show_blocks_lines, 
-                                  blocks_are_vertical=blocks_are_vertical,
-                                  thickness_lines=thickness, color_lines=color, 
-                                  dashes_pattern=pattern, quantity_pages_for_part=size_part)
-    update_preview(app, align)
-    if app.mode == MODE.VISUALIZATION:
-        update_visualization(app)
+    app.pdf_imposer.update_params(**params)
 
+    q_parts, q_blocks = _calculate_parts_blocks(
+        q_pages=len(app.pdf_imposer.input_doc),
+        size_part=params['quantity_pages_for_part'])
+    page_size = formats_sizes[params['format']]
+    side = SIDE.TOP if params['blocks_are_vertical'] else SIDE.LEFT
+    app.scene.visual_book.set(page_size=page_size, side=side)
+    
+    if (app.scene.visual_book.get('page_size') != page_size or
+        app.scene.visual_book.get('q_parts') != q_parts or
+        app.scene.visual_book.get('q_blocks') != q_blocks or
+        app.scene.visual_book.get('side') != side):
+        reset_visual_book(app)
+
+    align = (params['format'] != app.pdf_imposer.params.format)
+    update(app, align=align)
+
+def _is_size_part_normal(app, params):
+    if params['quantity_pages_for_part'] % BLOCK_SIZE != 0:
+        _custom_round = lambda x: int(x) + (0 if x % 1 >= 0.5 else 1)
+        params['quantity_pages_for_part'] = int(
+            _custom_round(params['quantity_pages_for_part'] / BLOCK_SIZE) * BLOCK_SIZE)
+        dpg.set_value("size_part_input", params['quantity_pages_for_part'])
+    q_pages = len(app.pdf_imposer.input_doc)
+    if q_pages < params['quantity_pages_for_part']:
+        params['quantity_pages_for_part'] = q_pages - (q_pages % BLOCK_SIZE)
+        dpg.set_value("size_part_input", params['quantity_pages_for_part'])
+        return False
+    return True
+
+def _validate_params(app, params):
+    if params['rows'] <= 0:
+        dpg.set_value("rows_input", 1)
+        return False
+    if params['cols'] <= 0:
+        dpg.set_value("cols_input", 1)
+        return False
+    if params['margin'] < 0:
+        dpg.set_value("margin_input", 0)
+        return False
+    if params['quantity_pages_for_part'] < 0:
+        dpg.set_value("size_part_input", 0)
+        return False
+    if params['thickness_lines'] < 0:
+        dpg.set_value("thickness_input", 0)
+        return False
+    if params['thickness_lines'] > conf.max_line_thickness:
+        dpg.set_value("thickness_input", conf.max_line_thickness)
+        return False
+    if params['blocks_are_vertical'] and (params['rows'] % 2 == 1):
+        app.log_message("В указанное количество строк не помещаются блоки по два")
+        return False
+    if not params['blocks_are_vertical'] and (params['cols'] % 2 == 1):
+        app.log_message("В указанное количество столбцов не помещаются блоки по два")
+        return False
+    return True
+
+def _prepare_pattern(app, pattern):
+    pattern_code = pattern.split()
+    if (len(pattern_code) % 2 != 0) or not all(s.isdigit() for s in pattern_code):
+        pattern = conf.default_pattern
+    return f"[{pattern}] 0"
+    
+def _calculate_parts_blocks(q_pages, size_part):
+    if size_part:
+        q_parts = ((q_pages - 1) // size_part + 1)
+        q_blocks = size_part // BLOCK_SIZE
+    else:
+        q_parts = 1
+        q_blocks = ((q_pages - 1) // BLOCK_SIZE + 1)
+    return q_parts, q_blocks
+
+@require_pdf
+def selection_block(app):
+    part_index = int(dpg.get_value("combo_parts"))
+    block_index = int(dpg.get_value("combo_blocks"))
+    alpha = app.scene.visual_book.get('alpha', part_index, block_index)
+    beta = app.scene.visual_book.get('beta', part_index, block_index)
+    dpg.set_value("alpha_input", alpha)
+    dpg.set_value("beta_input", beta)
+
+@require_pdf
 def edit_visualization(app):
-    ...
+    part_index = int(dpg.get_value("combo_parts"))
+    block_index = int(dpg.get_value("combo_blocks"))
+    alpha = dpg.get_value("alpha_input")
+    beta = dpg.get_value("beta_input")
+    if app.scene.visual_book.get('alpha', part_index, block_index) != alpha or \
+       app.scene.visual_book.get('beta', part_index, block_index) != beta:
+        app.scene.visual_book.set(part_index=part_index, 
+                                  block_index=block_index, 
+                                  alpha=alpha, beta=beta)
+    update_visualization(app)
 
 def is_ok_output(app):
     path = dpg.get_value("lineedit_output")
@@ -251,11 +321,9 @@ def save_as_file(app):
     dpg.set_value("lineedit_output", path)
     save_file(app)
 
+@require_pdf
 def save_file(app):
     if not is_ok_output(app): return
-    if app.pdf_path is None:
-        app.log_message("Исходный файл не выбран")
-        return
     path = dpg.get_value("lineedit_output")
     split = app.is_split_file
     app.pdf_imposer.export_doc(path, split)
@@ -296,26 +364,19 @@ def switch_font(app):
 def switch_mode(app, mode):
     if mode == "page": app.mode = MODE.PAGE
     if mode == "visualization": app.mode = MODE.VISUALIZATION
-    is_mode_p = app.mode == MODE.PAGE
-    is_mode_v = app.mode == MODE.VISUALIZATION
-    dpg.set_value("page_mode_button", is_mode_p)
-    dpg.set_value("visualization_mode_button", is_mode_v)
-    dpg.configure_item("plot_window", show=is_mode_p)
-    dpg.configure_item("drawlist_window", show=is_mode_v)
-    dpg.configure_item("visualization_tab", show=is_mode_v)
-    if is_mode_v: 
+    is_page_mode = app.mode == MODE.PAGE
+    is_page_visualization = app.mode == MODE.VISUALIZATION
+    dpg.set_value("page_mode_button", is_page_mode)
+    dpg.set_value("visualization_mode_button", is_page_visualization)
+    dpg.configure_item("plot_window", show=is_page_mode)
+    dpg.configure_item("drawlist_window", show=is_page_visualization)
+    dpg.configure_item("visualization_tab", show=is_page_visualization)
+    if is_page_visualization: 
         dpg.set_value("tab_bar", "visualization_tab")
-        if app.pdf_path is None:
-            app.log_message("Файл PDF не загружен")
-            set_default_values(app)
-            return
         update_visualization(app)
 
+@require_pdf
 def separate(app):
-    if app.pdf_path is None:
-        app.log_message("Файл PDF не загружен")
-        set_default_values(app)
-        return
     value = dpg.get_value("separate_checkbox")
     dpg.configure_item("part_options", show=value)
     if not value:
@@ -323,15 +384,15 @@ def separate(app):
     else:
         app.pdf_imposer.params.quantity_pages_for_part = \
             dpg.get_value("size_part_input")
-    update_preview(app)
+    if app.pdf_imposer.params.quantity_pages_for_part != \
+       app.visual_book.get('q_blocks') * BLOCK_SIZE:
+        reset_visual_book(app)
+    update(app)
 
+@require_pdf
 def edit_indexation(app):
-    if app.pdf_path is None:
-        app.log_message("Файл PDF не загружен")
-        set_default_values(app)
-        return
     app.is_indexation = dpg.get_value("indexes_pages_checkbox")
-    update_preview(app)
+    update(app)
 
 def edit_scale(app, sender):
     scale = float(dpg.get_item_label(sender))
@@ -345,40 +406,45 @@ def reset_to_home(app):
     app.scene.update()
 
 def register_callbacks(app):
-    dpg.set_item_callback("lineedit_input_file", lambda: is_ok_input_file(app))
-    dpg.set_item_callback("load_file_btn", lambda: load_file(app))
-    dpg.set_item_callback("open_file_btn", lambda: open_file(app))
-    dpg.set_item_callback("arrow_left", lambda: arrow_left_callback(app))
-    dpg.set_item_callback("arrow_right", lambda: arrow_right_callback(app))
-    dpg.set_item_callback("rows_input", lambda: edit_params(app))
-    dpg.set_item_callback("cols_input", lambda: edit_params(app))
-    dpg.set_item_callback("margin_input", lambda: edit_params(app))
-    dpg.set_item_callback("show_margin_lines", lambda: edit_params(app))
-    dpg.set_item_callback("show_blocks_lines", lambda: edit_params(app))
-    dpg.set_item_callback("show_cut_lines", lambda: edit_params(app))
-    dpg.set_item_callback("color_picker", lambda: edit_params(app))
-    dpg.set_item_callback("radio_btn", lambda: edit_params(app))
-    dpg.set_item_callback("lineedit_output", lambda: is_ok_output(app))
-    dpg.set_item_callback("save_as_file_btn", lambda: save_as_file(app))
-    dpg.set_item_callback("save_file_btn", lambda: save_file(app))
-    dpg.set_item_callback("split_file_checkbox", lambda: split_file(app))
-    dpg.set_item_callback("thickness_input", lambda: edit_params(app))
-    dpg.set_item_callback("lineedit_pattern", lambda: lineedit_pattern_btn(app))
-    dpg.set_item_callback("move_panel_btn", lambda: move_panel(app))
-    dpg.set_item_callback("switch_theme_btn", lambda: switch_theme(app))
-    dpg.set_item_callback("switch_font_btn", lambda: switch_font(app))
-    dpg.set_item_callback("combo_formats", lambda: edit_params(app))
-    dpg.set_item_callback("separate_checkbox", lambda: separate(app))
-    dpg.set_item_callback("size_part_input", lambda: edit_params(app))
-    dpg.set_item_callback("indexes_pages_checkbox", lambda: edit_indexation(app))
-    dpg.set_item_callback("page_mode_button", 
-                          lambda _, __, d: switch_mode(app, d))
-    dpg.set_item_callback("visualization_mode_button", 
-                          lambda _, __, d: switch_mode(app, d))
-    dpg.set_item_callback("reset_to_home_btn", lambda: reset_to_home(app))
+    callbacks = {
+        "lineedit_input_file": lambda: is_ok_input_file(app),
+        "load_file_btn": lambda: load_file(app),
+        "open_file_btn": lambda: open_file(app),
+        "arrow_left": lambda: arrow_left_callback(app),
+        "arrow_right": lambda: arrow_right_callback(app),
+        "rows_input": lambda: edit_params(app),
+        "cols_input": lambda: edit_params(app),
+        "margin_input": lambda: edit_params(app),
+        "show_margin_lines": lambda: edit_params(app),
+        "show_blocks_lines": lambda: edit_params(app),
+        "show_cut_lines": lambda: edit_params(app),
+        "color_picker": lambda: edit_params(app),
+        "radio_btn": lambda: edit_params(app),
+        "lineedit_output": lambda: is_ok_output(app),
+        "save_as_file_btn": lambda: save_as_file(app),
+        "save_file_btn": lambda: save_file(app),
+        "split_file_checkbox": lambda: split_file(app),
+        "thickness_input": lambda: edit_params(app),
+        "lineedit_pattern": lambda: lineedit_pattern_btn(app),
+        "move_panel_btn": lambda: move_panel(app),
+        "switch_theme_btn": lambda: switch_theme(app),
+        "switch_font_btn": lambda: switch_font(app),
+        "combo_formats": lambda: edit_params(app),
+        "separate_checkbox": lambda: separate(app),
+        "size_part_input": lambda: edit_params(app),
+        "indexes_pages_checkbox": lambda: edit_indexation(app),
+        "page_mode_button": lambda _, __, d: switch_mode(app, d),
+        "visualization_mode_button": lambda _, __, d: switch_mode(app, d),
+        "reset_to_home_btn": lambda: reset_to_home(app),
+        "combo_parts": lambda: selection_block(app),
+        "combo_blocks": lambda: selection_block(app),
+        "alpha_input": lambda: edit_visualization(app),
+        "beta_input": lambda: edit_visualization(app)
+    }
+
     for det in range(150, 300, 25):
-        btn = f"scale_{det/100}_btn"
-        dpg.set_item_callback(
-            btn, lambda s, a, d: 
-            edit_scale(app, s)
-        )
+        callbacks[f"scale_{det/100}_btn"] = lambda s, a, d: edit_scale(app, s)
+
+    for item, callback in callbacks.items():
+        dpg.set_item_callback(item, callback)
+    

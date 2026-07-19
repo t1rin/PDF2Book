@@ -157,7 +157,7 @@ def get_scale_multiplier(distance):
 def calculate_vertices(book: Book):
     sheets_vertices = []
             
-    w, h = book.format
+    w, h = book.page_size
     
     local_vertices = [
         [0, 0, 0],
@@ -189,13 +189,18 @@ def calculate_vertices(book: Book):
                 for v in local_vertices:
                     match book.side:
                         case SIDE.LEFT:
-                            final = base + np.array([v[0] * math.cos(angle), 
-                                                    v[1],
-                                                    v[2] * math.sin(angle)])
+                            rotation_matrix = np.array([
+                                [math.cos(angle), 0, -math.sin(angle)],
+                                [0, 1, 0],
+                                [math.sin(angle), 0, math.cos(angle)]
+                            ])
                         case SIDE.TOP:
-                            final = base + np.array([v[0], 
-                                                    v[1] * math.cos(angle),
-                                                    v[2] * math.sin(angle)])
+                            rotation_matrix = np.array([
+                                [1, 0, 0],
+                                [0, math.cos(angle), math.sin(angle)],
+                                [0, -math.sin(angle), math.cos(angle)]
+                            ])
+                    final = base + np.dot(rotation_matrix, v)
                     vertices.append(final.tolist())
                 
                 surface_id = angles.index(angle)

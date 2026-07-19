@@ -10,14 +10,13 @@ class PDF2BookApp:
     def __init__(self):
         self.pdf_path = None
         self.pdf_imposer = PDFImposer()
+        self.scene = Scene()
 
         self.mode = MODE.PAGE
         self.theme = ui.conf.selected_theme
         self.font = ui.conf.selected_font
         self.pw_left = ui.conf.parametrs_window_on_the_left
         self.scale = ui.conf.scale
-
-        self.scene = Scene()
 
         self.is_indexation = False
         self.is_split_file = False

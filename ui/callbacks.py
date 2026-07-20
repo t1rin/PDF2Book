@@ -19,14 +19,18 @@ def require_pdf(func):
     return wrapper
 
 def update(app, align=False):
-    update_preview(app, align)
-    if app.mode == MODE.VISUALIZATION:
-        update_visualization(app)
+    match app.mode:
+        case MODE.PAGE:
+            update_preview(app, align)
+        case MODE.VISUALIZATION:
+            update_visualization(app)        
 
 def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
+    indexation_size = conf.default_indexation_size if app.is_indexation else 0
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
-                                              scale=app.scale, indexation=app.is_indexation)
+                                              scale=app.scale, 
+                                              indexation_size=indexation_size)
     update_texture(texture_tag, img_data)
     if align:
         dpg.fit_axis_data("x_axis")
@@ -309,7 +313,7 @@ def edit_visualization(app):
         app.scene.visual_book.set(part_index=part_index, 
                                   block_index=block_index, 
                                   alpha=alpha, beta=beta)
-    update_visualization(app)
+    update(app)
 
 def is_ok_output(app):
     path = dpg.get_value("lineedit_output")
@@ -378,15 +382,15 @@ def switch_mode(app, mode):
     if mode == "page": app.mode = MODE.PAGE
     if mode == "visualization": app.mode = MODE.VISUALIZATION
     is_page_mode = app.mode == MODE.PAGE
-    is_page_visualization = app.mode == MODE.VISUALIZATION
+    is_visualization_mode = app.mode == MODE.VISUALIZATION
     dpg.set_value("page_mode_button", is_page_mode)
-    dpg.set_value("visualization_mode_button", is_page_visualization)
+    dpg.set_value("visualization_mode_button", is_visualization_mode)
     dpg.configure_item("plot_window", show=is_page_mode)
-    dpg.configure_item("drawlist_window", show=is_page_visualization)
-    dpg.configure_item("visualization_tab", show=is_page_visualization)
-    if is_page_visualization: 
+    dpg.configure_item("drawlist_window", show=is_visualization_mode)
+    dpg.configure_item("visualization_tab", show=is_visualization_mode)
+    if is_visualization_mode: 
         dpg.set_value("tab_bar", "visualization_tab")
-        update_visualization(app)
+    update(app)
 
 @require_pdf
 def separate(app):
@@ -460,4 +464,3 @@ def register_callbacks(app):
 
     for item, callback in callbacks.items():
         dpg.set_item_callback(item, callback)
-    

@@ -109,9 +109,10 @@
         }
     },
     "default_panel_width": 250,
+    "default_indexation_size": 60,
     "padding_loading_text": 10,
     "padding_drawlist": 18,
-    "scale": 2,
+    "scale": 1,
     "max_line_thickness": 5,
     "default_pattern": "4 2"
 }

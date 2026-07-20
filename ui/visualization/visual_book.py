@@ -2,6 +2,7 @@ from functools import wraps
 import copy
 
 from core import get_positions_pages
+from core.config import formats as formats_sizes
 from .geometry import pages_intersect, calculate_vertices
 from .data_structures import *
 
@@ -25,19 +26,25 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, rule=RULE.LOGIC, padding=50):
+    def __init__(self, rule=RULE.LOGIC, padding=50, scale=1):
         self.rule = rule
         self._book: Book
 
         self._padding_between_parts: int = padding
+        self._scale = scale
 
         self.active_block: tuple[int] = (0, 0)
         self.cache_planes: list[int] = []
+        self.cache_textures: list[list[int]] = []
+
+        for _ in range(len(formats_sizes)):
+            self.cache_textures.append([])
 
         self.new_book()
 
     def new_book(self, q_parts=1, q_blocks=1, 
                  page_size=(841, 1189), side=SIDE.LEFT):
+        page_size = tuple([self._scale * value for value in page_size])
         book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
                     page_size=page_size, side=side)
         for i in range(q_parts):

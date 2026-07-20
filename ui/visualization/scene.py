@@ -14,7 +14,9 @@ class Scene:
         self._axis_size = 5
 
         self.camera = Camera()
-        self.visual_book = VisualBook()
+        self.visual_book = VisualBook(
+            scale=conf.scale
+        )
     
     def set_clip_space(self, width, height):
         self._width = width

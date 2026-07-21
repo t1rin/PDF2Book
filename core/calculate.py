@@ -38,15 +38,15 @@ def get_positions_pages(quentity: int, is_vertical: bool = False,
             _list[i] += 4
     return get_positions_pages(quentity, is_vertical=is_vertical, _list=_list)
 
-def get_cell_size(page_size: tuple[int], cols: int, rows: int) -> tuple[int]:
+def get_cell_size(page_size: tuple[int, int], cols: int, rows: int) -> tuple[int, int]:
     """получение размеров ячейки"""
     cell_width = page_size[0] / cols
     cell_height = page_size[1] / rows
     return (cell_width, cell_height)
 
-def get_cords_rect(margin: int, page_size: tuple[int],
+def get_cords_rect(margin: int, page_size: tuple[int, int],
                    col: int = 0, row: int = 0,
-                   cols: int = 1, rows: int = 1) -> tuple[int]:
+                   cols: int = 1, rows: int = 1) -> tuple[int, int, int, int]:
     """получение области размещения страницы"""
     cell_width, cell_height = get_cell_size(page_size, cols, rows)
     x0 = col * cell_width + margin
@@ -56,23 +56,23 @@ def get_cords_rect(margin: int, page_size: tuple[int],
 
     return (x0, y0, x1, y1)
 
-def get_cords_vertical_line(page_size: tuple[int], col: int, 
-                            cols: int, rows: int) -> tuple[int]:
+def get_cords_vertical_line(page_size: tuple[int, int], col: int, 
+                            cols: int, rows: int) -> tuple[int, int]:
     """получение координат размещения вертикальной линии сетки"""
     cell_width, _ = get_cell_size(page_size, cols, rows)
     point0 = ((col + 1) * cell_width, 0)
     point1 = ((col + 1) * cell_width, page_size[1])
     return (point0, point1)
 
-def get_cords_horizontal_line(page_size: tuple[int], row: int, 
-                              cols: int, rows: int) -> tuple[int]:
+def get_cords_horizontal_line(page_size: tuple[int, int], row: int, 
+                              cols: int, rows: int) -> tuple[tuple[int, int], ...]:
     """получение координат размещения горизонтальной линии сетки"""
     _, cell_height = get_cell_size(page_size, cols, rows)
     point0 = (0, (row + 1) * cell_height)
     point1 = (page_size[0], (row + 1) * cell_height)
     return (point0, point1)
 
-def get_point_center(rect: fitz.Rect) -> tuple[int]:
+def get_point_center(rect: fitz.Rect) -> tuple[int, int]:
     return (min(rect.x0, rect.x1) + (rect.x1-rect.x0)//2,
             min(rect.y0, rect.y1) + (rect.y1-rect.y0)//2)
 
@@ -129,7 +129,7 @@ def draw_formatting_page(
     return drawn_lines
 
 def calculate_texture_data(page: fitz.Page, scale: int,
-                           format: str) -> tuple[list, tuple[int]]:
+                           format: str) -> tuple[list, tuple[int, int]]:
     right_width, right_height = conf.formats[format]
     right_width = int(right_width * scale)
     right_height = int(right_height * scale)

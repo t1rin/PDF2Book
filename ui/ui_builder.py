@@ -140,9 +140,9 @@ def create_plot_window(app):
                        "no_tick_labels": True, "no_tick_labels": True}
             dpg.add_plot_axis(dpg.mvXAxis, tag="x_axis", **options) 
             with dpg.plot_axis(dpg.mvYAxis, tag="y_axis", **options):
-                create_dynamic_textures(formats, scale=app.scale)
+                create_preview_textures(formats, scale=app.scale)
                 texture_tag = app.pdf_imposer.params.format
-                _, size = get_dynamic_texture(texture_tag, only_size=True)
+                _, size = get_preview_texture(texture_tag, only_size=True)
                 dpg.add_image_series(texture_tag, [0, 0], size, tag="preview_pdf")
                 dpg.fit_axis_data(dpg.top_container_stack())
             dpg.fit_axis_data("x_axis")

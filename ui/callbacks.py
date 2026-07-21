@@ -11,6 +11,8 @@ BLOCK_SIZE = 4
 
 def require_pdf(func):
     def wrapper(app, *args, **kwargs):
+        if app.pdf_path:
+            app.log_message()
         if app.pdf_path is None:
             app.log_message("Файл PDF не загружен")
             set_values(app)
@@ -23,6 +25,9 @@ def update(app, align=False):
         case MODE.PAGE:
             update_preview(app, align)
         case MODE.VISUALIZATION:
+            if app._need_reload_textures:
+                app.scene.visual_book.load_textures(_get_textures(app))
+                app._need_reload_textures = False
             update_visualization(app)        
 
 @require_pdf
@@ -52,17 +57,26 @@ def update_visualization(app):
             continue
         seen_vertices.add(vertices)
         
+        surface = sheet["surface"]
+        textures = sheet["textures"]
+        uv_coords = sheet["uv_coords"]
+
+        texture_tag = textures[surface]
+        if not texture_tag:
+            return
+
+        quad_params = {
+            'p1': vertices[0], 'p2': vertices[1],
+            'p3': vertices[2], 'p4': vertices[3],
+            'uv1': uv_coords[0], 'uv2': uv_coords[1], 
+            'uv3': uv_coords[2], 'uv4': uv_coords[3],
+            'parent': "plane_node", 'texture_tag': texture_tag
+        }
+
         if cache_index < len(cache):
-            item = cache[cache_index]
-            dpg.configure_item(
-                item=item, show=True,
-                p1=vertices[0], p2=vertices[1],
-                p3=vertices[2], p4=vertices[3])
+            dpg.configure_item(item=cache[cache_index], show=True, **quad_params)
         else:
-            item = dpg.draw_quad(*vertices, 
-                        color=[0, 205, 0, 255], 
-                        fill=[100, 200, 255, 200],
-                        parent="plane_node")
+            item = dpg.draw_image_quad(**quad_params)
             cache.append(item)
         cache_index += 1
 
@@ -81,18 +95,43 @@ def reset_visual_book(app):
     side = SIDE.TOP if blocks_are_vertical else SIDE.LEFT
     
     app.scene.visual_book.new_book(q_parts, q_blocks, format_size, side)
-    #app.scene.visual_book.load_texture()
+    app._need_reload_textures = True
     app.scene.visual_book.active_block = (0, 0)
 
     _set_values_of_visualization(app)
 
+def _get_textures(app):
+    q_pages = len(app.pdf_imposer.input_doc)
+    format = app.pdf_imposer.params.format
+    index_format = list(formats_sizes.keys()).index(format)
+    cache_textures = app.scene.visual_book.cache_textures[index_format]
+
+    index = 0
+    textures = []
+    datas_for_creating = []
+    while index < min(q_pages, len(cache_textures)):
+        img_data, size = app.pdf_imposer.get_formatted_source_page(
+            page_num=index, scale=app.scale)
+        texture = cache_textures[index]
+        update_texture(texture, img_data=img_data, size=size)
+        textures.append(texture)
+        index += 1
+    while index < q_pages:
+        datas_for_creating.append(app.pdf_imposer.get_formatted_source_page(
+            page_num=index, scale=app.scale))
+        index += 1
+    if datas_for_creating:
+        new_textures = get_dynamic_textures(datas_for_creating)
+        cache_textures += new_textures
+        textures += new_textures
+        
+    return textures
+
 def is_ok_input_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
-    if path:
-        app.log_message(err)
-    else:
-        app.log_message()
+    if path: app.log_message(err)
+    else: app.log_message()
 
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
@@ -229,7 +268,9 @@ def edit_params(app):
     page_size = formats_sizes[params['format']]
     side = SIDE.TOP if params['blocks_are_vertical'] else SIDE.LEFT
     app.scene.visual_book.set(page_size=page_size, side=side)
-    
+
+    if app.scene.visual_book.get('page_size') != page_size:
+        app.scene.visual_book.set(default_texture=params['format'])
     if (app.scene.visual_book.get('page_size') != page_size or
         app.scene.visual_book.get('q_parts') != q_parts or
         app.scene.visual_book.get('q_blocks') != q_blocks or
@@ -237,6 +278,7 @@ def edit_params(app):
         reset_visual_book(app)
 
     align = (params['format'] != app.pdf_imposer.params.format)
+    app._need_reload_textures = True
     update(app, align=align)
 
 def _is_size_part_normal(app, params):

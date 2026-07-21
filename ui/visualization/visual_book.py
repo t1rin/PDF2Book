@@ -26,14 +26,16 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, rule=RULE.LOGIC, padding=50, scale=1):
+    def __init__(self, rule=RULE.LOGIC, padding=50, 
+                 scale=1, default_texture=None):
         self.rule = rule
         self._book: Book
 
         self._padding_between_parts: int = padding
+        self._default_texture = default_texture
         self._scale = scale
 
-        self.active_block: tuple[int] = (0, 0)
+        self.active_block: tuple[int, int] = (0, 0)
         self.cache_planes: list[int] = []
         self.cache_textures: list[list[int]] = []
 
@@ -55,7 +57,7 @@ class VisualBook:
                 block = BlockPages(
                     pages=[], pos=[0, 0, 0], alpha=0, beta=0)
                 for k in range(4):
-                    page = Page(texture=None)
+                    page = Page(texture=self._default_texture)
                     block.pages.append(page)
                 part.blocks.append(block)
             book.parts.append(part)
@@ -79,19 +81,25 @@ class VisualBook:
                         self._book.parts[i].blocks[j].pages[k].texture = \
                             textures[positions_pages[idx]]
                     else:
-                        self._book.parts[i].blocks[j].pages[k].texture = None
+                        self._book.parts[i].blocks[j].pages[k].texture = \
+                            self._default_texture
                     idx += 1
     
     @with_rule
-    def set(self, *, part_index: int | None = None, 
-            block_index: int | None = None, page_size: tuple[int] | None = None, 
+    def set(self, *, 
+            part_index: int | None = None, 
+            block_index: int | None = None, 
+            page_size: tuple[int, int] | None = None, 
             side: SIDE | None = None, pos: list[int] | None = None, 
-            alpha: int | None = None, beta: int | None = None):
+            alpha: int | None = None, beta: int | None = None,
+            default_texture: int | str | None = None):
         if part_index is None and block_index is None:
             if page_size is not None:
                 self._book.page_size = page_size
             if side is not None:
                 self._book.side = side
+            if default_texture is not None:
+                self._default_texture = default_texture
         elif part_index is not None and block_index is None:
             if not (part_index < self._q_parts):
                 print("failed editing angle of page of block")

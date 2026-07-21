@@ -160,23 +160,15 @@ def calculate_vertices(book: Book):
             
     w, h = book.page_size
     
-    local_vertices = [
-        [0, 0, 0],
-        [w, 0, 0],
-        [w, -h, 0],
-        [0, -h, 0]
+    local_vertices_with_uv = [
+        ([0, 0, 0],  [1, 0]),
+        ([w, 0, 0],  [0, 0]),
+        ([w, -h, 0], [0, 1]),
+        ([0, -h, 0], [1, 1])
     ]
             
     for part_idx, part in enumerate(book.parts):
-        if len(part.pos) != 3:
-            print("Incorrect position")
-            return
-        
-        for block_idx, block in enumerate(part.blocks):
-            if len(block.pos) != 3:
-                print("Incorrect position")
-                return
-            
+        for block_idx, block in enumerate(part.blocks): 
             base = np.array(part.pos) + np.array(block.pos)
             
             alpha_rad = math.radians(block.alpha)
@@ -185,9 +177,10 @@ def calculate_vertices(book: Book):
             angles = [alpha_rad, beta_rad]
             for angle in set(angles):
                 vertices = []
+                uv_coords = []
                 textures = []
 
-                for v in local_vertices:
+                for v, uv in local_vertices_with_uv:
                     match book.side:
                         case SIDE.LEFT:
                             rotation_matrix = np.array([
@@ -203,6 +196,7 @@ def calculate_vertices(book: Book):
                             ])
                     final = base + np.dot(rotation_matrix, v)
                     vertices.append(tuple(final.tolist()))
+                    uv_coords.append(uv)
                 
                 surface_id = angles.index(angle)
                 for i, page in enumerate(block.pages):
@@ -218,7 +212,8 @@ def calculate_vertices(book: Book):
                     'side': book.side,
                     'angle': angle,
                     'textures': textures,
-                    'vertices': vertices
+                    'vertices': vertices,
+                    'uv_coords': uv_coords
                 })
                 
     return sheets_vertices

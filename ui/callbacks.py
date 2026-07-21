@@ -25,6 +25,7 @@ def update(app, align=False):
         case MODE.VISUALIZATION:
             update_visualization(app)        
 
+@require_pdf
 def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
     indexation_size = conf.default_indexation_size if app.is_indexation else 0

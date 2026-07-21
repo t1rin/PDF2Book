@@ -20,6 +20,8 @@ def require_pdf(func):
         return func(app, *args, **kwargs)
     return wrapper
 
+# __ Updating and setting __
+
 def update(app, align=False):
     match app.mode:
         case MODE.PAGE:
@@ -127,6 +129,8 @@ def _get_textures(app):
         
     return textures
 
+# __ Working with files __
+
 def is_ok_input_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
@@ -170,22 +174,42 @@ def drop_handler(app, data):
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
 
-@require_pdf
-def arrow_left_callback(app):
-    if (app.current_page == 1): 
-        return
-    dpg.set_value("page_label", int(dpg.get_value("page_label"))-1)
-    app.current_page -= 1
-    update(app)
+def is_ok_output(app):
+    path = dpg.get_value("lineedit_output")
+    if not path:
+        app.log_message()
+        return False
+    if (not app.is_split_file) and (not is_type(path, "pdf")):
+        app.log_message("Файл некорректного типа")
+        return False
+    return True
+
+def save_as_file(app):
+    if app.is_split_file:
+        path = FileDialogHelper.save_folder()
+        if path is None: return
+    else:
+        path = FileDialogHelper.save_pdf_file()
+        if path is None: return
+        if not is_type(path, "pdf"):
+            app.log_message("Файл некорректного типа")
+            return
+    dpg.set_value("lineedit_output", path)
+    save_file(app)
 
 @require_pdf
-def arrow_right_callback(app):
-    if (app.pdf_imposer.output_doc is not None) and \
-        (app.current_page == app.pdf_imposer.quantity_page): 
-        return
-    dpg.set_value("page_label", int(dpg.get_value("page_label"))+1)
-    app.current_page += 1
-    update(app)
+def save_file(app):
+    if not is_ok_output(app): return
+    path = dpg.get_value("lineedit_output")
+    split = app.is_split_file
+    app.pdf_imposer.export_doc(path, split)
+    if split: app.log_message("Файлы сохранены")
+    else: app.log_message("Файл сохранен")
+
+def split_file(app):
+    app.is_split_file = dpg.get_value("split_file_checkbox")
+
+# __ Working with params __
 
 def set_values(app):
     if app.pdf_path:
@@ -230,6 +254,7 @@ def _set_values_of_visualization(app):
     dpg.set_value("alpha_input", alpha)
     dpg.set_value("beta_input", beta)
 
+@require_pdf
 def edit_params(app):
     params = {
         'rows': dpg.get_value("rows_input"),
@@ -246,15 +271,7 @@ def edit_params(app):
         'dashes_pattern': dpg.get_value("lineedit_pattern"),
     }
     
-    if not _validate_params(app, params):
-        return
-
-    if app.pdf_path is None:
-        app.log_message("Файл PDF не загружен")
-        set_values(app)
-        return
-    
-    if not _is_size_part_normal(app, params):
+    if not (_validate_params(app, params) and _is_size_part_normal(app, params)):
         return
     
     params['dashes_pattern'] = _prepare_pattern(app, params['dashes_pattern'])
@@ -336,6 +353,25 @@ def _calculate_parts_blocks(q_pages, size_part):
         q_blocks = ((q_pages - 1) // BLOCK_SIZE + 1)
     return q_parts, q_blocks
 
+# __ Callbacks __
+
+@require_pdf
+def arrow_left_callback(app):
+    if (app.current_page == 1): 
+        return
+    dpg.set_value("page_label", int(dpg.get_value("page_label"))-1)
+    app.current_page -= 1
+    update(app)
+
+@require_pdf
+def arrow_right_callback(app):
+    if (app.pdf_imposer.output_doc is not None) and \
+        (app.current_page == app.pdf_imposer.quantity_page): 
+        return
+    dpg.set_value("page_label", int(dpg.get_value("page_label"))+1)
+    app.current_page += 1
+    update(app)
+
 @require_pdf
 def selection_block(app):
     part_index = int(dpg.get_value("combo_parts"))
@@ -358,42 +394,7 @@ def edit_visualization(app):
                                   alpha=alpha, beta=beta)
     update(app)
 
-def is_ok_output(app):
-    path = dpg.get_value("lineedit_output")
-    if not path:
-        app.log_message()
-        return False
-    if (not app.is_split_file) and (not is_type(path, "pdf")):
-        app.log_message("Файл некорректного типа")
-        return False
-    return True
-
-def save_as_file(app):
-    if app.is_split_file:
-        path = FileDialogHelper.save_folder()
-        if path is None: return
-    else:
-        path = FileDialogHelper.save_pdf_file()
-        if path is None: return
-        if not is_type(path, "pdf"):
-            app.log_message("Файл некорректного типа")
-            return
-    dpg.set_value("lineedit_output", path)
-    save_file(app)
-
-@require_pdf
-def save_file(app):
-    if not is_ok_output(app): return
-    path = dpg.get_value("lineedit_output")
-    split = app.is_split_file
-    app.pdf_imposer.export_doc(path, split)
-    if split: app.log_message("Файлы сохранены")
-    else: app.log_message("Файл сохранен")
-
-def split_file(app):
-    app.is_split_file = dpg.get_value("split_file_checkbox")
-
-def lineedit_pattern_btn(app):
+def check_lineedit_pattern(app):
     pattern = dpg.get_value("lineedit_pattern")
     pattern_code = pattern.split()
 
@@ -485,7 +486,7 @@ def register_callbacks(app):
         "save_file_btn": lambda: save_file(app),
         "split_file_checkbox": lambda: split_file(app),
         "thickness_input": lambda: edit_params(app),
-        "lineedit_pattern": lambda: lineedit_pattern_btn(app),
+        "lineedit_pattern": lambda: check_lineedit_pattern(app),
         "move_panel_btn": lambda: move_panel(app),
         "switch_theme_btn": lambda: switch_theme(app),
         "switch_font_btn": lambda: switch_font(app),

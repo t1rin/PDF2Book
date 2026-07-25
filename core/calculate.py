@@ -97,7 +97,7 @@ def draw_formatting_page(
                             'cols': params.cols, 'rows': params.rows})
     rect = fitz.Rect(get_cords_rect(**rect_params))
 
-    if index not in range(len(input_doc)):
+    if index is not None and index not in range(len(input_doc)):
         index = None
 
     if index is not None:

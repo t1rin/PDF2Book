@@ -88,7 +88,7 @@ class PDFImposer():
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
-        if page_num >= len(self.input_doc):
+        if page_num and (page_num >= len(self.input_doc)):
             raise ValueError("page_num >= len(self.input_doc)!!!")
         
         page_size = conf.formats[self.params.format]

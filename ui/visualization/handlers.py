@@ -2,6 +2,8 @@ import dearpygui.dearpygui as dpg
 
 import math
 
+import ui.callbacks as cb
+
 
 _is_dragging = False
 _is_panning = False
@@ -38,21 +40,26 @@ def mouse_move_callback(app):
     
     global _is_dragging, _is_panning, _last_mouse_pos
     
-    if _is_dragging:
-        dx = -(dpg.get_mouse_pos()[0] - _last_mouse_pos[0])
-        dy = dpg.get_mouse_pos()[1] - _last_mouse_pos[1]
-        _last_mouse_pos = dpg.get_mouse_pos()
-        
-        app.scene.camera.update_camera_rotation(dx, dy)
-        app.scene.update()
+    if _is_dragging or _is_panning:
+        camera_pos = app.scene.camera.get_position()
+        if app.scene.visual_book.is_order_changed(camera_pos):
+            cb.update(app)
 
-    elif _is_panning:
-        dx = -(dpg.get_mouse_pos()[0] - _last_mouse_pos[0])
-        dy = dpg.get_mouse_pos()[1] - _last_mouse_pos[1]
-        _last_mouse_pos = dpg.get_mouse_pos()
-        
-        app.scene.camera.update_camera_pan(dx, dy)     
-        app.scene.update()
+        if _is_dragging:
+            dx = -(dpg.get_mouse_pos()[0] - _last_mouse_pos[0])
+            dy = dpg.get_mouse_pos()[1] - _last_mouse_pos[1]
+            _last_mouse_pos = dpg.get_mouse_pos()
+            
+            app.scene.camera.update_camera_rotation(dx, dy)
+            app.scene.update()
+
+        else:
+            dx = -(dpg.get_mouse_pos()[0] - _last_mouse_pos[0])
+            dy = dpg.get_mouse_pos()[1] - _last_mouse_pos[1]
+            _last_mouse_pos = dpg.get_mouse_pos()
+            
+            app.scene.camera.update_camera_pan(dx, dy)     
+            app.scene.update()
 
 def mouse_wheel_callback(app, sign):
     if not _is_mouse_over_drawlist(app):

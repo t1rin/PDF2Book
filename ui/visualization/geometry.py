@@ -6,6 +6,7 @@ from .data_structures import Book, SIDE
 
 
 TOLERANCE = 1e-8
+BLOCK_SIZE = 4
 
 def pages_intersect(page1_vertices, page2_vertices):
     alpha = get_plane(page1_vertices)
@@ -155,22 +156,53 @@ def get_scale_multiplier(distance):
     else:
         return distance * 0.15
 
-def calculate_vertices(book: Book, thickness: int = 325):
+def get_quad_distance(vertices, camera_pos):
+    center = np.mean(vertices, axis=0)
+    distance = np.linalg.norm(center - camera_pos)
+    return distance
+
+def _resolve_texture_conflict(candidates):
+    sorded_candidates = [[], []]
+    for candidate in candidates:
+        page_num = candidate['page_num']
+        angle_id = (page_num % 4) // 2
+        sorded_candidates[angle_id].append(candidate)
+
+    surface_id = None
+    total_canditates = []
+    for angle_id, candidates in enumerate(sorded_candidates):
+        page_num = candidates[0]['page_num']
+        _min, _max = (0, page_num), (0, page_num)
+        for candidate_id, candidate in enumerate(candidates):
+            page_num = candidate['page_num']
+            if page_num < _min[1]:
+                _min = (candidate_id, page_num)
+            if page_num > _max[1]:
+                _max = (candidate_id, page_num)
+        surface_id = page_num % 2
+        if angle_id == surface_id:
+            total_canditates.append(candidates[_min[0]])
+            continue
+        total_canditates.append(candidates[_max[0]])
+    return total_canditates[surface_id]
+
+def calculate_vertices(book: Book, thickness: int = 3):
     sheets_vertices = []
-            
     w, h = book.page_size
+
     local_vertices_with_uv = [[
-        ([0, 0, thickness/2],  [0, 0]),
-        ([0, -h, thickness/2],  [0, 1]),
+        ([0,  0, thickness/2], [0, 0]),
+        ([0, -h, thickness/2], [0, 1]),
         ([w, -h, thickness/2], [1, 1]),
-        ([w, 0, thickness/2], [1, 0])], 
+        ([w,  0, thickness/2], [1, 0])], 
     [
-        ([0, 0, -thickness/2],  [1, 0]),
-        ([w, 0, -thickness/2],  [0, 0]),
+        ([0,  0, -thickness/2], [1, 0]),
+        ([w,  0, -thickness/2], [0, 0]),
         ([w, -h, -thickness/2], [0, 1]),
         ([0, -h, -thickness/2], [1, 1])
     ]]
     
+    position_map = dict()
     for part_idx, part in enumerate(book.parts):
         for block_idx, block in enumerate(part.blocks): 
             base = np.array(part.pos) + np.array(block.pos)
@@ -180,38 +212,51 @@ def calculate_vertices(book: Book, thickness: int = 325):
             angles = [alpha_rad, beta_rad]
             
             for page_idx, page in enumerate(block.pages):
-                uv_coords = []
-                vertices = []
-                
                 angle = angles[page_idx // 2]
-                surface_id = page_idx % 2
-                for v, uv in local_vertices_with_uv[surface_id]:
+
+                vertices = []
+                uv_coords = []
+                for local_vertex, uv in local_vertices_with_uv[page_idx % 2]:
                     match book.side:
                         case SIDE.LEFT:
                             rotation_matrix = np.array([
                                 [math.cos(angle), 0, -math.sin(angle)],
-                                [0, 1, 0],
-                                [math.sin(angle), 0, math.cos(angle)]
+                                [0,               1,                0],
+                                [math.sin(angle), 0,  math.cos(angle)]
                             ])
                         case SIDE.TOP:
                             rotation_matrix = np.array([
-                                [1, 0, 0],
-                                [0, math.cos(angle), math.sin(angle)],
+                                [1,                0,               0],
+                                [0,  math.cos(angle), math.sin(angle)],
                                 [0, -math.sin(angle), math.cos(angle)]
                             ])
-                    final = base + np.dot(rotation_matrix, v)
-                    vertices.append(tuple(final.tolist()))
+                    final = base + np.dot(rotation_matrix, local_vertex)
+                    vertex = tuple([*map(lambda point: round(point, 3), 
+                                         final.tolist())])
+                    vertices.append(vertex)
                     uv_coords.append(uv)
+                vertices = tuple(vertices)
         
                 block_num = part_idx * len(part.blocks) + block_idx
+                page_num = block_num * BLOCK_SIZE + page_idx
 
-                sheets_vertices.append({
+                candidate = {
+                    'page_num': page_num,
                     'block_num': block_num,
-                    'surface': surface_id,
-                    'side': book.side,
                     'texture': page.texture,
                     'vertices': vertices,
                     'uv_coords': uv_coords
-                })
+                }
+
+                if vertices not in position_map:
+                    position_map[vertices] = []
+                position_map[vertices].append(candidate)
                 
+    for _, candidates in position_map.items():
+        if len(candidates) == 1:
+            sheets_vertices.append(candidates[0])
+        else:
+            winner = _resolve_texture_conflict(candidates)
+            sheets_vertices.append(winner)
+
     return sheets_vertices

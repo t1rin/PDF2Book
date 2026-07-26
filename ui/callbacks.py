@@ -47,25 +47,16 @@ def update_preview(app, align=False):
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
 
 def update_visualization(app):
-    sheets_vertices = app.scene.visual_book.solve_visualization()
+    camera_pos = app.scene.camera.get_position()
+    sheets_vertices = app.scene.visual_book.solve_visualization(camera_pos)
 
-    seen_vertices = set()
     cache = app.scene.visual_book.cache_planes
     cache_index = 0
 
     for sheet in sheets_vertices:
-        vertices = tuple(sheet["vertices"])
-        if vertices in seen_vertices:
-            continue
-        seen_vertices.add(vertices)
-        
-        surface = sheet["surface"]
-        textures = sheet["textures"]
+        vertices = sheet["vertices"]
+        texture_tag = sheet["texture"]
         uv_coords = sheet["uv_coords"]
-
-        texture_tag = textures[surface]
-        if not texture_tag:
-            return
 
         quad_params = {
             'p1': vertices[0], 'p2': vertices[1],
@@ -295,7 +286,7 @@ def edit_params(app):
         reset_visual_book(app)
 
     align = (params['format'] != app.pdf_imposer.params.format)
-    app._need_reload_textures = True
+    app.scene.visual_book.need_reload = True
     update(app, align=align)
 
 def _is_size_part_normal(app, params):
@@ -500,7 +491,7 @@ def register_callbacks(app):
         "combo_parts": lambda: selection_block(app),
         "combo_blocks": lambda: selection_block(app),
         "alpha_input": lambda: edit_visualization(app),
-        "beta_input": lambda: edit_visualization(app)
+        "beta_input": lambda: edit_visualization(app),
     }
 
     for det in range(150, 300, 25):

@@ -3,7 +3,7 @@ import copy
 
 from core import get_positions_pages
 from core.config import formats as formats_sizes
-from .geometry import pages_intersect, calculate_vertices
+from .geometry import pages_intersect, calculate_vertices, get_quad_distance
 from .data_structures import *
 
 
@@ -26,7 +26,7 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, rule=RULE.LOGIC, padding=50, 
+    def __init__(self, rule=RULE.LOGIC, padding=250, 
                  scale=1, default_texture=None):
         self.rule = rule
         self._book: Book
@@ -182,10 +182,27 @@ class VisualBook:
 
         return True
 
-    def solve_visualization(self):
+    def _sort_sheets_vertices(self, camera_pos):
+        self._sheets_vertices.sort(
+            key=lambda s: get_quad_distance(s['vertices'], camera_pos),
+            reverse=True)
+
+    def is_order_changed(self, camera_pos):
+        old_order = [sheet_vertices['page_num']
+                     for sheet_vertices in self._sheets_vertices]
+        self._sort_sheets_vertices(camera_pos)
+        order = [sheet_vertices['page_num']
+                 for sheet_vertices in self._sheets_vertices]
+        return order != old_order
+
+    def solve_visualization(self, camera_pos=None):
         sheets_vertices = calculate_vertices(self._book)
         if sheets_vertices is None:
             return
         self._sheets_vertices = sheets_vertices
-        return sheets_vertices
+        
+        if camera_pos is not None:
+            self._sort_sheets_vertices(camera_pos)
+
+        return self._sheets_vertices
     

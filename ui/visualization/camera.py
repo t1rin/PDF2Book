@@ -2,32 +2,56 @@ import numpy as np
 
 import math
 
+from .geometry import get_scale_multiplier
+
 
 class Camera:
     def __init__(self, scale=1):
-        self.min_distance = 10.0
-        self.max_distance = 20000.0
-
-        self._scale = scale
+        self._min_distance: float = 10.0
+        self._max_distance: float = 20000.0
+        self._scale: float = scale
         
         self.home()
 
     def home(self):
-        self.distance = self._scale * 3500.0
-        self.yaw = math.pi / 4
-        self.pitch = math.pi / 6
-        self.target_x = 0.0
-        self.target_y = 0.0
-        self.target_z = 0.0
-        self.rot_x = 0.0
-        self.rot_y = 0.0
-        self.rot_z = 0.0
+        self._distance: float = self._scale * 3500.0
+        self._yaw: float = math.pi / 4
+        self._pitch: float = math.pi / 6
+        self._target_x: float = 0.0
+        self._target_y: float = 0.0
+        self._target_z: float = 0.0
+        self._rot_x: float = 0.0
+        self._rot_y: float = 0.0
+        self._rot_z: float = 0.0
+    
+    def update_camera_rotation(self, dx, dy):
+        self._yaw += dx * 0.01
+        self._pitch += dy * 0.01
+        self._pitch = max(
+            -math.pi / 2 + 0.01,
+            min(math.pi / 2 - 0.01, self._pitch)
+        )
+        
+    def update_camera_pan(self, dx, dy):
+        right, up = self.get_camera_vectors()
+        scale = self._distance * 0.001
+        
+        self._target_x += (right[0] * dx + up[0] * dy) * scale
+        self._target_y += (right[1] * dx + up[1] * dy) * scale
+        self._target_z += (right[2] * dx + up[2] * dy) * scale
 
+    def update_camera_zoom(self, sign):
+        self._distance -= sign * get_scale_multiplier(self._distance)
+        self._distance = max(
+            self._min_distance, 
+            min(self._max_distance, self._distance)
+        )
+    
     def get_camera_vectors(self):
         forward = np.array([
-            -math.cos(self.pitch) * math.sin(self.yaw),
-            -math.sin(self.pitch),
-            -math.cos(self.pitch) * math.cos(self.yaw)
+            -math.cos(self._pitch) * math.sin(self._yaw),
+            -math.sin(self._pitch),
+            -math.cos(self._pitch) * math.cos(self._yaw)
         ])
         
         world_up = np.array([0, 1, 0])
@@ -39,3 +63,23 @@ class Camera:
         up = up / np.linalg.norm(up)
         
         return right, up
+
+    def get_position(self):
+        cam_x = (self._distance * math.cos(self._pitch) * math.sin(self._yaw) + 
+                 self._target_x)
+        cam_y = (self._distance * math.sin(self._pitch) + 
+                 self._target_y)
+        cam_z = (self._distance * math.cos(self._pitch) * math.cos(self._yaw) + 
+                 self._target_z)
+        return np.array([cam_x, cam_y, cam_z])
+    
+    def get_radian_angles(self):
+        _rot_x = self._rot_x * math.pi / 180.0
+        _rot_y = self._rot_y * math.pi / 180.0
+        _rot_z = self._rot_z * math.pi / 180.0
+        return np.array([_rot_x, _rot_y, _rot_z])
+
+    def get_target_pos(self):
+        return np.array(
+            [self._target_x, self._target_y, self._target_z]
+        )

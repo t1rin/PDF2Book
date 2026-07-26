@@ -155,32 +155,37 @@ def get_scale_multiplier(distance):
     else:
         return distance * 0.15
 
-def calculate_vertices(book: Book):
+def calculate_vertices(book: Book, thickness: int = 325):
     sheets_vertices = []
             
     w, h = book.page_size
+    local_vertices_with_uv = [[
+        ([0, 0, thickness/2],  [0, 0]),
+        ([0, -h, thickness/2],  [0, 1]),
+        ([w, -h, thickness/2], [1, 1]),
+        ([w, 0, thickness/2], [1, 0])], 
+    [
+        ([0, 0, -thickness/2],  [1, 0]),
+        ([w, 0, -thickness/2],  [0, 0]),
+        ([w, -h, -thickness/2], [0, 1]),
+        ([0, -h, -thickness/2], [1, 1])
+    ]]
     
-    local_vertices_with_uv = [
-        ([0, 0, 0],  [1, 0]),
-        ([w, 0, 0],  [0, 0]),
-        ([w, -h, 0], [0, 1]),
-        ([0, -h, 0], [1, 1])
-    ]
-            
     for part_idx, part in enumerate(book.parts):
         for block_idx, block in enumerate(part.blocks): 
             base = np.array(part.pos) + np.array(block.pos)
             
             alpha_rad = math.radians(block.alpha)
             beta_rad = math.radians(block.beta)
-            
             angles = [alpha_rad, beta_rad]
-            for angle in set(angles):
-                vertices = []
+            
+            for page_idx, page in enumerate(block.pages):
                 uv_coords = []
-                textures = []
-
-                for v, uv in local_vertices_with_uv:
+                vertices = []
+                
+                angle = angles[page_idx // 2]
+                surface_id = page_idx % 2
+                for v, uv in local_vertices_with_uv[surface_id]:
                     match book.side:
                         case SIDE.LEFT:
                             rotation_matrix = np.array([
@@ -197,21 +202,14 @@ def calculate_vertices(book: Book):
                     final = base + np.dot(rotation_matrix, v)
                     vertices.append(tuple(final.tolist()))
                     uv_coords.append(uv)
-                
-                surface_id = angles.index(angle)
-                for i, page in enumerate(block.pages):
-                    if surface_id == i // 2:
-                        textures.append(page.texture)
-            
-                block_index = part_idx * len(part.blocks) + block_idx
+        
+                block_num = part_idx * len(part.blocks) + block_idx
 
                 sheets_vertices.append({
-                    'part_index': part_idx,
-                    'block_index': block_index,
+                    'block_num': block_num,
                     'surface': surface_id,
                     'side': book.side,
-                    'angle': angle,
-                    'textures': textures,
+                    'texture': page.texture,
                     'vertices': vertices,
                     'uv_coords': uv_coords
                 })

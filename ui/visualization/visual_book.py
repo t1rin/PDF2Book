@@ -76,7 +76,7 @@ class VisualBook:
         idx = 0
         for i in range(self._q_parts):
             for j in range(self._q_blocks):
-                for k in range(4):
+                for k in [3, 0, 1, 2]:
                     if positions_pages[idx] < len(textures):
                         self._book.parts[i].blocks[j].pages[k].texture = \
                             textures[positions_pages[idx]]
@@ -175,8 +175,7 @@ class VisualBook:
             for j, page2 in enumerate(sheets_vertices):
                 if j < i + 1:
                     continue
-                
-                if page1['block_index'] != page2['block_index']:
+                if page1['block_num'] != page2['block_num']:
                     if pages_intersect(page1['vertices'], page2['vertices']):
                         return False
 

@@ -27,9 +27,9 @@ def update(app, align=False):
         case MODE.PAGE:
             update_preview(app, align)
         case MODE.VISUALIZATION:
-            if app._need_reload_textures:
+            if app.scene.visual_book.need_reload:
                 app.scene.visual_book.load_textures(_get_textures(app))
-                app._need_reload_textures = False
+                app.scene.visual_book.need_reload = False
             update_visualization(app)        
 
 @require_pdf
@@ -97,7 +97,7 @@ def reset_visual_book(app):
     side = SIDE.TOP if blocks_are_vertical else SIDE.LEFT
     
     app.scene.visual_book.new_book(q_parts, q_blocks, format_size, side)
-    app._need_reload_textures = True
+    app.scene.visual_book.need_reload = True
     app.scene.visual_book.active_block = (0, 0)
 
     _set_values_of_visualization(app)

@@ -38,6 +38,7 @@ class VisualBook:
         self.active_block: tuple[int, int] = (0, 0)
         self.cache_planes: list[int] = []
         self.cache_textures: list[list[int]] = []
+        self.need_reload: bool = False
 
         for _ in range(len(formats_sizes)):
             self.cache_textures.append([])

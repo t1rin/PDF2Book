@@ -23,7 +23,6 @@ class PDF2BookApp:
         self.current_page = 1
 
         self._old_size_drawlist = None
-        self._need_reload_textures = False
         
     def log_message(self, msg=None):
         if msg: dpg.set_value("log_output", msg)

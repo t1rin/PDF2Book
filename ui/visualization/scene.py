@@ -4,22 +4,16 @@ import math
 
 from .camera import Camera
 from .visual_book import VisualBook
-from ..config import conf
-from core.config import formats as formats_sizes
 
 
 class Scene:
-    def __init__(self, **visual_book_params):
+    def __init__(self, scale, **vb_kwargs):
         self._width = 500
         self._height = 500
         self._axis_size = 5
 
-        self.camera = Camera()
-        self.visual_book = VisualBook(
-            scale=conf.scale,
-            default_texture=list(formats_sizes.keys())[0],
-            **visual_book_params
-        )
+        self.camera = Camera(scale=scale)
+        self.visual_book = VisualBook(scale=scale, **vb_kwargs)
     
     def set_clip_space(self, width, height):
         self._width = width

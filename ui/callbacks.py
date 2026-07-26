@@ -39,7 +39,7 @@ def update_preview(app, align=False):
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
                                               scale=app.scale, 
                                               indexation_size=indexation_size)
-    update_texture(texture_tag, img_data)
+    app.tm.update_preview_texture(texture_tag, img_data=img_data)
     if align:
         dpg.fit_axis_data("x_axis")
         dpg.fit_axis_data("y_axis")
@@ -103,10 +103,10 @@ def _get_textures(app):
     textures = []
     datas_for_creating = []
     while index < min(q_pages, len(cache_textures)):
-        img_data, size = app.pdf_imposer.get_formatted_source_page(
+        img_data, _ = app.pdf_imposer.get_formatted_source_page(
             page_num=index, scale=app.scale)
         texture = cache_textures[index]
-        update_texture(texture, img_data=img_data, size=size)
+        app.tm.update_dynamic_texture(texture, img_data=img_data)
         textures.append(texture)
         index += 1
     while index < q_pages:
@@ -114,7 +114,8 @@ def _get_textures(app):
             page_num=index, scale=app.scale))
         index += 1
     if datas_for_creating:
-        new_textures = get_dynamic_textures(datas_for_creating)
+        texture_register = app.tm.create_dynamic_textures(datas_for_creating)
+        new_textures = app.tm.get_dynamic_textures(texture_register)
         cache_textures += new_textures
         textures += new_textures
         
@@ -275,10 +276,10 @@ def edit_params(app):
         size_part=params['quantity_pages_for_part'])
     page_size = formats_sizes[params['format']]
     side = SIDE.TOP if params['blocks_are_vertical'] else SIDE.LEFT
-    app.scene.visual_book.set(page_size=page_size, side=side)
 
     if app.scene.visual_book.get('page_size') != page_size:
-        app.scene.visual_book.set(default_texture=params['format'])
+        default_texture = app.tm.get_clean_texture(params['format'])
+        app.scene.visual_book.set(default_texture=default_texture)
     if (app.scene.visual_book.get('page_size') != page_size or
         app.scene.visual_book.get('q_parts') != q_parts or
         app.scene.visual_book.get('q_blocks') != q_blocks or

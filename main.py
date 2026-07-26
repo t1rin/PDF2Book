@@ -2,6 +2,7 @@ import dearpygui.dearpygui as dpg
 
 from core import PDFImposer
 from ui.visualization import Scene
+from ui.textures import TextureManager
 from ui.config import MODE
 import ui
 
@@ -9,27 +10,39 @@ import ui
 class PDF2BookApp:
     def __init__(self):
         self.pdf_path = None
-        self.pdf_imposer = PDFImposer()
-        self.scene = Scene()
-
         self.mode = MODE.PAGE
+
         self.theme = ui.conf.selected_theme
         self.font = ui.conf.selected_font
         self.pw_left = ui.conf.parametrs_window_on_the_left
         self.scale = ui.conf.scale
+
+        self.pdf_imposer = PDFImposer()
+        self.scene = None
+        self.tm = None
 
         self.is_indexation = False
         self.is_split_file = False
         self.current_page = 1
 
         self._old_size_drawlist = None
-        
+
+    def initialize(self):
+        from core.config import formats
+        self.tm = TextureManager(formats=formats, 
+                                 scale=self.scale)
+        default_texture = self.tm.get_dynamic_textures("visual_textures")[0]
+        self.scene = Scene(scale=self.scale,
+                           default_texture=default_texture)
+
     def log_message(self, msg=None):
         if msg: dpg.set_value("log_output", msg)
         else: dpg.set_value("log_output", "")
 
     def run(self):
         dpg.create_context()
+
+        self.initialize()
 
         dpg.create_viewport(**ui.conf.viewport_options)
 

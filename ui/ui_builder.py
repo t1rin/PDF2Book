@@ -124,7 +124,7 @@ def create_settings_panel(app):
                 dpg.add_text("Угол второго листа:")
                 dpg.add_input_int(tag="beta_input", step=3)
 
-        dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
+        dpg.add_text(wrap=0, tag="log_output")
 
 def create_drawlist_window(app):
     with dpg.child_window(tag="drawlist_window", show=False):

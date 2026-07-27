@@ -10,7 +10,6 @@ class Scene:
     def __init__(self, scale, **vb_kwargs):
         self._width = 500
         self._height = 500
-        self._axis_size = 5
 
         self.camera = Camera(scale=scale)
         self.visual_book = VisualBook(scale=scale, **vb_kwargs)

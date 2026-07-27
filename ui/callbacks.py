@@ -27,6 +27,7 @@ def update(app, align=False):
         case MODE.PAGE:
             update_preview(app, align)
         case MODE.VISUALIZATION:
+            update_visualization(app)  
             if app.scene.visual_book.need_reload:
                 app.scene.visual_book.load_textures(_get_textures(app))
                 app.scene.visual_book.need_reload = False
@@ -67,7 +68,10 @@ def update_visualization(app):
         }
 
         if cache_index < len(cache):
-            dpg.configure_item(item=cache[cache_index], show=True, **quad_params)
+            if dpg.does_item_exist(item := cache[cache_index]):
+                dpg.configure_item(item=item, show=True, **quad_params)
+            else:
+                dpg.draw_image_quad(tag=item, **quad_params)
         else:
             item = dpg.draw_image_quad(**quad_params)
             cache.append(item)
@@ -76,6 +80,10 @@ def update_visualization(app):
     while cache_index < len(cache):
         dpg.configure_item(item=cache[cache_index], show=False)
         cache_index += 1
+
+    if app.pdf_imposer.input_doc is not None:
+        dpg.set_value("quantity_source_page_label", 
+                      len(app.pdf_imposer.input_doc))
 
     app.scene.update()
 
@@ -222,13 +230,24 @@ def set_values(app):
     dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
     dpg.set_value("indexes_pages_checkbox", app.is_indexation)
     dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
-    is_vis_active = dpg.get_value("visualization_mode_button")
-    dpg.configure_item("visualization_tab", show=is_vis_active)
+
     items = [*formats_sizes.keys()]
     dpg.configure_item("combo_formats", items=items)
     dpg.set_value("combo_formats", app.pdf_imposer.params.format)
 
+    _set_values_of_modes(app)
     _set_values_of_visualization(app)
+
+def _set_values_of_modes(app):
+    is_page_mode = app.mode == MODE.PAGE
+    is_visualization_mode = app.mode == MODE.VISUALIZATION
+    dpg.set_value("page_mode_button", is_page_mode)
+    dpg.set_value("visualization_mode_button", is_visualization_mode)
+    dpg.configure_item("plot_window", show=is_page_mode)
+    dpg.configure_item("drawlist_window", show=is_visualization_mode)
+    dpg.configure_item("preview_view_settings", show=is_page_mode)
+    dpg.configure_item("visualiization_view_settings", 
+                       show=is_visualization_mode)
 
 def _set_values_of_visualization(app):
     if app.pdf_imposer.input_doc is not None:
@@ -245,6 +264,9 @@ def _set_values_of_visualization(app):
     dpg.set_value("combo_blocks", block_index)
     dpg.set_value("alpha_input", alpha)
     dpg.set_value("beta_input", beta)
+
+    app.scene.camera.home()
+    app.scene.update()
 
 @require_pdf
 def edit_params(app):
@@ -291,14 +313,13 @@ def edit_params(app):
     update(app, align=align)
 
 def _is_size_part_normal(app, params):
-    if params['quantity_pages_for_part'] % BLOCK_SIZE != 0:
-        _custom_round = lambda x: int(x) + (0 if x % 1 >= 0.5 else 1)
-        params['quantity_pages_for_part'] = int(
-            _custom_round(params['quantity_pages_for_part'] / BLOCK_SIZE) * BLOCK_SIZE)
-        dpg.set_value("size_part_input", params['quantity_pages_for_part'])
     q_pages = len(app.pdf_imposer.input_doc)
     if q_pages < params['quantity_pages_for_part']:
         params['quantity_pages_for_part'] = q_pages - (q_pages % BLOCK_SIZE)
+        dpg.set_value("size_part_input", params['quantity_pages_for_part'])
+        return False
+    if params['quantity_pages_for_part'] < 0:
+        params['quantity_pages_for_part'] = 0
         dpg.set_value("size_part_input", params['quantity_pages_for_part'])
         return False
     return True
@@ -417,15 +438,7 @@ def switch_font(app):
 def switch_mode(app, mode):
     if mode == "page": app.mode = MODE.PAGE
     if mode == "visualization": app.mode = MODE.VISUALIZATION
-    is_page_mode = app.mode == MODE.PAGE
-    is_visualization_mode = app.mode == MODE.VISUALIZATION
-    dpg.set_value("page_mode_button", is_page_mode)
-    dpg.set_value("visualization_mode_button", is_visualization_mode)
-    dpg.configure_item("plot_window", show=is_page_mode)
-    dpg.configure_item("drawlist_window", show=is_visualization_mode)
-    dpg.configure_item("visualization_tab", show=is_visualization_mode)
-    if is_visualization_mode: 
-        dpg.set_value("tab_bar", "visualization_tab")
+    _set_values_of_modes(app)
     update(app)
 
 @require_pdf

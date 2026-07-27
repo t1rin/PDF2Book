@@ -49,7 +49,6 @@ def create_settings_panel(app):
         with dpg.group(horizontal=True):
             dpg.add_button(tag="open_file_btn", label="Открыть")
             dpg.add_button(tag="load_file_btn", label="Загрузить")
-        
         dpg.add_text("Выходной файл PDF")
         dpg.add_input_text(tag="lineedit_output", hint="enter path")
         with dpg.group(horizontal=True):
@@ -57,15 +56,32 @@ def create_settings_panel(app):
             dpg.add_button(tag="save_file_btn", label="Сохранить")
             with dpg.popup("save_as_file_btn"):
                 dpg.add_checkbox(tag="split_file_checkbox", label="Разделять файл для печати")
-        dpg.add_separator(label="View")
-        with dpg.group(horizontal=True):
-            dpg.add_text("Страница: ")
-            dpg.add_button(arrow=True, direction=dpg.mvDir_Left, tag="arrow_left")
-            dpg.add_text("1", tag="page_label")
-            dpg.add_button(arrow=True, direction=dpg.mvDir_Right, tag="arrow_right")
-        with dpg.group(horizontal=True):
-            dpg.add_text("Всего: ")
-            dpg.add_text("0", tag="quantity_page_label")
+
+        with dpg.group():
+            dpg.add_separator(label="View")
+            with dpg.group(tag="preview_view_settings"):
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Страница: ")
+                    dpg.add_button(arrow=True, direction=dpg.mvDir_Left, tag="arrow_left")
+                    dpg.add_text("1", tag="page_label")
+                    dpg.add_button(arrow=True, direction=dpg.mvDir_Right, tag="arrow_right")
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Всего: ")
+                    dpg.add_text("0", tag="quantity_page_label")
+            with dpg.group(tag="visualiization_view_settings", show=False):
+                dpg.add_button(tag="reset_to_home_btn", label="Домой")
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Часть:")
+                    dpg.add_combo(tag="combo_parts", fit_width=True,
+                                  height_mode=dpg.mvComboHeight_Largest)
+                    dpg.add_text("Блок:")
+                    dpg.add_combo(tag="combo_blocks", fit_width=True,
+                                  height_mode=dpg.mvComboHeight_Largest)
+                dpg.add_input_int(tag="alpha_input", step=2)
+                dpg.add_input_int(tag="beta_input", step=2)
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Всего: ")
+                    dpg.add_text("0", tag="quantity_source_page_label")
 
         dpg.add_separator(label="Settings")
 
@@ -83,7 +99,7 @@ def create_settings_panel(app):
                 dpg.add_checkbox(tag="show_margin_lines", label="Показ линии с отступом")
                 dpg.add_checkbox(tag="show_blocks_lines", label="Показ линии блоков")
                 dpg.add_checkbox(tag="show_cut_lines", label="Показ разделяющего пунктира")
-                dpg.add_text("Цвет пунктира:")
+                dpg.add_text("Цвет линий:")
                 dpg.add_color_edit(tag="color_picker", no_alpha=True, no_picker=True, no_drag_drop=True)
                 dpg.add_text("Толщина линий:")
                 dpg.add_input_int(tag="thickness_input")
@@ -96,25 +112,9 @@ def create_settings_panel(app):
                 dpg.add_checkbox(tag="separate_checkbox", label="Делить на секции")
                 with dpg.group(tag="part_options"):
                     dpg.add_text("Размер секции:")
-                    dpg.add_input_int(tag="size_part_input")
-
-            with dpg.tab(label="Визуализация", tag="visualization_tab"):
-                dpg.add_button(tag="reset_to_home_btn", label="Домой")
-                with dpg.group(horizontal=True):
-                    dpg.add_text("Часть:")
-                    dpg.add_combo(tag="combo_parts", height_mode=dpg.mvComboHeight_Largest)
-                with dpg.group(horizontal=True):
-                    dpg.add_text("Блок:")
-                    dpg.add_combo(tag="combo_blocks", height_mode=dpg.mvComboHeight_Largest)
-                dpg.add_text("Угол первого листа:")
-                dpg.add_input_int(tag="alpha_input")
-                dpg.add_text("Угол второго листа:")
-                dpg.add_input_int(tag="beta_input")
-
+                    dpg.add_input_int(tag="size_part_input", step=4)
 
         dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
-
-        set_values(app)
 
 def create_drawlist_window(app):
     with dpg.child_window(tag="drawlist_window", show=False):
@@ -123,13 +123,7 @@ def create_drawlist_window(app):
             with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
                 with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
                                     perspective_divide=True, tag="drawlayer_3d"):
-                    with dpg.draw_node(tag="plane_node"):
-                        dpg.draw_line([0, 0, 0], [app.scene._axis_size, 0, 0], 
-                                      color=[255, 0, 0, 255], thickness=3)
-                        dpg.draw_line([0, 0, 0], [0, app.scene._axis_size, 0], 
-                                      color=[0, 255, 0, 255], thickness=3)
-                        dpg.draw_line([0, 0, 0], [0, 0, app.scene._axis_size], 
-                                      color=[0, 0, 255, 255], thickness=3)
+                    with dpg.draw_node(tag="plane_node"): pass
 
 def create_plot_window(app):
     with dpg.child_window(tag="plot_window"):
@@ -187,6 +181,8 @@ def create_main_window(app):
     create_loading_window(app)
 
     resize_update(app)
+
+    set_values(app)
 
 def create_drag_and_drop(app):
     if os_type() == "Windows":

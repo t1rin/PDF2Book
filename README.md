@@ -12,43 +12,49 @@
 
 ## Модуль `core`
 
-### Методы класса `PDFImposer()`
+отвечает за основную логику программы (класс `PDFImposer()`)
 
-#### `PDFImposer().load_doc(path)`
+<details>
+<summary>Методы класса</summary>
+<p>
+
+### `PDFImposer().load_doc(path)`
 
 загружает исходный файл PDF
 
-#### `PDFImposer().update_params(rows=2, cols=2, margin=15, format="A4_portrait", show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", blocks_are_vertical=False, quantity_pages_for_part=0`
+### `PDFImposer().update_params(rows=2, cols=2, margin=15, format="A4_portrait", show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", blocks_are_vertical=False, quantity_pages_for_part=0`
 
 обновляет параметры расшивки
 
-#### `PDFImposer().get_preview(page_num, scale=1, indexation_size=None)`
+### `PDFImposer().get_preview(page_num, scale=1, indexation_size=None)`
 
 позволяет получить набор данных страницы `page_num` итогового документа без экспорта, если указан `indexation_size`, то будет проводится индексация страниц
 
-#### `PDFImposer().get_formatted_source_page(page_num, scale=1)`
+### `PDFImposer().get_formatted_source_page(page_num, scale=1)`
 
 позволяет получить страницу номера `page_num` исходного документа
 
-#### `PDFImposer().update_doc()`
+### `PDFImposer().update_doc()`
 
 пересчитывает выходной документ по параметрам
 
-#### `PDFImposer().export_doc(path)`
+### `PDFImposer().export_doc(path)`
 
 сохраняет выходной файл
 
-#### `PDFImposer().get_preview_async(page_num, scale=1, indexation=False, callback=None)`
+### `PDFImposer().get_preview_async(page_num, scale=1, indexation=False, callback=None)`
 
 то же, что и `PDFImposer().get_preview(...)`, но асинхронно, переданая функция `callback` будет вызвана по окончанию как: `callback(status, message)`, где `status = True`, если ошибок не было, иначе `status = False` и `message` - пояснение ошибки
 
-#### `PDFImposer().wait_for_completion(timeout=None)`
+### `PDFImposer().wait_for_completion(timeout=None)`
 
 ожидает завершения текущей асинхронной задачи, если `timeout` задан, выйдет из функции по окончанию времени
 
-#### `PDFImposer().is_processing()`
+### `PDFImposer().is_processing()`
 
 проверяет, выполняется ли асинхронная задача
+</p>
+</details>
 
 
 ## Модуль `ui`
@@ -89,7 +95,13 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-# Пример
+для Windows дополнительно:
+
+```shell
+pip install pywin32==312
+```
+
+# Примеры
 
 получение документа для печати и сборки книжки:
 

@@ -248,6 +248,11 @@ def _set_values_of_modes(app):
     dpg.configure_item("preview_view_settings", show=is_page_mode)
     dpg.configure_item("visualiization_view_settings", 
                        show=is_visualization_mode)
+    if is_page_mode:
+        dpg.configure_item("visualization_tab", show=False)
+        dpg.configure_item("detailed_visual_properties_btn", show=True)
+    else:
+        dpg.set_value("tab_bar", "visualization_tab")
 
 def _set_values_of_visualization(app):
     if app.pdf_imposer.input_doc is not None:
@@ -264,8 +269,9 @@ def _set_values_of_visualization(app):
     dpg.set_value("combo_blocks", block_index)
     dpg.set_value("alpha_input", alpha)
     dpg.set_value("beta_input", beta)
+    dpg.set_value("active_block_label", 
+                  f"({part_index}, {block_index})")
 
-    app.scene.camera.home()
     app.scene.update()
 
 @require_pdf
@@ -393,6 +399,8 @@ def selection_block(app):
     beta = app.scene.visual_book.get('beta', part_index, block_index)
     dpg.set_value("alpha_input", alpha)
     dpg.set_value("beta_input", beta)
+    dpg.set_value("active_block_label", f"({part_index}, {block_index})")
+    app.scene.visual_book.active_block = (part_index, block_index)
 
 @require_pdf
 def edit_visualization(app):
@@ -471,6 +479,11 @@ def reset_to_home(app):
     app.scene.camera.home()
     app.scene.update()
 
+def show_visual_settings(app):
+    dpg.configure_item("visualization_tab", show=True)
+    dpg.set_value("tab_bar", "visualization_tab")
+    dpg.configure_item("detailed_visual_properties_btn", show=False)
+
 def register_callbacks(app):
     callbacks = {
         "lineedit_input_file": lambda: is_ok_input_file(app),
@@ -501,6 +514,7 @@ def register_callbacks(app):
         "indexes_pages_checkbox": lambda: edit_indexation(app),
         "page_mode_button": lambda _, __, d: switch_mode(app, d),
         "visualization_mode_button": lambda _, __, d: switch_mode(app, d),
+        "detailed_visual_properties_btn": lambda: show_visual_settings(app),
         "reset_to_home_btn": lambda: reset_to_home(app),
         "combo_parts": lambda: selection_block(app),
         "combo_blocks": lambda: selection_block(app),

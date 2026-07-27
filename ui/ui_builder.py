@@ -69,18 +69,14 @@ def create_settings_panel(app):
                     dpg.add_text("Всего: ")
                     dpg.add_text("0", tag="quantity_page_label")
             with dpg.group(tag="visualiization_view_settings", show=False):
-                dpg.add_button(tag="reset_to_home_btn", label="Домой")
                 with dpg.group(horizontal=True):
-                    dpg.add_text("Часть:")
-                    dpg.add_combo(tag="combo_parts", fit_width=True,
-                                  height_mode=dpg.mvComboHeight_Largest)
-                    dpg.add_text("Блок:")
-                    dpg.add_combo(tag="combo_blocks", fit_width=True,
-                                  height_mode=dpg.mvComboHeight_Largest)
-                dpg.add_input_int(tag="alpha_input", step=2)
-                dpg.add_input_int(tag="beta_input", step=2)
+                    dpg.add_button(tag="reset_to_home_btn", label="Домой")
+                    dpg.add_button(tag="detailed_visual_properties_btn", label="Подробнее")
                 with dpg.group(horizontal=True):
-                    dpg.add_text("Всего: ")
+                    dpg.add_text("Текущий элемент:")
+                    dpg.add_text(tag="active_block_label")
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Страниц всего: ")
                     dpg.add_text("0", tag="quantity_source_page_label")
 
         dpg.add_separator(label="Settings")
@@ -113,6 +109,20 @@ def create_settings_panel(app):
                 with dpg.group(tag="part_options"):
                     dpg.add_text("Размер секции:")
                     dpg.add_input_int(tag="size_part_input", step=4)
+
+            with dpg.tab(label="Визуализация", tag="visualization_tab"):
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Часть:")
+                    dpg.add_combo(tag="combo_parts",
+                                  height_mode=dpg.mvComboHeight_Largest)
+                with dpg.group(horizontal=True):
+                    dpg.add_text("Блок:")
+                    dpg.add_combo(tag="combo_blocks", 
+                                  height_mode=dpg.mvComboHeight_Largest)
+                dpg.add_text("Угол первого листа:")
+                dpg.add_input_int(tag="alpha_input", step=3)
+                dpg.add_text("Угол второго листа:")
+                dpg.add_input_int(tag="beta_input", step=3)
 
         dpg.add_text(color=(200, 50, 50), wrap=0, tag="log_output")
 

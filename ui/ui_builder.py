@@ -160,8 +160,8 @@ def create_loading_window(app):
 def create_menu_bar(app):
     with dpg.menu_bar():
         with dpg.menu(label="Режим"):
-            dpg.add_menu_item(label="Страница", check=True, default_value=True,
-                              tag="page_mode_button", user_data="page")
+            dpg.add_menu_item(label="Просмотр", check=True, default_value=True,
+                              tag="preview_mode_button", user_data="preview")
             dpg.add_menu_item(label="Визуализация", check=True, 
                               tag="visualization_mode_button", 
                               user_data="visualization")

@@ -10,7 +10,7 @@ import ui
 class PDF2BookApp:
     def __init__(self):
         self.pdf_path = None
-        self.mode = MODE.PAGE
+        self.mode = MODE.PREVIEW
 
         self.theme = ui.conf.selected_theme
         self.font = ui.conf.selected_font

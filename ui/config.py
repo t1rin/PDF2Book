@@ -6,7 +6,7 @@ from utils import resource_path
 
 
 class MODE(IntEnum):
-    PAGE = 0
+    PREVIEW = 0
     VISUALIZATION = 1
 
 

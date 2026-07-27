@@ -24,7 +24,7 @@ def require_pdf(func):
 
 def update(app, align=False):
     match app.mode:
-        case MODE.PAGE:
+        case MODE.PREVIEW:
             update_preview(app, align)
         case MODE.VISUALIZATION:
             update_visualization(app)  
@@ -239,16 +239,16 @@ def set_values(app):
     _set_values_of_visualization(app)
 
 def _set_values_of_modes(app):
-    is_page_mode = app.mode == MODE.PAGE
+    is_preview_mode = app.mode == MODE.PREVIEW
     is_visualization_mode = app.mode == MODE.VISUALIZATION
-    dpg.set_value("page_mode_button", is_page_mode)
+    dpg.set_value("preview_mode_button", is_preview_mode)
     dpg.set_value("visualization_mode_button", is_visualization_mode)
-    dpg.configure_item("plot_window", show=is_page_mode)
+    dpg.configure_item("plot_window", show=is_preview_mode)
     dpg.configure_item("drawlist_window", show=is_visualization_mode)
-    dpg.configure_item("preview_view_settings", show=is_page_mode)
+    dpg.configure_item("preview_view_settings", show=is_preview_mode)
     dpg.configure_item("visualiization_view_settings", 
                        show=is_visualization_mode)
-    if is_page_mode:
+    if is_preview_mode:
         dpg.configure_item("visualization_tab", show=False)
         dpg.configure_item("detailed_visual_properties_btn", show=True)
     else:
@@ -444,7 +444,7 @@ def switch_font(app):
     update_theme(app)
 
 def switch_mode(app, mode):
-    if mode == "page": app.mode = MODE.PAGE
+    if mode == "preview": app.mode = MODE.PREVIEW
     if mode == "visualization": app.mode = MODE.VISUALIZATION
     _set_values_of_modes(app)
     update(app)
@@ -512,7 +512,7 @@ def register_callbacks(app):
         "separate_checkbox": lambda: separate(app),
         "size_part_input": lambda: edit_params(app),
         "indexes_pages_checkbox": lambda: edit_indexation(app),
-        "page_mode_button": lambda _, __, d: switch_mode(app, d),
+        "preview_mode_button": lambda _, __, d: switch_mode(app, d),
         "visualization_mode_button": lambda _, __, d: switch_mode(app, d),
         "detailed_visual_properties_btn": lambda: show_visual_settings(app),
         "reset_to_home_btn": lambda: reset_to_home(app),

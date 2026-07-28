@@ -184,12 +184,29 @@ def save_as_file(app):
 
 @require_pdf
 def save_file(app):
-    if not is_ok_output(app): return
+    message = ""
     path = dpg.get_value("lineedit_output")
-    split = app.is_split_file
-    app.pdf_imposer.export_doc(path, split)
-    if split: app.log_message("Файлы сохранены", mood=True)
-    else: app.log_message("Файл сохранен", mood=True)
+
+    if path and not app.is_split_file and not is_type(path, "pdf"):
+        message += "Файл некорректного типа\n\n"
+        path = None
+    if path and app.is_split_file and not is_directory(path):
+        message += "Путь не директория\n\n"
+        path = None
+    
+    if not path:
+        source_dir, source_name = split_path(app.pdf_path)
+        if app.is_split_file:
+            path = join_path(source_dir, f"book_{source_name}")
+        else:
+            path = join_path(source_dir, f"book_{source_name}.pdf")
+        dpg.set_value("lineedit_output", path)
+        message += f"Путь автоматически установлен: {path}\n\n"
+
+    app.pdf_imposer.export_doc(path, app.is_split_file)
+
+    message += "Файлы сохранены" if app.is_split_file else "Файл сохранен"
+    app.log_message(message, mood=True)
 
 def split_file(app):
     app.is_split_file = dpg.get_value("split_file_checkbox")

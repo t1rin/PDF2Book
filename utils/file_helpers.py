@@ -160,3 +160,14 @@ def os_type():
 
 def is_type(path, type):
     return path.split(".")[-1] == type
+
+def split_path(src):
+    source_dir = os.path.dirname(src)
+    source_name = os.path.splitext(os.path.basename(src))[0]
+    return source_dir, source_name
+
+def join_path(*args):
+    return os.path.join(*args)
+
+def is_directory(path):
+    return os.path.isdir(path)

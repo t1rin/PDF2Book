@@ -21,26 +21,7 @@ def resize_update(app):
     text_width, _ = dpg.get_item_rect_size("loading_text")
     pos_loading_text = ((widget_width - text_width) / 2, widget_width + padding)
     dpg.configure_item("loading_text", pos=pos_loading_text)
-
-def create_context_menu(app):
-    with dpg.window(tag="context_menu", popup=True, show=False, no_title_bar=True, 
-                    no_move=True, no_resize=True, autosize=True):
-        dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
-        dpg.add_menu_item(label="Сменить тему", tag="switch_theme_btn")
-        dpg.add_menu_item(label="Сменить шрифт", tag="switch_font_btn")
-        dpg.add_checkbox(label="Индексы страниц", tag="indexes_pages_checkbox")
-        dpg.add_text("Детализация: ", tag="scale_text")
-        with dpg.group(horizontal=True):
-            dpg.add_button(label="1.5", tag="scale_1.5_btn")
-            dpg.add_button(label="1.75", tag="scale_1.75_btn")
-            dpg.add_button(label="2", tag="scale_2.0_btn")
-        with dpg.group(horizontal=True):
-            dpg.add_button(label="2.25", tag="scale_2.25_btn")
-            dpg.add_button(label="2.5", tag="scale_2.5_btn")
-            dpg.add_button(label="3", tag="scale_2.75_btn")
-        dpg.add_text("При выборе необходимо будет перезапустить программу", 
-                     wrap=0, color=(150, 150, 60))
-
+      
 def create_settings_panel(app):
     with dpg.child_window(tag="settings_panel"):
         dpg.add_separator(label="PDF2Book")
@@ -60,6 +41,7 @@ def create_settings_panel(app):
         with dpg.group():
             dpg.add_separator(label="View")
             with dpg.group(tag="preview_view_settings"):
+                dpg.add_checkbox(label="Индексы страниц", tag="indexes_pages_checkbox")
                 with dpg.group(horizontal=True):
                     dpg.add_text("Страница: ")
                     dpg.add_button(arrow=True, direction=dpg.mvDir_Left, tag="arrow_left")
@@ -165,9 +147,26 @@ def create_menu_bar(app):
             dpg.add_menu_item(label="Визуализация", check=True, 
                               tag="visualization_mode_button", 
                               user_data="visualization")
+        with dpg.menu(label="Вид"):
+            dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
+            dpg.add_separator()
+            dpg.add_menu_item(label="Сменить тему", shortcut="F1",
+                              tag="switch_theme_btn")
+            dpg.add_menu_item(label="Сменить шрифт", shortcut="F2",
+                              tag="switch_font_btn")
+            dpg.add_separator()
+            with dpg.menu(label="Детализация"):
+                current_scale = app.scale
+                for value in range(100, 300, 25):
+                    scale = value / 100
+                    tag = f"scale_{scale}_btn"
+                    dpg.add_menu_item(label=str(scale), tag=tag, check=True,
+                        default_value=(scale == current_scale), user_data=scale)
+                dpg.add_separator()
+                dpg.add_text("Изменение вступит в силу\nпосле перезапуска", 
+                           color=(150, 150, 60), wrap=200)
 
 def create_main_window(app):
-    create_context_menu(app)
     with dpg.window(tag="primary_window"):
         dpg.set_primary_window("primary_window", True)
         create_menu_bar(app)

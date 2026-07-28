@@ -476,7 +476,6 @@ def edit_indexation(app):
 def edit_scale(app, sender):
     scale = float(dpg.get_item_label(sender))
     app.scale = scale
-    dpg.hide_item("context_menu")
     #update_theme(app, rebuild=True)
     app.on_exit()
 
@@ -527,7 +526,7 @@ def register_callbacks(app):
         "beta_input": lambda: edit_visualization(app),
     }
 
-    for det in range(150, 300, 25):
+    for det in range(100, 300, 25):
         callbacks[f"scale_{det/100}_btn"] = lambda s, a, d: edit_scale(app, s)
 
     for item, callback in callbacks.items():

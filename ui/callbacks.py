@@ -12,9 +12,9 @@ BLOCK_SIZE = 4
 def require_pdf(func):
     def wrapper(app, *args, **kwargs):
         if app.pdf_path:
-            app.log_message()
+            app.message()
         if app.pdf_path is None:
-            app.log_message("Файл PDF не загружен", mood=False)
+            app.message("Файл PDF не загружен", mood=False)
             set_values(app)
             return
         return func(app, *args, **kwargs)
@@ -134,7 +134,7 @@ def _get_textures(app):
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
-    app.log_message(err, mood=False)
+    app.message(err, mood=False)
     if err: return
 
     def on_loading(success, error):
@@ -142,10 +142,10 @@ def load_file(app):
             reset_visual_book(app)
             update(app, align=True)
             set_values(app)
-            app.log_message("Файл успешно загружен", mood=True)
+            app.message("Файл успешно загружен", mood=True)
         else:
             app.pdf_path = None
-            app.log_message(error, mood=False)
+            app.message(error, mood=False)
 
     app.pdf_path = path
     app.pdf_imposer.update_params()
@@ -155,7 +155,7 @@ def open_file(app):
     path = FileDialogHelper.open_pdf_file()
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
-    app.log_message(err, mood=False)
+    app.message(err, mood=False)
     if not err:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
@@ -164,7 +164,7 @@ def drop_handler(app, data):
     path = data[0]
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
-    app.log_message(err, mood=False)
+    app.message(err, mood=False)
     if not err:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
@@ -177,21 +177,21 @@ def save_as_file(app):
         path = FileDialogHelper.save_pdf_file()
         if path is None: return
         if not is_type(path, "pdf"):
-            app.log_message("Файл некорректного типа")
+            app.message("Файл некорректного типа")
             return
     dpg.set_value("lineedit_output", path)
     save_file(app)
 
 @require_pdf
 def save_file(app):
-    message = ""
+    messages = []
     path = dpg.get_value("lineedit_output")
 
     if path and not app.is_split_file and not is_type(path, "pdf"):
-        message += "Файл некорректного типа\n\n"
+        messages.append("Файл некорректного типа")
         path = None
     if path and app.is_split_file and not is_directory(path):
-        message += "Путь не директория\n\n"
+        messages.append("Путь не директория")
         path = None
     
     if not path:
@@ -201,12 +201,12 @@ def save_file(app):
         else:
             path = join_path(source_dir, f"book_{source_name}.pdf")
         dpg.set_value("lineedit_output", path)
-        message += f"Путь автоматически установлен: {path}\n\n"
+        messages.append(f"Путь автоматически установлен: {path}")
 
     app.pdf_imposer.export_doc(path, app.is_split_file)
 
-    message += "Файлы сохранены" if app.is_split_file else "Файл сохранен"
-    app.log_message(message, mood=True)
+    messages.append("Файлы сохранены" if app.is_split_file else "Файл сохранен")
+    app.message(messages, mood=True)
 
 def split_file(app):
     app.is_split_file = dpg.get_value("split_file_checkbox")
@@ -296,7 +296,7 @@ def edit_params(app):
     
     params['dashes_pattern'] = _prepare_pattern(app, params['dashes_pattern'])
 
-    app.log_message()
+    app.message()
     app.pdf_imposer.update_params(**params)
 
     q_parts, q_blocks = _calculate_parts_blocks(
@@ -350,13 +350,13 @@ def _validate_params(app, params):
         dpg.set_value("thickness_input", conf.max_line_thickness)
         return False
     if params['blocks_are_vertical'] and (params['rows'] % 2 == 1):
-        app.log_message(
-            msg="В указанное количество строк не помещаются блоки по два", 
+        app.message(
+            content="В указанное количество строк не помещаются блоки по два", 
             mood=False)
         return False
     if not params['blocks_are_vertical'] and (params['cols'] % 2 == 1):
-        app.log_message(
-            msg="В указанное количество столбцов не помещаются блоки по два", 
+        app.message(
+            content="В указанное количество столбцов не помещаются блоки по два", 
             mood=False)
         return False
     return True
@@ -425,13 +425,13 @@ def check_lineedit_pattern(app):
 
     if app.pdf_path is None:
         dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
-        app.log_message("Файл PDF не загружен", mood=False)
+        app.message("Файл PDF не загружен", mood=False)
         return
 
     if (len(pattern_code) % 2 == 0) and all(s.isdigit() for s in pattern_code):
         edit_params(app)
     else:
-        app.log_message("Некорректный формат паттерна", mood=False)
+        app.message("Некорректный формат паттерна", mood=False)
 
 def move_panel(app):
     app.pw_left = not app.pw_left

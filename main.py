@@ -35,13 +35,25 @@ class PDF2BookApp:
         self.scene = Scene(scale=self.scale,
                            default_texture=default_texture)
 
-    def log_message(self, msg=None, mood=None):
+    def message(self, content=None, mood=None, sep="\n\n"):
         color = None
-        if mood == True: color = (50, 150, 100)
-        if mood == False: color = (200, 50, 50)
+        if mood == True:
+            color = (50, 150, 100)
+        if mood == False:
+            color = (200, 50, 50)
         dpg.configure_item("log_output", color=color)
-        if msg: dpg.set_value("log_output", msg)
-        else: dpg.set_value("log_output", "")
+
+        if isinstance(content, str):
+            message = content
+        else:
+            message = ""
+
+        if isinstance(content, list) and all([isinstance(msg, str) 
+                                              for msg in content]):
+            for i in range(len(content)):
+                message += content[i] + sep
+
+        dpg.set_value("log_output", message)
 
     def run(self):
         dpg.create_context()

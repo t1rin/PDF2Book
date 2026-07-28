@@ -143,9 +143,15 @@ def create_menu_bar(app):
             dpg.add_separator()
             with dpg.menu(label="Пути"):
                 dpg.add_text("Исходный")
-                dpg.add_input_text(tag="lineedit_input_file", enabled=False)
+                with dpg.group(horizontal=True):
+                    dpg.add_input_text(tag="lineedit_input_file", enabled=False)
+                    dpg.add_button(tag="open_input_folder_btn",
+                                   label="Показать")
                 dpg.add_text("Выходной")
-                dpg.add_input_text(tag="lineedit_output", enabled=False)
+                with dpg.group(horizontal=True):
+                    dpg.add_input_text(tag="lineedit_output", enabled=False)
+                    dpg.add_button(tag="open_output_folder_btn", 
+                                   label="Показать")
             
         with dpg.menu(label="Режим"):
             dpg.add_menu_item(label="Просмотр", check=True, default_value=True,

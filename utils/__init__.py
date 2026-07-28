@@ -1,5 +1,6 @@
 from .file_helpers import (os_type, split_path, join_path, is_type, get_fonts, 
-                           normalize_path, resource_path, is_directory)
+                           normalize_path, resource_path, is_directory,
+                           start_path)
 from .file_helpers import FileDialogHelper, PDFInfo
 
 __all__ = [
@@ -12,5 +13,6 @@ __all__ = [
     'resource_path',
     'split_path',
     'join_path',
-    'is_directory'
+    'is_directory',
+    'start_path'
 ]

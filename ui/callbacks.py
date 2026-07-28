@@ -211,6 +211,23 @@ def save_file(app):
 def split_file(app):
     app.is_split_file = dpg.get_value("split_file_checkbox")
 
+@require_pdf
+def open_input_folder(app):
+    path = dpg.get_value("lineedit_input_file")
+
+    if not start_path(path):
+        app.message(f"Папка не существует", mood=False)
+
+@require_pdf
+def open_output_folder(app):
+    path = dpg.get_value("lineedit_output")
+    if not path:
+        app.message("Файл не был сохранён", mood=False)
+        return
+    
+    if not start_path(path):
+        app.message(f"Папка не существует", mood=False)
+
 # __ Working with params __
 
 def set_values(app):
@@ -520,6 +537,8 @@ def register_callbacks(app):
         "combo_blocks": lambda: selection_block(app),
         "alpha_input": lambda: edit_visualization(app),
         "beta_input": lambda: edit_visualization(app),
+        "open_input_folder_btn": lambda: open_input_folder(app),
+        "open_output_folder_btn": lambda: open_output_folder(app),
     }
 
     for det in range(100, 300, 25):

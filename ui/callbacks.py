@@ -131,12 +131,6 @@ def _get_textures(app):
 
 # __ Working with files __
 
-def is_ok_input_file(app):
-    path = dpg.get_value("lineedit_input_file")
-    _, err = PDFInfo.validate_and_get_info(path)
-    if path: app.log_message(err, mood=False)
-    else: app.log_message()
-
 def load_file(app):
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
@@ -174,16 +168,6 @@ def drop_handler(app, data):
     if not err:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
-
-def is_ok_output(app):
-    path = dpg.get_value("lineedit_output")
-    if not path:
-        app.log_message()
-        return False
-    if (not app.is_split_file) and (not is_type(path, "pdf")):
-        app.log_message("Файл некорректного типа", mood=False)
-        return False
-    return True
 
 def save_as_file(app):
     if app.is_split_file:
@@ -488,8 +472,6 @@ def show_visual_settings(app):
 
 def register_callbacks(app):
     callbacks = {
-        "lineedit_input_file": lambda: is_ok_input_file(app),
-        "load_file_btn": lambda: load_file(app),
         "open_file_btn": lambda: open_file(app),
         "arrow_left": lambda: arrow_left_callback(app),
         "arrow_right": lambda: arrow_right_callback(app),
@@ -501,7 +483,6 @@ def register_callbacks(app):
         "show_cut_lines": lambda: edit_params(app),
         "color_picker": lambda: edit_params(app),
         "radio_btn": lambda: edit_params(app),
-        "lineedit_output": lambda: is_ok_output(app),
         "save_as_file_btn": lambda: save_as_file(app),
         "save_file_btn": lambda: save_file(app),
         "split_file_checkbox": lambda: split_file(app),

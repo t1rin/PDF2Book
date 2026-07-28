@@ -24,22 +24,10 @@ def resize_update(app):
       
 def create_settings_panel(app):
     with dpg.child_window(tag="settings_panel"):
-        dpg.add_separator(label="PDF2Book")
-        dpg.add_text("Исходный файл PDF")
-        dpg.add_input_text(tag="lineedit_input_file", hint="enter path to file")
-        with dpg.group(horizontal=True):
-            dpg.add_button(tag="open_file_btn", label="Открыть")
-            dpg.add_button(tag="load_file_btn", label="Загрузить")
-        dpg.add_text("Выходной файл PDF")
-        dpg.add_input_text(tag="lineedit_output", hint="enter path")
-        with dpg.group(horizontal=True):
-            dpg.add_button(tag="save_as_file_btn", label="Экспорт")
-            dpg.add_button(tag="save_file_btn", label="Сохранить")
-            with dpg.popup("save_as_file_btn"):
-                dpg.add_checkbox(tag="split_file_checkbox", label="Разделять файл для печати")
+
+        dpg.add_separator(label="View")
 
         with dpg.group():
-            dpg.add_separator(label="View")
             with dpg.group(tag="preview_view_settings"):
                 dpg.add_checkbox(label="Индексы страниц", tag="indexes_pages_checkbox")
                 with dpg.group(horizontal=True):
@@ -141,12 +129,31 @@ def create_loading_window(app):
 
 def create_menu_bar(app):
     with dpg.menu_bar():
+        with dpg.menu(label="Файл"):
+            dpg.add_menu_item(label="Открыть PDF", tag="open_file_btn",
+                              shortcut="Ctrl+O")
+            dpg.add_separator()
+            dpg.add_menu_item(label="Сохранить", tag="save_file_btn",
+                              shortcut="Ctrl+S")
+            dpg.add_menu_item(label="Сохранить как...", tag="save_as_file_btn",
+                              shortcut="Ctrl+Shift+S")
+            with dpg.menu(label="Параметры"):
+                dpg.add_checkbox(tag="split_file_checkbox", 
+                                label="Разделять файл для печати")
+            dpg.add_separator()
+            with dpg.menu(label="Пути"):
+                dpg.add_text("Исходный")
+                dpg.add_input_text(tag="lineedit_input_file", enabled=False)
+                dpg.add_text("Выходной")
+                dpg.add_input_text(tag="lineedit_output", enabled=False)
+            
         with dpg.menu(label="Режим"):
             dpg.add_menu_item(label="Просмотр", check=True, default_value=True,
                               tag="preview_mode_button", user_data="preview")
             dpg.add_menu_item(label="Визуализация", check=True, 
                               tag="visualization_mode_button", 
                               user_data="visualization")
+            
         with dpg.menu(label="Вид"):
             dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
             dpg.add_separator()

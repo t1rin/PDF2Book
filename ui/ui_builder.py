@@ -11,6 +11,8 @@ if os_type() == "Windows":
 def resize_update(app):
     viewport_width = dpg.get_viewport_width()
     viewport_height = dpg.get_viewport_height()
+    if not dpg.does_item_exist("loading_window"):
+        return
     widget_width = dpg.get_item_width("loading_window")
     widget_height = dpg.get_item_height("loading_window")
     pos_loading_window = ((viewport_width - widget_width) / 2, 
@@ -25,7 +27,7 @@ def resize_update(app):
 def create_settings_panel(app):
     with dpg.child_window(tag="settings_panel"):
 
-        dpg.add_separator(label="View")
+        dpg.add_text(tag="pdf2book_text", default_value="PDF2Book")
 
         with dpg.group():
             with dpg.group(tag="preview_view_settings"):

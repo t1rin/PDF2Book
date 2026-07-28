@@ -68,7 +68,9 @@ def register_theme(app):
     
 def register_font(app):
     font = resource_path(app.font)
+    title_font = resource_path(app.title_font)
     with dpg.font_registry():
+        with dpg.font(title_font, size=38, tag="title_font"): pass
         with dpg.font(font, size=14, tag="global_font"): pass
         with dpg.font(font, size=20, tag="loading_font"): pass
 
@@ -81,9 +83,10 @@ def register_themes(app):
         register_font(app)
         dpg.bind_font("global_font")
         #dpg.bind_item_font("loading_text", "loading_font")
+        dpg.bind_item_font("pdf2book_text", "title_font")
 
 def update_theme(app, rebuild=False):
-    to_delete = ["global_theme", "global_font", "loading_font"]
+    to_delete = ["global_theme", "global_font", "loading_font", "title_font"]
     for item in to_delete:
         if dpg.does_item_exist(item):
             dpg.delete_item(item)

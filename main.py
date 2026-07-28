@@ -14,6 +14,7 @@ class PDF2BookApp:
 
         self.theme = ui.conf.selected_theme
         self.font = ui.conf.selected_font
+        self.title_font = ui.conf.title_font
         self.pw_left = ui.conf.parametrs_window_on_the_left
         self.scale = ui.conf.scale
 

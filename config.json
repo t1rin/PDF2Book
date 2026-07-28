@@ -4,7 +4,8 @@
         "height": 750,
         "width": 770
     },
-    "selected_font": "assets\\fonts\\Cruinn.ttf",
+    "title_font": "assets\\fonts\\Prata-Regular.ttf",
+    "selected_font": "assets/fonts/DeleddaOpen.ttf",
     "selected_theme": "light",
     "parametrs_window_on_the_left": false,
     "theme": {

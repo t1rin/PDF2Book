@@ -252,8 +252,6 @@ def _set_values_of_modes(app):
     if is_preview_mode:
         dpg.configure_item("visualization_tab", show=False)
         dpg.configure_item("detailed_visual_properties_btn", show=True)
-    else:
-        dpg.set_value("tab_bar", "visualization_tab")
 
 def _set_values_of_visualization(app):
     if app.pdf_imposer.input_doc is not None:

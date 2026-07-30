@@ -2,114 +2,140 @@ import os
 import dearpygui.dearpygui as dpg
 
 from ui.config import conf
-from utils import resource_path
+from utils import resource_path, get_fonts
 
 
-def register_theme(app):
-    name = app.theme
-    with dpg.theme(tag="global_theme"):
-        with dpg.theme_component(dpg.mvAll):
-            dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 8, 8)
-            dpg.add_theme_style(dpg.mvStyleVar_FramePadding, 6, 4)
-            dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 6, 3)
-            dpg.add_theme_style(dpg.mvStyleVar_ItemSpacing, 8, 10)
-            dpg.add_theme_style(dpg.mvStyleVar_ItemInnerSpacing, 8, 8)
-            dpg.add_theme_style(dpg.mvStyleVar_ScrollbarSize, 14)
-            dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 10)
-            dpg.add_theme_style(dpg.mvStyleVar_SeparatorTextBorderSize, 2)
-            dpg.add_theme_style(dpg.mvStyleVar_SeparatorTextAlign, 0.5, 0.5)
-            dpg.add_theme_style(dpg.mvStyleVar_SeparatorTextPadding, 0, 0)
-            dpg.add_theme_style(dpg.mvStyleVar_TabBarBorderSize, 0)
 
-            dpg.add_theme_color(dpg.mvThemeCol_WindowBg, conf.theme[name]["window_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_ChildBg, conf.theme[name]["bg_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_PopupBg, conf.theme[name]["bg_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_MenuBarBg, conf.theme[name]["bg_color"])
-            
-            dpg.add_theme_color(dpg.mvThemeCol_FrameBg, conf.theme[name]["widget_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_Button, conf.theme[name]["widget_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TitleBg, conf.theme[name]["widget_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TitleBgActive, conf.theme[name]["widget_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_Tab, conf.theme[name]["widget_color"])
-            
-            dpg.add_theme_color(dpg.mvThemeCol_Text, conf.theme[name]["text_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TextDisabled, conf.theme[name]["text_disabled_color"])
-            
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonHovered, conf.theme[name]["hovered_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_HeaderHovered, conf.theme[name]["hovered_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TabHovered, conf.theme[name]["hovered_color"])
-            
-            dpg.add_theme_color(dpg.mvThemeCol_ButtonActive, conf.theme[name]["selected_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_HeaderActive, conf.theme[name]["selected_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TabSelected, conf.theme[name]["selected_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TabActive, conf.theme[name]["selected_color"])
-            
-            dpg.add_theme_color(dpg.mvThemeCol_Separator, conf.theme[name]["border_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_Border, conf.theme[name]["border_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TableBorderLight, conf.theme[name]["border_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_TableBorderStrong, conf.theme[name]["border_color"])
-  
-            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarBg, conf.theme[name]["bg_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrab, conf.theme[name]["widget_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabHovered, conf.theme[name]["hovered_color"])
-            dpg.add_theme_color(dpg.mvThemeCol_ScrollbarGrabActive, conf.theme[name]["selected_color"])
+class ThemeManager:
+    def __init__(self, parent) -> None:
+        self._app = parent
+        self._cache_fonts: dict[tuple[str, int], str | int] = dict()
+        self._fonts_settings = [
+            (None, self._app.font, 14),
+            ("loading_text", self._app.font, 20),
+            ("pdf2book_text", self._app.title_font, 38),
+        ]
 
-        with dpg.theme_component(dpg.mvTab):
-            dpg.add_theme_style(dpg.mvStyleVar_TabBorderSize, 1)
-            dpg.add_theme_style(dpg.mvStyleVar_TabRounding, 0)
+        self.registry_themes()
 
-        with dpg.theme_component(dpg.mvTable):
-            dpg.add_theme_style(dpg.mvStyleVar_CellPadding, 1, 0)
-            dpg.add_theme_color(dpg.mvThemeCol_TableHeaderBg, conf.theme[name]["widget_color"])
+    def registry_themes(self) -> None:
+        themes_names = conf.themes.keys()
+        for theme_name in themes_names:
+            if theme_name and dpg.does_item_exist(theme_name):
+                self.app.message(f"{theme_name} exists", mood=False)
+                continue
 
-        with dpg.theme_component(dpg.mvPlot):
-            dpg.add_theme_color(dpg.mvThemeCol_FrameBg, conf.theme[name]["bg_color"])
-            dpg.add_theme_color(dpg.mvPlotCol_Selection, conf.theme[name]["plot_selection_color"])
-    
-def register_font(app):
-    font = resource_path(app.font)
-    title_font = resource_path(app.title_font)
-    with dpg.font_registry():
-        with dpg.font(title_font, size=38, tag="title_font"): pass
-        with dpg.font(font, size=14, tag="global_font"): pass
-        with dpg.font(font, size=20, tag="loading_font"): pass
+            themes = self._get_style_dict(theme_name)
+            with dpg.theme(tag=theme_name):
+                for component, theme in themes.items():
+                    with dpg.theme_component(component):
+                        for style in theme["styles"]:
+                            dpg.add_theme_style(*style)
+                        for color in theme["colors"]:
+                            dpg.add_theme_color(*color)
 
-def register_themes(app):
-    register_theme(app)
-    dpg.bind_theme("global_theme")
-    if not os.path.exists(resource_path(app.font)):
-        app.message(f"Warning: Font file not found: {app.font}", mood=False)
-    else:
-        register_font(app)
-        dpg.bind_font("global_font")
-        #dpg.bind_item_font("loading_text", "loading_font")
-        dpg.bind_item_font("pdf2book_text", "title_font")
+    def update(self) -> None:
+        dpg.bind_theme(self._app.theme)
+        for item, path, size in self._fonts_settings:
+            font_tag = self._get_font(path, size)
+            if font_tag is None:
+                continue
 
-def update_theme(app, rebuild=False):
-    to_delete = ["global_theme", "global_font", "loading_font", "title_font"]
-    for item in to_delete:
-        if dpg.does_item_exist(item):
-            dpg.delete_item(item)
-        
-    if rebuild:
-        import ui
+            if item is None:
+                dpg.bind_font(font_tag)
+            elif dpg.does_item_exist(item):
+                dpg.bind_item_font(item, font_tag)
 
-        to_delete = ["primary_window", "loading_window", "split_file_checkbox",
-                     "drawlist_window", "plot_window"]
-        for item in to_delete:
-            if dpg.does_item_exist(item):
-                dpg.delete_item(item)
-        
-        ui.create_main_window(app)
-        ui.register_callbacks(app)
-        ui.register_mouse_handlers(app)
-        ui.register_keyboards(app)
-    
-    register_themes(app)
-    
-    app.scene.update()
+        self._app.message()
 
-    dpg.split_frame()
+    def _get_font(self, path: str, size: int) -> str | int | None:
+        item = (path, size)
+        if item not in self._cache_fonts:
+            with dpg.font_registry(tag=dpg.generate_uuid()):
+                _path = resource_path(path)
+                if not os.path.exists(_path):
+                    self._app.message(
+                        content=f"Warning: Font file not found: {path}", 
+                        mood=False)
+                    return
+                font_tag = dpg.generate_uuid()
+                with dpg.font(_path, size, tag=font_tag):
+                    self._cache_fonts[item] = font_tag
+        return self._cache_fonts[item]
 
-    app.message()
+    def _get_style_dict(self, theme_name: str) -> dict[int, dict[str, list]]:
+        settings = conf.themes[theme_name]
+        return {
+            dpg.mvAll: {
+                "styles": [
+                    (dpg.mvStyleVar_WindowPadding, 8, 8),
+                    (dpg.mvStyleVar_FramePadding, 6, 4),
+                    (dpg.mvStyleVar_CellPadding, 6, 3),
+                    (dpg.mvStyleVar_ItemSpacing, 8, 10),
+                    (dpg.mvStyleVar_ItemInnerSpacing, 8, 8),
+                    (dpg.mvStyleVar_ScrollbarSize, 14),
+                    (dpg.mvStyleVar_ChildRounding, 10),
+                    (dpg.mvStyleVar_SeparatorTextBorderSize, 2),
+                    (dpg.mvStyleVar_SeparatorTextAlign, 0.5, 0.5),
+                    (dpg.mvStyleVar_SeparatorTextPadding, 0, 0),
+                    (dpg.mvStyleVar_TabBarBorderSize, 0),
+                ],
+                "colors": [
+                    (dpg.mvThemeCol_WindowBg, settings["window_color"]),
+                    (dpg.mvThemeCol_ChildBg, settings["bg_color"]),
+                    (dpg.mvThemeCol_PopupBg, settings["bg_color"]),
+                    (dpg.mvThemeCol_MenuBarBg, settings["bg_color"]),
+                    (dpg.mvThemeCol_FrameBg, settings["widget_color"]),
+                    (dpg.mvThemeCol_Button, settings["widget_color"]),
+                    (dpg.mvThemeCol_TitleBg, settings["widget_color"]),
+                    (dpg.mvThemeCol_TitleBgActive, settings["widget_color"]),
+                    (dpg.mvThemeCol_Tab, settings["widget_color"]),
+                    (dpg.mvThemeCol_Text, settings["text_color"]),
+                    (dpg.mvThemeCol_TextDisabled, settings["text_disabled_color"]),
+                    (dpg.mvThemeCol_ButtonHovered, settings["hovered_color"]),
+                    (dpg.mvThemeCol_HeaderHovered, settings["hovered_color"]),
+                    (dpg.mvThemeCol_TabHovered, settings["hovered_color"]),
+                    (dpg.mvThemeCol_ButtonActive, settings["selected_color"]),
+                    (dpg.mvThemeCol_HeaderActive, settings["selected_color"]),
+                    (dpg.mvThemeCol_TabSelected, settings["selected_color"]),
+                    (dpg.mvThemeCol_TabActive, settings["selected_color"]),
+                    (dpg.mvThemeCol_Separator, settings["border_color"]),
+                    (dpg.mvThemeCol_Border, settings["border_color"]),
+                    (dpg.mvThemeCol_TableBorderLight, settings["border_color"]),
+                    (dpg.mvThemeCol_TableBorderStrong, settings["border_color"]),
+                    (dpg.mvThemeCol_ScrollbarBg, settings["bg_color"]),
+                    (dpg.mvThemeCol_ScrollbarGrab, settings["widget_color"]),
+                    (dpg.mvThemeCol_ScrollbarGrabHovered, settings["hovered_color"]),
+                    (dpg.mvThemeCol_ScrollbarGrabActive, settings["selected_color"]),
+                ]
+            },
+            dpg.mvTab: {
+                "styles": [
+                    (dpg.mvStyleVar_TabBorderSize, 1),
+                    (dpg.mvStyleVar_TabRounding, 0),
+                ],
+                "colors": []
+            },
+            dpg.mvTable: {
+                "styles": [
+                    (dpg.mvStyleVar_CellPadding, 1, 0)
+                ],
+                "colors": [
+                    (dpg.mvThemeCol_TableHeaderBg, settings["widget_color"])
+                ]
+            },
+            dpg.mvPlot: {
+                "styles": [
+                    (dpg.mvStyleVar_TabBorderSize, 1),
+                    (dpg.mvStyleVar_TabRounding, 0),
+                ],
+                "colors": [
+                    (dpg.mvThemeCol_FrameBg, settings["bg_color"]),
+                    (dpg.mvPlotCol_Selection, settings["plot_selection_color"]),
+                ]
+            }
+        }
+
+
+
     

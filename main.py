@@ -3,6 +3,7 @@ import dearpygui.dearpygui as dpg
 from core import PDFImposer
 from ui.visualization import Scene
 from ui.textures import TextureManager
+from ui.themes import ThemeManager
 from ui.config import MODE
 import ui
 
@@ -19,20 +20,24 @@ class PDF2BookApp:
         self.scale = ui.conf.scale
 
         self.pdf_imposer = PDFImposer()
+        self.texture_manager = None
+        self.theme_manager = None
         self.scene = None
-        self.tm = None
 
         self.is_indexation = False
         self.is_split_file = False
         self.current_page = 1
 
         self._old_size_drawlist = None
+        self._processing = None
 
     def initialize(self):
         from core.config import formats
-        self.tm = TextureManager(formats=formats, 
+
+        self.theme_manager = ThemeManager(self)
+        self.texture_manager = TextureManager(formats=formats, 
                                  scale=self.scale)
-        default_texture = self.tm.get_dynamic_textures("visual_textures")[0]
+        default_texture = self.texture_manager.get_dynamic_textures("visual_textures")[0]
         self.scene = Scene(scale=self.scale,
                            default_texture=default_texture)
 
@@ -66,14 +71,7 @@ class PDF2BookApp:
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         dpg.set_exit_callback(self.on_exit)
 
-        ui.create_main_window(self)
-        ui.register_callbacks(self)
-        ui.register_mouse_handlers(self)
-        ui.register_keyboards(self)
-        ui.register_themes(self)
-        ui.create_drag_and_drop(self)
-        
-        self.scene.update()
+        self.create_ui()
 
         dpg.setup_dearpygui()
         dpg.show_viewport()
@@ -84,13 +82,29 @@ class PDF2BookApp:
 
         dpg.destroy_context()
 
+    def create_ui(self):
+        to_delete = ["primary_window", "loading_window", "context_menu",
+                     "split_file_checkbox", "drawlist_window", "plot_window"]
+        for item in to_delete:
+            if dpg.does_item_exist(item):
+                dpg.delete_item(item)
+
+        ui.create_main_window(self)
+        ui.register_callbacks(self)
+        ui.register_mouse_handlers(self)
+        ui.register_keyboards(self)
+        ui.create_drag_and_drop(self)
+
+        self.theme_manager.update()
+        self.scene.update()
+
     def on_frame(self):
         if dpg.get_frame_count() < 25:
             ui.resize_update(self)
         else:
-            showed = self.pdf_imposer.is_processing()
+            show = self._processing or self.pdf_imposer.is_processing()
             if dpg.does_item_exist("loading_window"):
-                dpg.configure_item("loading_window", show=showed)
+                dpg.configure_item("loading_window", show=show)
 
             if dpg.does_item_exist("drawlist_window"):
                 size_drawlist = dpg.get_item_rect_size("drawlist_window")

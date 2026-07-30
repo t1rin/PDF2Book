@@ -116,7 +116,7 @@ def create_plot_window(app):
             dpg.add_plot_axis(dpg.mvXAxis, tag="x_axis", **options) 
             with dpg.plot_axis(dpg.mvYAxis, tag="y_axis", **options):
                 texture_tag = app.pdf_imposer.params.format
-                _, size = app.tm.get_preview_data(texture_tag, only_size=True)
+                _, size = app.texture_manager.get_preview_data(texture_tag, only_size=True)
                 dpg.add_image_series(texture_tag, [0, 0], size, tag="preview_pdf")
                 dpg.fit_axis_data(dpg.top_container_stack())
             dpg.fit_axis_data("x_axis")

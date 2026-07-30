@@ -1,7 +1,6 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.themes import update_theme
 from ui.config import conf, MODE
 from ui.visualization.data_structures import SIDE
 from core.config import formats as formats_sizes
@@ -40,7 +39,7 @@ def update_preview(app, align=False):
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
                                               scale=app.scale, 
                                               indexation_size=indexation_size)
-    app.tm.update_preview_texture(texture_tag, img_data=img_data)
+    app.texture_manager.update_preview_texture(texture_tag, img_data=img_data)
     if align:
         dpg.fit_axis_data("x_axis")
         dpg.fit_axis_data("y_axis")
@@ -114,7 +113,7 @@ def _get_textures(app):
         img_data, _ = app.pdf_imposer.get_formatted_source_page(
             page_num=index, scale=app.scale)
         texture = cache_textures[index]
-        app.tm.update_dynamic_texture(texture, img_data=img_data)
+        app.texture_manager.update_dynamic_texture(texture, img_data=img_data)
         textures.append(texture)
         index += 1
     while index < q_pages:
@@ -122,8 +121,8 @@ def _get_textures(app):
             page_num=index, scale=app.scale))
         index += 1
     if datas_for_creating:
-        texture_register = app.tm.create_dynamic_textures(datas_for_creating)
-        new_textures = app.tm.get_dynamic_textures(texture_register)
+        texture_register = app.texture_manager.create_dynamic_textures(datas_for_creating)
+        new_textures = app.texture_manager.get_dynamic_textures(texture_register)
         cache_textures += new_textures
         textures += new_textures
         
@@ -323,7 +322,7 @@ def edit_params(app):
     side = SIDE.TOP if params['blocks_are_vertical'] else SIDE.LEFT
 
     if app.scene.visual_book.get('page_size') != page_size:
-        default_texture = app.tm.get_clean_texture(params['format'])
+        default_texture = app.texture_manager.get_clean_texture(params['format'])
         app.scene.visual_book.set(default_texture=default_texture)
     if (app.scene.visual_book.get('page_size') != page_size or
         app.scene.visual_book.get('q_parts') != q_parts or
@@ -452,17 +451,17 @@ def check_lineedit_pattern(app):
 
 def move_panel(app):
     app.pw_left = not app.pw_left
-    update_theme(app, rebuild=True)
+    app.create_ui()
 
 def switch_theme(app):
-    themes = list(conf.theme.keys())
+    themes = list(conf.themes.keys())
     app.theme = themes[themes.index(app.theme)-1]
-    update_theme(app)
+    app.theme_manager.update()
 
 def switch_font(app):
     fonts = get_fonts()
     app.font = fonts[fonts.index(normalize_path(app.font))-1]
-    update_theme(app)
+    app.theme_manager.update()
 
 def switch_mode(app, mode):
     if mode == "preview": app.mode = MODE.PREVIEW
@@ -492,8 +491,7 @@ def edit_indexation(app):
 def edit_scale(app, sender):
     scale = float(dpg.get_item_label(sender))
     app.scale = scale
-    #update_theme(app, rebuild=True)
-    app.on_exit()
+    app.create_ui()
 
 def reset_to_home(app):
     app.scene.camera.home()

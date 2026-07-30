@@ -8,7 +8,7 @@
     "selected_font": "assets/fonts/DeleddaOpen.ttf",
     "selected_theme": "light",
     "parametrs_window_on_the_left": false,
-    "theme": {
+    "themes": {
         "dark": {
             "window_color": [
                 16,

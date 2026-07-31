@@ -128,6 +128,8 @@ class PDF2BookApp:
         
         if self.pdf_imposer:
             del self.pdf_imposer
+        if self.texture_manager:
+            self.texture_manager.delete_textures()
         dpg.stop_dearpygui()
 
 def main():

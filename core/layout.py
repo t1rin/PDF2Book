@@ -1,6 +1,7 @@
 import pymupdf as fitz
 
 from typing import Callable, Any
+from copy import deepcopy
 from uuid import uuid4
 import threading
 import os
@@ -61,7 +62,8 @@ class PDFImposer():
                                  blocks_are_vertical, quantity_pages_for_part)
 
     def get_preview(self, page_num: int, scale: int = 1,
-                    indexation_size: int | None = None) -> tuple[list, tuple[int]]:
+                    indexation_size: int | None = None
+                    ) -> tuple[list | None, tuple[int] | None]:
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
@@ -99,7 +101,6 @@ class PDFImposer():
     def update_doc(self) -> None:
         if self._current_task and self._current_task.is_alive():
             self._current_task.join()
-            return
         
         self.output_doc, total_pages = calculate_doc(self.input_doc, self.params)
         self.quantity_page = total_pages
@@ -107,11 +108,14 @@ class PDFImposer():
     def _get_split(self) -> tuple[fitz.Document, fitz.Document]:
         output_1 = fitz.open()
         output_2 = fitz.open()
-
-        for i in range(0, self.quantity_page, 2):
-            ind_1, ind_2 = i, self.quantity_page-i-1
-            output_1.insert_pdf(self.output_doc, from_page=ind_1, to_page=ind_1)
-            output_2.insert_pdf(self.output_doc, from_page=ind_2, to_page=ind_2)
+        
+        if self.output_doc is not None:
+            for i in range(0, self.quantity_page, 2):
+                ind_1, ind_2 = i, self.quantity_page-i-1
+                output_1.insert_pdf(
+                    self.output_doc, from_page=ind_1, to_page=ind_1)
+                output_2.insert_pdf(
+                    self.output_doc, from_page=ind_2, to_page=ind_2)
         
         return output_1, output_2
 
@@ -133,11 +137,11 @@ class PDFImposer():
             self.output_doc.save(path, garbage=4, deflate=True)
 
     def get_preview_async(self, page_num: int, scale: int = 1, 
-                          indexation: bool = False, 
+                          indexation_size: int | None = None, 
                           callback: Callable[[Any], None] | None = None) -> None:
         def worker():
             try:
-                result = self.get_preview(page_num, scale, indexation)
+                result = self.get_preview(page_num, scale, indexation_size)
                 if callback:
                     callback(result)
             except Exception as e:
@@ -163,7 +167,7 @@ class PDFImposer():
         task_id = str(uuid4())
         self._current_task_id = task_id
         
-        params_copy = self.params
+        params_copy = deepcopy(self.params)
         
         def worker():
             try:

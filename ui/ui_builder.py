@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import dearpygui.dearpygui as dpg
 
 from utils import *
@@ -6,8 +9,11 @@ from ui.callbacks import set_values, drop_handler
 if os_type() == "Windows":
     import ui.DearPyGui_DragAndDrop as dpg_dnd
 
+if TYPE_CHECKING:
+    from main import PDF2BookApp
 
-def resize_update(app):
+
+def resize_update(app: PDF2BookApp) -> None:
     viewport_width = dpg.get_viewport_width()
     viewport_height = dpg.get_viewport_height()
     if not dpg.does_item_exist("loading_window"):
@@ -23,7 +29,7 @@ def resize_update(app):
     pos_loading_text = ((widget_width - text_width) / 2, widget_width + padding)
     dpg.configure_item("loading_text", pos=pos_loading_text)
       
-def create_settings_panel(app):
+def create_settings_panel(app: PDF2BookApp) -> None:
     with dpg.child_window(tag="settings_panel"):
 
         dpg.add_text(tag="pdf2book_text", default_value="PDF2Book")
@@ -97,7 +103,7 @@ def create_settings_panel(app):
 
         dpg.add_text(wrap=0, tag="log_output")
 
-def create_drawlist_window(app):
+def create_drawlist_window(app: PDF2BookApp) -> None:
     with dpg.child_window(tag="drawlist_window", show=False):
         with dpg.group(parent="drawlist_window", 
                        pos=[app.conf.padding_drawlist,
@@ -107,7 +113,7 @@ def create_drawlist_window(app):
                                     perspective_divide=True, tag="drawlayer_3d"):
                     with dpg.draw_node(tag="plane_node"): pass
 
-def create_plot_window(app):
+def create_plot_window(app: PDF2BookApp) -> None:
     with dpg.child_window(tag="plot_window"):
         with dpg.plot(width=-1, height=-1, equal_aspects=True, 
                         no_mouse_pos=True, no_menus=True):
@@ -121,7 +127,7 @@ def create_plot_window(app):
                 dpg.fit_axis_data(dpg.top_container_stack())
             dpg.fit_axis_data("x_axis")
 
-def create_loading_window(app):
+def create_loading_window(app: PDF2BookApp) -> None:
     with dpg.window(tag="loading_window", autosize=True,
                     show=True, modal=True, no_title_bar=True, 
                     no_resize=True, no_move=True, no_background=True):
@@ -129,7 +135,7 @@ def create_loading_window(app):
             dpg.add_loading_indicator(tag="loading_widget", style=2, radius=7)
             dpg.add_text("Loading...", tag="loading_text")
 
-def create_menu_bar(app):
+def create_menu_bar(app: PDF2BookApp) -> None:
     with dpg.menu_bar():
         with dpg.menu(label="Файл"):
             dpg.add_menu_item(label="Открыть PDF", tag="open_file_btn",
@@ -181,7 +187,13 @@ def create_menu_bar(app):
                 dpg.add_text("Изменение вступит в силу\nпосле перезапуска", 
                            color=(150, 150, 60), wrap=200)
 
-def create_main_window(app):
+def create_drag_and_drop(app: PDF2BookApp) -> None:
+    if os_type() == "Windows":
+        dpg_dnd.initialize()
+        dpg_dnd.set_drop(lambda data, keys: 
+                         drop_handler(app, data))
+
+def create_main_window(app: PDF2BookApp) -> None:
     with dpg.window(tag="primary_window"):
         dpg.set_primary_window("primary_window", True)
         create_menu_bar(app)
@@ -207,10 +219,4 @@ def create_main_window(app):
     resize_update(app)
 
     set_values(app)
-
-def create_drag_and_drop(app):
-    if os_type() == "Windows":
-        dpg_dnd.initialize()
-        dpg_dnd.set_drop(lambda data, keys: 
-                         drop_handler(app, data))
     

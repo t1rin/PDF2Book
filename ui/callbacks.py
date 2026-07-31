@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import dearpygui.dearpygui as dpg
 
 from utils import *
@@ -5,11 +8,14 @@ from ui.visualization import SIDE, RULE
 from ui.config import MODE
 from core.config import formats as formats_sizes
 
+if TYPE_CHECKING:
+    from main import PDF2BookApp
+
 
 BLOCK_SIZE = 4
 
 def require_pdf(func):
-    def wrapper(app, *args, **kwargs):
+    def wrapper(app: PDF2BookApp, *args, **kwargs):
         if app.pdf_path:
             app.message()
         if app.pdf_path is None:
@@ -21,7 +27,7 @@ def require_pdf(func):
 
 # __ Updating and setting __
 
-def update(app, align=False):
+def update(app: PDF2BookApp, align: bool = False) -> None:
     match app.mode:
         case MODE.PREVIEW:
             update_preview(app, align)
@@ -33,7 +39,7 @@ def update(app, align=False):
             update_visualization(app)        
 
 @require_pdf
-def update_preview(app, align=False):
+def update_preview(app: PDF2BookApp, align: bool = False) -> None:
     texture_tag = app.pdf_imposer.params.format
     indexation_size = (app.conf.default_indexation_size 
                        if app.is_indexation else 0)
@@ -47,7 +53,7 @@ def update_preview(app, align=False):
     if app.pdf_imposer.output_doc is not None:
         dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
 
-def update_visualization(app):
+def update_visualization(app: PDF2BookApp) -> None:
     camera_pos = app.scene.camera.get_position()
     sheets_vertices = app.scene.visual_book.solve_visualization(camera_pos)
 
@@ -87,7 +93,7 @@ def update_visualization(app):
 
     app.scene.update()
 
-def reset_visual_book(app):
+def reset_visual_book(app: PDF2BookApp) -> None:
     q_parts, q_blocks = _calculate_parts_blocks(
         q_pages=len(app.pdf_imposer.input_doc), 
         size_part=app.pdf_imposer.params.quantity_pages_for_part)
@@ -101,7 +107,7 @@ def reset_visual_book(app):
 
     _set_values_of_visualization(app)
 
-def _get_textures(app):
+def _get_textures(app: PDF2BookApp) -> list:
     q_pages = len(app.pdf_imposer.input_doc)
     format = app.pdf_imposer.params.format
     index_format = list(formats_sizes.keys()).index(format)
@@ -131,7 +137,7 @@ def _get_textures(app):
 
 # __ Working with files __
 
-def load_file(app):
+def load_file(app: PDF2BookApp) -> None:
     path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
     app.message(err, mood=False)
@@ -151,7 +157,7 @@ def load_file(app):
     app.pdf_imposer.update_params()
     app.pdf_imposer.load_doc(path, on_loading)
 
-def open_file(app):
+def open_file(app: PDF2BookApp) -> None:
     path = FileDialogHelper.open_pdf_file()
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
@@ -160,7 +166,7 @@ def open_file(app):
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
         
-def drop_handler(app, data):
+def drop_handler(app: PDF2BookApp, data: list) -> None:
     path = data[0]
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
@@ -169,7 +175,7 @@ def drop_handler(app, data):
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
 
-def save_as_file(app):
+def save_as_file(app: PDF2BookApp) -> None:
     if app.is_split_file:
         path = FileDialogHelper.save_folder()
         if path is None: return
@@ -183,7 +189,7 @@ def save_as_file(app):
     save_file(app)
 
 @require_pdf
-def save_file(app):
+def save_file(app: PDF2BookApp) -> None:
     messages = []
     path = dpg.get_value("lineedit_output")
 
@@ -208,18 +214,18 @@ def save_file(app):
     messages.append("Файлы сохранены" if app.is_split_file else "Файл сохранен")
     app.message(messages, mood=True)
 
-def split_file(app):
+def split_file(app: PDF2BookApp) -> None:
     app.is_split_file = dpg.get_value("split_file_checkbox")
 
 @require_pdf
-def open_input_folder(app):
+def open_input_folder(app: PDF2BookApp) -> None:
     path = dpg.get_value("lineedit_input_file")
 
     if not start_path(path):
         app.message(f"Папка не существует", mood=False)
 
 @require_pdf
-def open_output_folder(app):
+def open_output_folder(app: PDF2BookApp) -> None:
     path = dpg.get_value("lineedit_output")
     if not path:
         app.message("Файл не был сохранён", mood=False)
@@ -230,7 +236,7 @@ def open_output_folder(app):
 
 # __ Working with params __
 
-def set_values(app):
+def set_values(app: PDF2BookApp) -> None:
     if app.pdf_path:
         dpg.set_value("lineedit_input_file", app.pdf_path)
     dpg.set_value("page_label", app.current_page)
@@ -257,7 +263,7 @@ def set_values(app):
     _set_values_of_modes(app)
     _set_values_of_visualization(app)
 
-def _set_values_of_modes(app):
+def _set_values_of_modes(app: PDF2BookApp) -> None:
     is_preview_mode = app.mode == MODE.PREVIEW
     is_visualization_mode = app.mode == MODE.VISUALIZATION
     dpg.set_value("preview_mode_button", is_preview_mode)
@@ -271,7 +277,7 @@ def _set_values_of_modes(app):
         dpg.configure_item("visualization_tab", show=False)
         dpg.configure_item("detailed_visual_properties_btn", show=True)
 
-def _set_values_of_visualization(app):
+def _set_values_of_visualization(app: PDF2BookApp) -> None:
     if app.pdf_imposer.input_doc is not None:
         q_parts = app.scene.visual_book.get('q_parts')
         q_blocks = app.scene.visual_book.get('q_blocks')
@@ -292,7 +298,7 @@ def _set_values_of_visualization(app):
     app.scene.update()
 
 @require_pdf
-def edit_params(app):
+def edit_params(app: PDF2BookApp) -> None:
     params = {
         'rows': dpg.get_value("rows_input"),
         'cols': dpg.get_value("cols_input"),
@@ -335,7 +341,7 @@ def edit_params(app):
     app.scene.visual_book.need_reload = True
     update(app, align=align)
 
-def _is_size_part_normal(app, params):
+def _is_size_part_normal(app: PDF2BookApp, params: dict) -> bool:
     q_pages = len(app.pdf_imposer.input_doc)
     if q_pages < params['quantity_pages_for_part']:
         params['quantity_pages_for_part'] = q_pages - (q_pages % BLOCK_SIZE)
@@ -347,7 +353,7 @@ def _is_size_part_normal(app, params):
         return False
     return True
 
-def _validate_params(app, params):
+def _validate_params(app: PDF2BookApp, params: dict) -> bool:
     if params['rows'] <= 0:
         dpg.set_value("rows_input", 1)
         return False
@@ -378,13 +384,13 @@ def _validate_params(app, params):
         return False
     return True
 
-def _prepare_pattern(app, pattern):
+def _prepare_pattern(app: PDF2BookApp, pattern: str) -> str:
     pattern_code = pattern.split()
     if (len(pattern_code) % 2 != 0) or not all(s.isdigit() for s in pattern_code):
         pattern = app.conf.default_pattern
     return f"[{pattern}] 0"
     
-def _calculate_parts_blocks(q_pages, size_part):
+def _calculate_parts_blocks(q_pages: int, size_part: int) -> tuple:
     if size_part:
         q_parts = ((q_pages - 1) // size_part + 1)
         q_blocks = size_part // BLOCK_SIZE
@@ -396,7 +402,7 @@ def _calculate_parts_blocks(q_pages, size_part):
 # __ Callbacks __
 
 @require_pdf
-def arrow_left_callback(app):
+def arrow_left_callback(app: PDF2BookApp) -> None:
     if (app.current_page == 1): 
         return
     dpg.set_value("page_label", int(dpg.get_value("page_label"))-1)
@@ -404,7 +410,7 @@ def arrow_left_callback(app):
     update(app)
 
 @require_pdf
-def arrow_right_callback(app):
+def arrow_right_callback(app: PDF2BookApp) -> None:
     if (app.pdf_imposer.output_doc is not None) and \
         (app.current_page == app.pdf_imposer.quantity_page): 
         return
@@ -413,7 +419,7 @@ def arrow_right_callback(app):
     update(app)
 
 @require_pdf
-def selection_block(app):
+def selection_block(app: PDF2BookApp) -> None:
     part_index = int(dpg.get_value("combo_parts"))
     block_index = int(dpg.get_value("combo_blocks"))
     alpha = app.scene.visual_book.get('alpha', part_index, block_index)
@@ -424,7 +430,7 @@ def selection_block(app):
     app.scene.visual_book.active_block = (part_index, block_index)
 
 @require_pdf
-def edit_visualization(app):
+def edit_visualization(app: PDF2BookApp) -> None:
     part_index = int(dpg.get_value("combo_parts"))
     block_index = int(dpg.get_value("combo_blocks"))
     alpha = dpg.get_value("alpha_input")
@@ -436,7 +442,7 @@ def edit_visualization(app):
                                   alpha=alpha, beta=beta)
     update(app)
 
-def check_lineedit_pattern(app):
+def check_lineedit_pattern(app: PDF2BookApp) -> None:
     pattern = dpg.get_value("lineedit_pattern")
     pattern_code = pattern.split()
 
@@ -450,28 +456,28 @@ def check_lineedit_pattern(app):
     else:
         app.message("Некорректный формат паттерна", mood=False)
 
-def move_panel(app):
+def move_panel(app: PDF2BookApp) -> None:
     app.pw_left = not app.pw_left
     app.create_ui()
 
-def switch_theme(app):
+def switch_theme(app: PDF2BookApp) -> None:
     themes = list(app.conf.themes.keys())
     app.theme = themes[themes.index(app.theme)-1]
     app.theme_manager.update()
 
-def switch_font(app):
+def switch_font(app: PDF2BookApp) -> None:
     fonts = get_fonts()
     app.font = fonts[fonts.index(normalize_path(app.font))-1]
     app.theme_manager.update()
 
-def switch_mode(app, mode):
+def switch_mode(app: PDF2BookApp, mode: str) -> None:
     if mode == "preview": app.mode = MODE.PREVIEW
     if mode == "visualization": app.mode = MODE.VISUALIZATION
     _set_values_of_modes(app)
     update(app)
 
 @require_pdf
-def separate(app):
+def separate(app: PDF2BookApp) -> None:
     value = dpg.get_value("separate_checkbox")
     dpg.configure_item("part_options", show=value)
     if not value:
@@ -485,25 +491,25 @@ def separate(app):
     update(app)
 
 @require_pdf
-def edit_indexation(app):
+def edit_indexation(app: PDF2BookApp) -> None:
     app.is_indexation = dpg.get_value("indexes_pages_checkbox")
     update(app)
 
-def edit_scale(app, sender):
+def edit_scale(app: PDF2BookApp, sender: int) -> None:
     scale = float(dpg.get_item_label(sender))
     app.scale = scale
     app.create_ui()
 
-def reset_to_home(app):
+def reset_to_home(app: PDF2BookApp) -> None:
     app.scene.camera.home()
     app.scene.update()
 
-def show_visual_settings(app):
+def show_visual_settings(app: PDF2BookApp) -> None:
     dpg.configure_item("visualization_tab", show=True)
     dpg.set_value("tab_bar", "visualization_tab")
     dpg.configure_item("detailed_visual_properties_btn", show=False)
 
-def register_callbacks(app):
+def register_callbacks(app: PDF2BookApp) -> None:
     callbacks = {
         "open_file_btn": lambda: open_file(app),
         "arrow_left": lambda: arrow_left_callback(app),

@@ -1,6 +1,12 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import dearpygui.dearpygui as dpg
 
 import ui.callbacks as cb
+
+if TYPE_CHECKING:
+    from main import PDF2BookApp
 
 
 _is_dragging = False
@@ -8,7 +14,7 @@ _is_panning = False
 _last_mouse_pos = [0, 0]
 
 
-def _is_mouse_over_drawlist(app):
+def _is_mouse_over_drawlist(app: PDF2BookApp) -> bool:
     if not dpg.does_item_exist("drawlist_3d"):
         return False
     if not dpg.is_item_shown("drawlist_window"):
@@ -20,19 +26,19 @@ def _is_mouse_over_drawlist(app):
     return (point0[0] < mouse_pos[0] < point1[0] and
             point0[1] < mouse_pos[1] < point1[1])
 
-def mouse_click_callback(app):
+def mouse_click_callback(app: PDF2BookApp) -> None:
     if not _is_mouse_over_drawlist(app):
         return
     global _is_dragging, _last_mouse_pos
     _is_dragging = True
     _last_mouse_pos = dpg.get_mouse_pos()
     
-def mouse_release_callback(app):
+def mouse_release_callback(app: PDF2BookApp) -> None:
     global _is_dragging, _is_panning
     _is_dragging = False
     _is_panning = False
 
-def mouse_move_callback(app):
+def mouse_move_callback(app: PDF2BookApp) -> None:
     if not _is_mouse_over_drawlist(app):
         return
     
@@ -59,14 +65,14 @@ def mouse_move_callback(app):
             app.scene.camera.update_camera_pan(dx, dy)     
             app.scene.update()
 
-def mouse_wheel_callback(app, sign):
+def mouse_wheel_callback(app: PDF2BookApp, sign: int) -> None:
     if not _is_mouse_over_drawlist(app):
         return
     
     app.scene.camera.update_camera_zoom(sign)
     app.scene.update()
 
-def mouse_middle_click_callback(app):
+def mouse_middle_click_callback(app: PDF2BookApp) -> None:
     if not _is_mouse_over_drawlist(app):
         return
     
@@ -74,7 +80,7 @@ def mouse_middle_click_callback(app):
     _is_panning = True
     _last_mouse_pos = dpg.get_mouse_pos()
 
-def register_mouse_handlers(app):
+def register_mouse_handlers(app: PDF2BookApp) -> None:
     with dpg.handler_registry():
         dpg.add_mouse_click_handler(dpg.mvMouseButton_Left, callback=lambda: mouse_click_callback(app))
         dpg.add_mouse_click_handler(dpg.mvMouseButton_Middle, callback=lambda: mouse_middle_click_callback(app))

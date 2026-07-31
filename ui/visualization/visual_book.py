@@ -1,3 +1,8 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
+from numpy.typing import NDArray
+
 from functools import wraps
 import copy
 
@@ -5,6 +10,9 @@ from core import get_positions_pages
 from core.config import formats as formats_sizes
 from .geometry import pages_intersect, calculate_vertices, get_quad_distance
 from .data_structures import *
+
+if TYPE_CHECKING:
+    from main import PDF2BookApp
 
 
 def with_rule(func):
@@ -26,9 +34,9 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, app):
-        self.app = app
-        self._rule = RULE.LOGIC
+    def __init__(self, app: PDF2BookApp) -> None:
+        self.app: PDF2BookApp = app
+        self._rule: RULE = RULE.LOGIC
         self._book: Book
 
         self._spacing_between_parts: int = app.conf.spacing_between_parts
@@ -46,8 +54,9 @@ class VisualBook:
 
         self.new_book()
 
-    def new_book(self, q_parts=1, q_blocks=1, 
-                 page_size=(841, 1189), side=SIDE.LEFT):
+    def new_book(self, q_parts: int = 1, q_blocks: int = 1, 
+                 page_size: tuple[int, int] = (841, 1189),
+                 side: SIDE = SIDE.LEFT) -> None:
         page_size = tuple([self.app.scale * value for value in page_size])
         book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
                     page_size=page_size, side=side)
@@ -68,7 +77,7 @@ class VisualBook:
         self._q_blocks = q_blocks
         self._sheets_vertices = []
 
-    def load_textures(self, textures: list):
+    def load_textures(self, textures: list) -> None:
         q_pages_on_block = 4 * self._q_blocks
         positions_pages = []
         for i in range(self._q_parts):
@@ -94,7 +103,8 @@ class VisualBook:
             page_size: tuple[int, int] | None = None, 
             side: SIDE | None = None, pos: list[int] | None = None, 
             alpha: int | None = None, beta: int | None = None,
-            default_texture: int | str | None = None, rule: RULE | None = None):
+            default_texture: int | str | None = None, 
+            rule: RULE | None = None) -> None:
         if part_index is None and block_index is None:
             if page_size is not None:
                 self._book.page_size = page_size
@@ -123,7 +133,7 @@ class VisualBook:
 
     def get(self, param: str, 
             part_ind: int | None = None, 
-            block_ind: int | None = None):
+            block_ind: int | None = None) -> None:
         params = {
             'q_parts': self._book.q_parts,
             'q_blocks': self._book.q_blocks,
@@ -145,7 +155,7 @@ class VisualBook:
         
         return params.get(param)
 
-    def _is_params_normal(self, **kwargs):
+    def _is_params_normal(self, **kwargs) -> bool:
         book_copy = copy.deepcopy(self._book)
 
         for attr in ['side', 'margin', 'page_size']:
@@ -185,12 +195,12 @@ class VisualBook:
 
         return True
 
-    def _sort_sheets_vertices(self, camera_pos):
+    def _sort_sheets_vertices(self, camera_pos: NDArray) -> None:
         self._sheets_vertices.sort(
             key=lambda s: get_quad_distance(s['vertices'], camera_pos),
             reverse=True)
 
-    def is_order_changed(self, camera_pos):
+    def is_order_changed(self, camera_pos: NDArray) -> None:
         old_order = [sheet_vertices['page_num']
                      for sheet_vertices in self._sheets_vertices]
         self._sort_sheets_vertices(camera_pos)
@@ -198,7 +208,7 @@ class VisualBook:
                  for sheet_vertices in self._sheets_vertices]
         return order != old_order
 
-    def solve_visualization(self, camera_pos=None):
+    def solve_visualization(self, camera_pos: NDArray | None = None) -> None:
         sheets_vertices = calculate_vertices(self._book)
         if sheets_vertices is None:
             return

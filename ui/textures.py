@@ -1,14 +1,20 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import dearpygui.dearpygui as dpg
 import numpy as np
 from numpy.typing import NDArray
 
 from core.config import formats
 
+if TYPE_CHECKING:
+    from main import PDF2BookApp
+
 
 
 class TextureManager:
-    def __init__(self, app) -> None:
-        self.app = app
+    def __init__(self, app: PDF2BookApp) -> None:
+        self.app: PDF2BookApp = app
         self._formats: dict[str, tuple[int, int]] = formats
 
         self._registers_and_textures: dict[str | int, list[str | int]] = dict()

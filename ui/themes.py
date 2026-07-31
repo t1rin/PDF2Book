@@ -1,12 +1,18 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import os
 import dearpygui.dearpygui as dpg
 
 from utils import resource_path
 
+if TYPE_CHECKING:
+    from main import PDF2BookApp
+
 
 class ThemeManager:
-    def __init__(self, app) -> None:
-        self.app = app
+    def __init__(self, app: PDF2BookApp) -> None:
+        self.app: PDF2BookApp = app
         self._cache_fonts: dict[tuple[str, int], str | int] = dict()
 
         self.registry_themes()

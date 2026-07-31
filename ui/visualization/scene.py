@@ -1,3 +1,6 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+
 import dearpygui.dearpygui as dpg
 
 import math
@@ -5,9 +8,12 @@ import math
 from .camera import Camera
 from .visual_book import VisualBook
 
+if TYPE_CHECKING:
+    from main import PDF2BookApp
+
 
 class Scene:
-    def __init__(self, app):
+    def __init__(self, app: PDF2BookApp) -> None:
         self._width = 500
         self._height = 500
 
@@ -15,13 +21,13 @@ class Scene:
         self.camera = Camera(app)
         self.visual_book = VisualBook(app)
     
-    def set_clip_space(self, width, height):
+    def set_clip_space(self, width: int, height: int) -> None:
         self._width = width
         self._height = height
         if dpg.does_item_exist("drawlayer_3d"):
             dpg.set_clip_space("drawlayer_3d", 0, 0, width, height, -1.0, 1.0)
 
-    def update(self):
+    def update(self) -> None:
         rot = self.camera.get_radian_angles()
         
         model_matrix = (dpg.create_rotation_matrix(rot[0], [1, 0, 0]) *

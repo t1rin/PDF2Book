@@ -65,6 +65,7 @@ class PDF2BookApp:
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         dpg.set_exit_callback(self.on_exit)
 
+        self.initialize()
         self.create_ui()
 
         dpg.setup_dearpygui()
@@ -77,7 +78,6 @@ class PDF2BookApp:
         dpg.destroy_context()
 
     def create_ui(self):
-        self.initialize()
 
         to_delete = ["primary_window", "loading_window", "context_menu",
                      "split_file_checkbox", "drawlist_window", "plot_window"]

@@ -8,11 +8,6 @@ class ThemeManager:
     def __init__(self, app) -> None:
         self.app = app
         self._cache_fonts: dict[tuple[str, int], str | int] = dict()
-        self._fonts_settings = [
-            (None,            app.font,       14),
-            ("loading_text",  app.font,       20),
-            ("pdf2book_text", app.title_font, 48),
-        ]
 
         self.registry_themes()
 
@@ -33,6 +28,11 @@ class ThemeManager:
 
     def update(self) -> None:
         dpg.bind_theme(self.app.theme)
+        self._fonts_settings = [
+            (None,            self.app.font,       14),
+            ("loading_text",  self.app.font,       20),
+            ("pdf2book_text", self.app.title_font, 48),
+        ]
         for item, path, size in self._fonts_settings:
             font_tag = self._get_font(path, size)
             if font_tag is None:

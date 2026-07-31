@@ -1,5 +1,5 @@
 from .scene import Scene
-from .handlers import register_mouse_handlers
+from .data_structures import RULE, SIDE
 
 
-__all__ = ['Scene', 'register_mouse_handlers']
+__all__ = ['Scene', 'RULE', 'SIDE']

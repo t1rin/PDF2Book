@@ -26,12 +26,12 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, parent, padding=250):
+    def __init__(self, parent):
         self._app = parent
         self._rule = RULE.LOGIC
         self._book: Book
 
-        self._padding_between_parts: int = padding
+        self._spacing_between_parts: int = self._app.conf.spacing_between_parts
         self._default_texture = self._app.texture_manager.get_clean_texture(
             format_name=self._app.pdf_imposer.params.format
         )
@@ -53,7 +53,7 @@ class VisualBook:
                     page_size=page_size, side=side)
         for i in range(q_parts):
             part = BookPart(pos=[-page_size[0]/2, page_size[1]/2, 
-                                 -i*self._padding_between_parts], 
+                                 -i*self._spacing_between_parts], 
                             blocks=[])
             for j in range(q_blocks):
                 block = BlockPages(

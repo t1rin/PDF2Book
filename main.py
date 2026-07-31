@@ -12,12 +12,13 @@ class PDF2BookApp:
     def __init__(self):
         self.pdf_path = None
         self.mode = MODE.PREVIEW
+        self.conf = ui.conf
 
-        self.theme = ui.conf.selected_theme
-        self.font = ui.conf.selected_font
-        self.title_font = ui.conf.title_font
-        self.pw_left = ui.conf.parametrs_window_on_the_left
-        self.scale = ui.conf.scale
+        self.theme = self.conf.selected_theme
+        self.font = self.conf.selected_font
+        self.title_font = self.conf.title_font
+        self.pw_left = self.conf.parametrs_window_on_the_left
+        self.scale = self.conf.scale
 
         self.pdf_imposer = PDFImposer()
         self.texture_manager = None
@@ -59,7 +60,7 @@ class PDF2BookApp:
     def run(self):
         dpg.create_context()
 
-        dpg.create_viewport(**ui.conf.viewport_options)
+        dpg.create_viewport(**self.conf.viewport_options)
 
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
         dpg.set_exit_callback(self.on_exit)
@@ -107,7 +108,7 @@ class PDF2BookApp:
                     self._old_size_drawlist = size_drawlist
                     return
                 if self._old_size_drawlist != size_drawlist:
-                    padding = 2 * ui.conf.padding_drawlist
+                    padding = 2 * self.conf.padding_drawlist
                     width = size_drawlist[0] - padding
                     height = size_drawlist[1] - padding
                     dpg.configure_item("drawlist_3d", width=width, height=height)
@@ -118,11 +119,11 @@ class PDF2BookApp:
         ui.resize_update(self)
 
     def on_exit(self):
-        ui.conf.selected_font = self.font
-        ui.conf.selected_theme = self.theme
-        ui.conf.parametrs_window_on_the_left = self.pw_left
-        ui.conf.scale = self.scale
-        ui.conf.save()
+        self.conf.selected_font = self.font
+        self.conf.selected_theme = self.theme
+        self.conf.parametrs_window_on_the_left = self.pw_left
+        self.conf.scale = self.scale
+        self.conf.save()
         print("Завершение...")
         
         if self.pdf_imposer:

@@ -1,7 +1,5 @@
 import dearpygui.dearpygui as dpg
 
-import math
-
 import ui.callbacks as cb
 
 

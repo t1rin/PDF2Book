@@ -7,13 +7,13 @@ from .visual_book import VisualBook
 
 
 class Scene:
-    def __init__(self, parent, **vb_kwargs):
+    def __init__(self, parent):
         self._app = parent
         self._width = 500
         self._height = 500
 
         self.camera = Camera(parent)
-        self.visual_book = VisualBook(parent, **vb_kwargs)
+        self.visual_book = VisualBook(parent)
     
     def set_clip_space(self, width, height):
         self._width = width

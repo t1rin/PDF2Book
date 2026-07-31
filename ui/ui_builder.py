@@ -2,7 +2,6 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.callbacks import set_values, drop_handler
-from ui.config import conf
 
 if os_type() == "Windows":
     import ui.DearPyGui_DragAndDrop as dpg_dnd
@@ -19,7 +18,7 @@ def resize_update(app):
                           (viewport_height - widget_height) / 2)
     dpg.configure_item("loading_window", pos=pos_loading_window)
 
-    padding = conf.padding_loading_text
+    padding = app.conf.padding_loading_text
     text_width, _ = dpg.get_item_rect_size("loading_text")
     pos_loading_text = ((widget_width - text_width) / 2, widget_width + padding)
     dpg.configure_item("loading_text", pos=pos_loading_text)
@@ -100,8 +99,9 @@ def create_settings_panel(app):
 
 def create_drawlist_window(app):
     with dpg.child_window(tag="drawlist_window", show=False):
-        with dpg.group(parent="drawlist_window", pos=[conf.padding_drawlist, 
-                                                      conf.padding_drawlist]):
+        with dpg.group(parent="drawlist_window", 
+                       pos=[app.conf.padding_drawlist,
+                            app.conf.padding_drawlist]):
             with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
                 with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
                                     perspective_divide=True, tag="drawlayer_3d"):
@@ -189,11 +189,11 @@ def create_main_window(app):
             with dpg.table(header_row=False, hideable=True, resizable=True):
                 if app.pw_left:
                     dpg.add_table_column(width_fixed=True, 
-                        init_width_or_weight=conf.default_panel_width)
+                        init_width_or_weight=app.conf.default_panel_width)
                 dpg.add_table_column()
                 if not app.pw_left:
                         dpg.add_table_column(width_fixed=True, 
-                            init_width_or_weight=conf.default_panel_width)
+                            init_width_or_weight=app.conf.default_panel_width)
                 with dpg.table_row():
                     if app.pw_left:
                         create_settings_panel(app)

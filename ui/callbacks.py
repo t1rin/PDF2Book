@@ -1,8 +1,8 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.config import conf, MODE
-from ui.visualization.data_structures import SIDE
+from ui.config import MODE
+from ui.visualization import SIDE
 from core.config import formats as formats_sizes
 
 
@@ -35,7 +35,8 @@ def update(app, align=False):
 @require_pdf
 def update_preview(app, align=False):
     texture_tag = app.pdf_imposer.params.format
-    indexation_size = conf.default_indexation_size if app.is_indexation else 0
+    indexation_size = (app.conf.default_indexation_size 
+                       if app.is_indexation else 0)
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
                                               scale=app.scale, 
                                               indexation_size=indexation_size)
@@ -362,8 +363,8 @@ def _validate_params(app, params):
     if params['thickness_lines'] < 0:
         dpg.set_value("thickness_input", 0)
         return False
-    if params['thickness_lines'] > conf.max_line_thickness:
-        dpg.set_value("thickness_input", conf.max_line_thickness)
+    if params['thickness_lines'] > app.conf.max_line_thickness:
+        dpg.set_value("thickness_input", app.conf.max_line_thickness)
         return False
     if params['blocks_are_vertical'] and (params['rows'] % 2 == 1):
         app.message(
@@ -380,7 +381,7 @@ def _validate_params(app, params):
 def _prepare_pattern(app, pattern):
     pattern_code = pattern.split()
     if (len(pattern_code) % 2 != 0) or not all(s.isdigit() for s in pattern_code):
-        pattern = conf.default_pattern
+        pattern = app.conf.default_pattern
     return f"[{pattern}] 0"
     
 def _calculate_parts_blocks(q_pages, size_part):
@@ -454,7 +455,7 @@ def move_panel(app):
     app.create_ui()
 
 def switch_theme(app):
-    themes = list(conf.themes.keys())
+    themes = list(app.conf.themes.keys())
     app.theme = themes[themes.index(app.theme)-1]
     app.theme_manager.update()
 

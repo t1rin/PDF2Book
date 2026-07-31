@@ -111,6 +111,7 @@
     },
     "default_panel_width": 250,
     "default_indexation_size": 60,
+    "spacing_between_parts": 300,
     "padding_loading_text": 10,
     "padding_drawlist": 18,
     "scale": 1,

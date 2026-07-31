@@ -1,9 +1,7 @@
 import os
 import dearpygui.dearpygui as dpg
 
-from ui.config import conf
-from utils import resource_path, get_fonts
-
+from utils import resource_path
 
 
 class ThemeManager:
@@ -19,7 +17,7 @@ class ThemeManager:
         self.registry_themes()
 
     def registry_themes(self) -> None:
-        themes_names = conf.themes.keys()
+        themes_names = self._app.conf.themes.keys()
         for theme_name in themes_names:
             if theme_name and dpg.does_item_exist(theme_name):
                 continue
@@ -63,7 +61,7 @@ class ThemeManager:
         return self._cache_fonts[item]
 
     def _get_style_dict(self, theme_name: str) -> dict[int, dict[str, list]]:
-        settings = conf.themes[theme_name]
+        settings = self._app.conf.themes[theme_name]
         return {
             dpg.mvAll: {
                 "styles": [

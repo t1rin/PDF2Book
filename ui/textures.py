@@ -2,13 +2,14 @@ import dearpygui.dearpygui as dpg
 import numpy as np
 from numpy.typing import NDArray
 
+from core.config import formats
+
 
 
 class TextureManager:
-    def __init__(self, formats: dict[str, tuple[int, int]], 
-                 scale: float = 1.0) -> None:
+    def __init__(self, parent) -> None:
+        self._app = parent
         self._formats: dict[str, tuple[int, int]] = formats
-        self._scale: float = scale
 
         self._registers_and_textures: dict[str | int, list[str | int]] = dict()
 
@@ -17,14 +18,14 @@ class TextureManager:
     def start(self):
         self.create_preview_textures()
         images_datas = self._get_datas_using_formats()['images_datas']
-        self.create_dynamic_textures(images_datas, 
-                                     texture_register="visual_textures")
+        self.create_dynamic_textures(
+            images_datas, texture_register="visual_textures")
 
     def _clean_img_data(self, width: int, height: int) -> NDArray:
         return np.array([220, 220, 220, 255] * (width * height), dtype=np.uint8)
     
     def _get_scaled_size(self, size: tuple[int, int]) -> tuple[int, int]:
-        return (int(size[0] * self._scale), int(size[1] * self._scale))
+        return (int(size[0] * self._app.scale), int(size[1] * self._app.scale))
 
     def _get_datas_using_formats(self) -> None:
         images_datas = []

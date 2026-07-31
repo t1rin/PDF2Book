@@ -32,14 +32,9 @@ class PDF2BookApp:
         self._processing = None
 
     def initialize(self):
-        from core.config import formats
-
         self.theme_manager = ThemeManager(self)
-        self.texture_manager = TextureManager(formats=formats, 
-                                 scale=self.scale)
-        default_texture = self.texture_manager.get_dynamic_textures("visual_textures")[0]
-        self.scene = Scene(scale=self.scale,
-                           default_texture=default_texture)
+        self.texture_manager = TextureManager(self)
+        self.scene = Scene(self)
 
     def message(self, content=None, mood=None, sep="\n\n"):
         color = None
@@ -64,8 +59,6 @@ class PDF2BookApp:
     def run(self):
         dpg.create_context()
 
-        self.initialize()
-
         dpg.create_viewport(**ui.conf.viewport_options)
 
         dpg.set_viewport_resize_callback(self.on_viewport_resize)
@@ -83,6 +76,8 @@ class PDF2BookApp:
         dpg.destroy_context()
 
     def create_ui(self):
+        self.initialize()
+
         to_delete = ["primary_window", "loading_window", "context_menu",
                      "split_file_checkbox", "drawlist_window", "plot_window"]
         for item in to_delete:

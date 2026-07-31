@@ -6,15 +6,15 @@ from .geometry import get_scale_multiplier
 
 
 class Camera:
-    def __init__(self, scale=1):
+    def __init__(self, parent):
+        self._app = parent
         self._min_distance: float = 10.0
         self._max_distance: float = 20000.0
-        self._scale: float = scale
         
         self.home()
 
     def home(self):
-        self._distance: float = self._scale * 3500.0
+        self._distance: float = self._app.scale * 3500.0
         self._yaw: float = math.pi / 4
         self._pitch: float = math.pi / 6
         self._target_x: float = 0.0

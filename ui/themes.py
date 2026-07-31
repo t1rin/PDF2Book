@@ -13,7 +13,7 @@ class ThemeManager:
         self._fonts_settings = [
             (None, self._app.font, 14),
             ("loading_text", self._app.font, 20),
-            ("pdf2book_text", self._app.title_font, 38),
+            ("pdf2book_text", self._app.title_font, 48),
         ]
 
         self.registry_themes()
@@ -22,7 +22,6 @@ class ThemeManager:
         themes_names = conf.themes.keys()
         for theme_name in themes_names:
             if theme_name and dpg.does_item_exist(theme_name):
-                self.app.message(f"{theme_name} exists", mood=False)
                 continue
 
             themes = self._get_style_dict(theme_name)

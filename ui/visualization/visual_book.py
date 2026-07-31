@@ -26,14 +26,14 @@ def with_rule(func):
     return wrapper
 
 class VisualBook:
-    def __init__(self, parent):
-        self._app = parent
+    def __init__(self, app):
+        self.app = app
         self._rule = RULE.LOGIC
         self._book: Book
 
-        self._spacing_between_parts: int = self._app.conf.spacing_between_parts
-        self._default_texture = self._app.texture_manager.get_clean_texture(
-            format_name=self._app.pdf_imposer.params.format
+        self._spacing_between_parts: int = app.conf.spacing_between_parts
+        self._default_texture = app.texture_manager.get_clean_texture(
+            format_name=app.pdf_imposer.params.format
         )
 
         self.active_block: tuple[int, int] = (0, 0)
@@ -48,7 +48,7 @@ class VisualBook:
 
     def new_book(self, q_parts=1, q_blocks=1, 
                  page_size=(841, 1189), side=SIDE.LEFT):
-        page_size = tuple([self._app.scale * value for value in page_size])
+        page_size = tuple([self.app.scale * value for value in page_size])
         book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
                     page_size=page_size, side=side)
         for i in range(q_parts):

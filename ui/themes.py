@@ -5,19 +5,19 @@ from utils import resource_path
 
 
 class ThemeManager:
-    def __init__(self, parent) -> None:
-        self._app = parent
+    def __init__(self, app) -> None:
+        self.app = app
         self._cache_fonts: dict[tuple[str, int], str | int] = dict()
         self._fonts_settings = [
-            (None, self._app.font, 14),
-            ("loading_text", self._app.font, 20),
-            ("pdf2book_text", self._app.title_font, 48),
+            (None,            app.font,       14),
+            ("loading_text",  app.font,       20),
+            ("pdf2book_text", app.title_font, 48),
         ]
 
         self.registry_themes()
 
     def registry_themes(self) -> None:
-        themes_names = self._app.conf.themes.keys()
+        themes_names = self.app.conf.themes.keys()
         for theme_name in themes_names:
             if theme_name and dpg.does_item_exist(theme_name):
                 continue
@@ -32,7 +32,7 @@ class ThemeManager:
                             dpg.add_theme_color(*color)
 
     def update(self) -> None:
-        dpg.bind_theme(self._app.theme)
+        dpg.bind_theme(self.app.theme)
         for item, path, size in self._fonts_settings:
             font_tag = self._get_font(path, size)
             if font_tag is None:
@@ -43,7 +43,7 @@ class ThemeManager:
             elif dpg.does_item_exist(item):
                 dpg.bind_item_font(item, font_tag)
 
-        self._app.message()
+        self.app.message()
 
     def _get_font(self, path: str, size: int) -> str | int | None:
         item = (path, size)
@@ -51,7 +51,7 @@ class ThemeManager:
             with dpg.font_registry(tag=dpg.generate_uuid()):
                 _path = resource_path(path)
                 if not os.path.exists(_path):
-                    self._app.message(
+                    self.app.message(
                         content=f"Warning: Font file not found: {path}", 
                         mood=False)
                     return
@@ -61,7 +61,7 @@ class ThemeManager:
         return self._cache_fonts[item]
 
     def _get_style_dict(self, theme_name: str) -> dict[int, dict[str, list]]:
-        settings = self._app.conf.themes[theme_name]
+        settings = self.app.conf.themes[theme_name]
         return {
             dpg.mvAll: {
                 "styles": [

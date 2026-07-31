@@ -7,8 +7,8 @@ from core.config import formats
 
 
 class TextureManager:
-    def __init__(self, parent) -> None:
-        self._app = parent
+    def __init__(self, app) -> None:
+        self.app = app
         self._formats: dict[str, tuple[int, int]] = formats
 
         self._registers_and_textures: dict[str | int, list[str | int]] = dict()
@@ -25,7 +25,7 @@ class TextureManager:
         return np.array([220, 220, 220, 255] * (width * height), dtype=np.uint8)
     
     def _get_scaled_size(self, size: tuple[int, int]) -> tuple[int, int]:
-        return (int(size[0] * self._app.scale), int(size[1] * self._app.scale))
+        return (int(size[0] * self.app.scale), int(size[1] * self.app.scale))
 
     def _get_datas_using_formats(self) -> None:
         images_datas = []

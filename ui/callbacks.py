@@ -1,8 +1,7 @@
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.config import MODE
-from ui.visualization import SIDE
+from ui import MODE, SIDE, RULE
 from core.config import formats as formats_sizes
 
 

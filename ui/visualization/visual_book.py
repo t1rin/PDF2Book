@@ -115,13 +115,13 @@ class VisualBook:
                 self._rule = rule
         elif part_index is not None and block_index is None:
             if not (part_index < self._q_parts):
-                print("failed editing angle of page of block")
+                self.app.message("failed editing angle of page of block")
                 return
             if pos is not None:
                 self._book.parts[part_index].pos = pos
         elif part_index is not None and block_index is not None:
             if (self._q_parts <= part_index) or (self._q_blocks <= block_index):
-                print("failed editing angle of page of block")
+                self.app.message("failed editing angle of page of block")
                 return
             if alpha is not None:
                 self._book.parts[part_index].blocks[block_index].alpha = alpha

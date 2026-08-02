@@ -3,20 +3,18 @@ import pymupdf as fitz
 
 from dataclasses import dataclass
 
-import core.config as conf
-
 
 @dataclass
 class BookParams:
     rows: int
     cols: int
     margin: int
-    format: str
+    thickness_lines: int
     show_cut_lines: bool
     show_margin_lines: bool
     show_blocks_lines: bool
-    thickness_lines: int
-    color_lines: tuple[int]
+    color_lines: tuple[int, ...]
+    page_size: tuple[int, int]
     dashes_pattern: str
     blocks_are_vertical: bool
     quantity_pages_for_part: int
@@ -90,8 +88,7 @@ def draw_formatting_page(
     if drawn_lines is None:
         drawn_lines = [[], []]
 
-    page_size = conf.formats[params.format]
-    rect_params = {'margin': params.margin, 'page_size': page_size}
+    rect_params = {'margin': params.margin, 'page_size': params.page_size}
     if (row is not None) and (col is not None):
         rect_params.update({'col': col, 'row': row, 
                             'cols': params.cols, 'rows': params.rows})
@@ -117,8 +114,9 @@ def draw_formatting_page(
         is_vertical = params.blocks_are_vertical
         is_cut_lines = [params.show_cut_lines and is_cut_line(row, is_vertical, is_row=True),
                         params.show_cut_lines and is_cut_line(col, is_vertical, is_row=False)]
-        cords_of_lines = [get_cords_horizontal_line(page_size, row, params.cols, params.rows),
-                        get_cords_vertical_line(page_size, col, params.cols, params.rows)]
+        cords_of_lines = [
+            get_cords_horizontal_line(params.page_size, row, params.cols, params.rows),
+            get_cords_vertical_line(params.page_size, col, params.cols, params.rows)]
         for i, cord in enumerate([row, col]):
             if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
                 output_page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
@@ -128,9 +126,11 @@ def draw_formatting_page(
                 drawn_lines[i].append(cord)
     return drawn_lines
 
-def calculate_texture_data(page: fitz.Page, scale: int,
-                           format: str) -> tuple[list, tuple[int, int]]:
-    right_width, right_height = conf.formats[format]
+def calculate_texture_data(
+        page: fitz.Page, scale: int,
+        page_size: tuple[int, int]
+        ) -> tuple[list, tuple[int, int]]:
+    right_width, right_height = page_size
     right_width = int(right_width * scale)
     right_height = int(right_height * scale)
     
@@ -165,7 +165,7 @@ def calculate_doc(input_doc: fitz.Document,
     if input_doc is None:
         raise ValueError("No PDF document loaded")
     
-    page_size = conf.formats[params.format]
+    page_size = params.page_size
     output_doc = fitz.open()
     is_vertical = params.blocks_are_vertical
     

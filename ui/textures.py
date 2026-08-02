@@ -5,8 +5,6 @@ import dearpygui.dearpygui as dpg
 import numpy as np
 from numpy.typing import NDArray
 
-from core.config import formats
-
 if TYPE_CHECKING:
     from main import PDF2BookApp
 
@@ -15,7 +13,7 @@ if TYPE_CHECKING:
 class TextureManager:
     def __init__(self, app: PDF2BookApp) -> None:
         self.app: PDF2BookApp = app
-        self._formats: dict[str, tuple[int, int]] = formats
+        self._formats: dict[str, tuple[int, int]] = app.conf.formats
 
         self._registers_and_textures: dict[str | int, list[str | int]] = dict()
 
@@ -83,19 +81,22 @@ class TextureManager:
         return textures
              
     def get_preview_data(
-            self, format_name: str | int, only_size: bool = False
+            self, format_size: tuple[int, int], only_size: bool = False
             ) -> tuple[NDArray | None, tuple[int, int] | None]:
-        if format_name not in self._formats:
+        if format_size not in self._formats.values():
             return None, None
-        scaled_size = self._get_scaled_size(self._formats[format_name])
+        scaled_size = self._get_scaled_size(format_size)
         if only_size:
             return None, scaled_size
         img_data = self._clean_img_data(*scaled_size)
         return img_data, scaled_size
 
-    def get_clean_texture(self, format_name: str) -> str | int:
+    def get_clean_texture(self, format_size: tuple[int, int]) -> str | int:
+        sizes = list(self._formats.values())
+        if format_size not in sizes:
+            raise ValueError("Uncorrectly format size")
+        index = sizes.index(format_size)
         textures = self.get_dynamic_textures("visual_textures")
-        index = list(self._formats.keys()).index(format_name)
         return textures[index]
 
     def update_preview_texture(self, format_name: str | int, 

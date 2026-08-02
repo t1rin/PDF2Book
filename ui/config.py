@@ -23,7 +23,11 @@ class Config:
     
     def __getattr__(self, name):
         if name in self._data:
-            return self._data[name]
+            attr = self._data[name]
+            if (name == 'formats') and isinstance(attr, dict):
+                return dict([*zip(list(attr.keys()), 
+                                  map(tuple, list(attr.values())))])
+            return attr
         raise AttributeError(f"Конфигурация не содержит поле '{name}'")
     
     def __setattr__(self, name, value):

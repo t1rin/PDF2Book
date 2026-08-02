@@ -7,7 +7,6 @@ import threading
 import os
 
 from core.calculate import *
-import core.config as conf
 
 
 class PDFImposer():
@@ -42,7 +41,7 @@ class PDFImposer():
 
     def update_params(
             self, rows: int = 2, cols: int = 2, margin: int = 15, 
-            format: str = "A4_portrait", show_cut_lines: bool = True, 
+            page_size: tuple[int, int] = (841, 1189), show_cut_lines: bool = True, 
             show_margin_lines: bool = True, show_blocks_lines: bool = False, 
             thickness_lines: int = 1, color_lines: tuple[float, ...] = (0.5, 0.5, 0.5), 
             dashes_pattern: str = "[4 2] 0", blocks_are_vertical: bool = False, 
@@ -56,10 +55,11 @@ class PDFImposer():
         q = quantity_pages_for_part
         if (q < 0) or (q % 4 != 0):
             raise ValueError("Incorrectly specified quantity_pages_for_part")
-        self.params = BookParams(rows, cols, margin, format, show_cut_lines,
-                                 show_margin_lines, show_blocks_lines,
-                                 thickness_lines, color_lines, dashes_pattern,
-                                 blocks_are_vertical, quantity_pages_for_part)
+        self.params = BookParams(rows, cols, margin, thickness_lines, 
+                                 show_cut_lines, show_margin_lines, 
+                                 show_blocks_lines, color_lines, page_size, 
+                                 dashes_pattern, blocks_are_vertical, 
+                                 quantity_pages_for_part)
 
     def get_preview(self, page_num: int, scale: int = 1,
                     indexation_size: int | None = None
@@ -79,7 +79,7 @@ class PDFImposer():
             return None, None
         
         try:
-            return calculate_texture_data(temp_doc[0], scale, self.params.format)
+            return calculate_texture_data(temp_doc[0], scale, self.params.page_size)
         finally:
             try: 
                 if temp_doc: temp_doc.close()
@@ -93,10 +93,10 @@ class PDFImposer():
         if page_num and (page_num >= len(self.input_doc)):
             raise ValueError("page_num >= len(self.input_doc)!!!")
         
-        page_size = conf.formats[self.params.format]
+        page_size = self.params.page_size
         page = fitz.open().new_page(width=page_size[0], height=page_size[1])
         draw_formatting_page(page, self.params, self.input_doc, page_num)
-        return calculate_texture_data(page, scale, self.params.format)
+        return calculate_texture_data(page, scale, self.params.page_size)
 
     def update_doc(self) -> None:
         if self._current_task and self._current_task.is_alive():
@@ -217,7 +217,4 @@ class PDFImposer():
     
     def is_processing(self) -> bool:
         return self._current_task is not None and self._current_task.is_alive()
-    
-    def get_formats(self) -> list[str]:
-        return list(conf.formats.keys())
     

@@ -7,7 +7,6 @@ from functools import wraps
 import copy
 
 from core import get_positions_pages
-from core.config import formats as formats_sizes
 from .geometry import pages_intersect, calculate_vertices, get_quad_distance
 from .data_structures import *
 
@@ -41,7 +40,7 @@ class VisualBook:
 
         self._spacing_between_parts: int = app.conf.spacing_between_parts
         self._default_texture = app.texture_manager.get_clean_texture(
-            format_name=app.pdf_imposer.params.format
+            format_size=app.pdf_imposer.params.page_size
         )
 
         self.active_block: tuple[int, int] = (0, 0)
@@ -49,7 +48,7 @@ class VisualBook:
         self.cache_textures: list[list[int]] = []
         self.need_reload: bool = False
 
-        for _ in range(len(formats_sizes)):
+        for _ in range(len(app.conf.formats)):
             self.cache_textures.append([])
 
         self.new_book()

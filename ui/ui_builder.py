@@ -121,8 +121,10 @@ def create_plot_window(app: PDF2BookApp) -> None:
                        "no_tick_labels": True, "no_tick_labels": True}
             dpg.add_plot_axis(dpg.mvXAxis, tag="x_axis", **options) 
             with dpg.plot_axis(dpg.mvYAxis, tag="y_axis", **options):
-                texture_tag = app.pdf_imposer.params.format
-                _, size = app.texture_manager.get_preview_data(texture_tag, only_size=True)
+                page_size = app.pdf_imposer.params.page_size
+                index_format = list(app.conf.formats.values()).index(page_size)
+                texture_tag = list(app.conf.formats.keys())[index_format]
+                _, size = app.texture_manager.get_preview_data(page_size, only_size=True)
                 dpg.add_image_series(texture_tag, [0, 0], size, tag="preview_pdf")
                 dpg.fit_axis_data(dpg.top_container_stack())
             dpg.fit_axis_data("x_axis")

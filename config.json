@@ -4,6 +4,16 @@
         "height": 750,
         "width": 770
     },
+    "formats": {
+        "A4_portrait": [
+            841,
+            1189
+        ],
+        "A4_landscape": [
+            1189,
+            841
+        ]
+    },
     "title_font": "assets\\fonts\\Prata-Regular.ttf",
     "selected_font": "assets/fonts/DeleddaOpen.ttf",
     "selected_theme": "light",

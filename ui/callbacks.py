@@ -6,7 +6,6 @@ import dearpygui.dearpygui as dpg
 from utils import *
 from ui.visualization import SIDE, RULE
 from ui.config import MODE
-from core.config import formats as formats_sizes
 
 if TYPE_CHECKING:
     from main import PDF2BookApp
@@ -40,7 +39,7 @@ def update(app: PDF2BookApp, align: bool = False) -> None:
 
 @require_pdf
 def update_preview(app: PDF2BookApp, align: bool = False) -> None:
-    texture_tag = app.pdf_imposer.params.format
+    texture_tag = _get_format(app)
     indexation_size = (app.conf.default_indexation_size 
                        if app.is_indexation else 0)
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
@@ -95,9 +94,9 @@ def update_visualization(app: PDF2BookApp) -> None:
 
 def reset_visual_book(app: PDF2BookApp) -> None:
     q_parts, q_blocks = _calculate_parts_blocks(
-        q_pages=len(app.pdf_imposer.input_doc), 
+        app, q_pages=len(app.pdf_imposer.input_doc), 
         size_part=app.pdf_imposer.params.quantity_pages_for_part)
-    format_size = formats_sizes[app.pdf_imposer.params.format]
+    format_size = app.pdf_imposer.params.page_size
     blocks_are_vertical = app.pdf_imposer.params.blocks_are_vertical
     side = SIDE.TOP if blocks_are_vertical else SIDE.LEFT
     
@@ -109,8 +108,8 @@ def reset_visual_book(app: PDF2BookApp) -> None:
 
 def _get_textures(app: PDF2BookApp) -> list:
     q_pages = len(app.pdf_imposer.input_doc)
-    format = app.pdf_imposer.params.format
-    index_format = list(formats_sizes.keys()).index(format)
+    page_size = app.pdf_imposer.params.page_size
+    index_format = list(app.conf.formats.values()).index(page_size)
     cache_textures = app.scene.visual_book.cache_textures[index_format]
 
     index = 0
@@ -256,9 +255,11 @@ def set_values(app: PDF2BookApp) -> None:
     dpg.set_value("indexes_pages_checkbox", app.is_indexation)
     dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
 
-    items = [*formats_sizes.keys()]
+    page_size = app.pdf_imposer.params.page_size
+    items = [*app.conf.formats.keys()]
+    select = items[list(app.conf.formats.values()).index(page_size)]
     dpg.configure_item("combo_formats", items=items)
-    dpg.set_value("combo_formats", app.pdf_imposer.params.format)
+    dpg.set_value("combo_formats", select)
 
     _set_values_of_modes(app)
     _set_values_of_visualization(app)
@@ -299,11 +300,12 @@ def _set_values_of_visualization(app: PDF2BookApp) -> None:
 
 @require_pdf
 def edit_params(app: PDF2BookApp) -> None:
+    formats = app.conf.formats
     params = {
         'rows': dpg.get_value("rows_input"),
         'cols': dpg.get_value("cols_input"),
         'margin': dpg.get_value("margin_input"),
-        'format': dpg.get_value("combo_formats"),
+        'page_size': formats[dpg.get_value("combo_formats")],
         'show_cut_lines': dpg.get_value("show_cut_lines"),
         'show_margin_lines': dpg.get_value("show_margin_lines"),
         'show_blocks_lines': dpg.get_value("show_blocks_lines"),
@@ -323,13 +325,13 @@ def edit_params(app: PDF2BookApp) -> None:
     app.pdf_imposer.update_params(**params)
 
     q_parts, q_blocks = _calculate_parts_blocks(
-        q_pages=len(app.pdf_imposer.input_doc),
+        app, q_pages=len(app.pdf_imposer.input_doc),
         size_part=params['quantity_pages_for_part'])
-    page_size = formats_sizes[params['format']]
+    page_size = params['page_size']
     side = SIDE.TOP if params['blocks_are_vertical'] else SIDE.LEFT
 
     if app.scene.visual_book.get('page_size') != page_size:
-        default_texture = app.texture_manager.get_clean_texture(params['format'])
+        default_texture = app.texture_manager.get_clean_texture(params['page_size'])
         app.scene.visual_book.set(default_texture=default_texture)
     if (app.scene.visual_book.get('page_size') != page_size or
         app.scene.visual_book.get('q_parts') != q_parts or
@@ -337,7 +339,7 @@ def edit_params(app: PDF2BookApp) -> None:
         app.scene.visual_book.get('side') != side):
         reset_visual_book(app)
 
-    align = (params['format'] != app.pdf_imposer.params.format)
+    align = (params['page_size'] != app.pdf_imposer.params.page_size)
     app.scene.visual_book.need_reload = True
     update(app, align=align)
 
@@ -390,7 +392,7 @@ def _prepare_pattern(app: PDF2BookApp, pattern: str) -> str:
         pattern = app.conf.default_pattern
     return f"[{pattern}] 0"
     
-def _calculate_parts_blocks(q_pages: int, size_part: int) -> tuple:
+def _calculate_parts_blocks(app: PDF2BookApp, q_pages: int, size_part: int) -> tuple:
     if size_part:
         q_parts = ((q_pages - 1) // size_part + 1)
         q_blocks = size_part // BLOCK_SIZE
@@ -398,6 +400,14 @@ def _calculate_parts_blocks(q_pages: int, size_part: int) -> tuple:
         q_parts = 1
         q_blocks = ((q_pages - 1) // BLOCK_SIZE + 1)
     return q_parts, q_blocks
+
+def _get_format(app: PDF2BookApp) -> str:
+    page_size = app.pdf_imposer.params.page_size
+    sizes = list(app.conf.formats.values())
+    if page_size not in sizes:
+        raise ValueError("Uncorrectly format size")
+    index_format = sizes.index(page_size)
+    return list(app.conf.formats.keys())[index_format]
 
 # __ Callbacks __
 

@@ -280,11 +280,12 @@ def _set_values_of_modes(app: PDF2BookApp) -> None:
 
 def _set_values_of_visualization(app: PDF2BookApp) -> None:
     if app.pdf_imposer.input_doc is not None:
+        q_pages = len(app.pdf_imposer.input_doc)
         q_parts = app.scene.visual_book.get('q_parts')
         q_blocks = app.scene.visual_book.get('q_blocks')
         dpg.configure_item("combo_parts", items=list(range(q_parts)))
         dpg.configure_item("combo_blocks", items=list(range(q_blocks)))
-
+        dpg.set_value("quantity_source_page_label", q_pages)
     part_index = app.scene.visual_book.active_block[0]
     block_index = app.scene.visual_book.active_block[1]
     alpha = app.scene.visual_book.get('alpha', part_index, block_index)

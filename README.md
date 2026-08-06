@@ -22,7 +22,7 @@
 
 загружает исходный файл PDF
 
-### `PDFImposer().update_params(rows=2, cols=2, margin=15, format="A4_portrait", show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", blocks_are_vertical=False, quantity_pages_for_part=0`
+### `PDFImposer().update_params(rows=2, cols=2, side=Side.LEFT, margin=15, page_size=(841, 1189), show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", quantity_pages_for_part=0`
 
 обновляет параметры расшивки
 
@@ -120,11 +120,11 @@ pi.export_doc("output.pdf")
 ```python
 import time
 
-from core import PDFImposer
+from core import PDFImposer, TOP
 
 
 pi = PDFImposer()
-pi.update_params(blocks_are_vertical=True, rows=2, cols=1)
+pi.update_params(side=TOP, rows=2, cols=1)
 pi.load_doc("input.pdf")
 
 start = time.time()

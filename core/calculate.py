@@ -8,9 +8,11 @@ from dataclasses import dataclass
 class Side(IntEnum):
     LEFT = 0
     TOP = 1
+    RIGHT = 2
 
 LEFT = Side.LEFT
 TOP = Side.TOP
+RIGHT = Side.RIGHT
 
 @dataclass
 class BookParams:
@@ -28,13 +30,18 @@ class BookParams:
     quantity_pages_for_part: int
 
 
-def get_positions_pages(quentity: int, side: Side = LEFT, 
+def get_positions_pages(quentity: int, side: Side = Side.LEFT, 
                         _list: list | None = None) -> list:
     """получение списка индексов для расположение в порядке для разреза"""
-    is_vertical = bool(side) # TODO
-    if _list is None: _list = [3, 0, 1, 2]
+    if _list is None:
+        _list = [3, 0, 1, 2]
+        if side == Side.RIGHT:
+            _list = get_positions_pages(quentity, Side.LEFT)
+            _list[::4], _list[2::4] = _list[2::4], _list[::4]
+            _list[1::4], _list[3::4] = _list[3::4], _list[1::4]
+            return _list[::-1]
     if quentity <= len(_list):
-        if is_vertical:
+        if side == Side.TOP:
             _list[2::4], _list[3::4] = _list[3::4], _list[2::4]
         return _list
     ind = _list.index(_list[-4])
@@ -91,9 +98,9 @@ def get_point_center(rect: fitz.Rect) -> tuple[int, int]:
 
 def is_cut_line(cord: int, side: Side, is_row: bool = True) -> bool:
     if is_row:
-        return (cord % 2 == 1) or (side == Side.LEFT)
+        return (cord % 2 == 1) or (side == LEFT) or (side == RIGHT)
     else:
-        return (cord % 2 == 1) or (side == Side.TOP)
+        return (cord % 2 == 1) or (side == TOP)
 
 
 def draw_formatting_page(
@@ -191,14 +198,14 @@ def calculate_doc(input_doc: fitz.Document, params: BookParams,
         raise ValueError("Incorrectly specified quantity_pages_for_part")
     
     new_positions = []
-    if params.quantity_pages_for_part == 0:
-        positions_pages = get_positions_pages(len(input_doc), side=LEFT)
-        new_positions += positions_pages
-    else:
-        positions_pages = get_positions_pages(params.quantity_pages_for_part, side=LEFT)
+    if params.quantity_pages_for_part:
+        positions_pages = get_positions_pages(params.quantity_pages_for_part, side=params.side)
         for i in range((len(input_doc) - 1) // params.quantity_pages_for_part + 1):
             positions = [params.quantity_pages_for_part*i+page for page in positions_pages]
             new_positions += positions
+    else:
+        positions_pages = get_positions_pages(len(input_doc), side=params.side)
+        new_positions += positions_pages
         
     side0, side1 = [], []
     for i in range(len(new_positions)):
@@ -226,7 +233,7 @@ def calculate_doc(input_doc: fitz.Document, params: BookParams,
             page = output_doc.new_page(width=page_size[0], height=page_size[1])
             
         drawn_lines = [[], []]
-        if params.side == LEFT:
+        if params.side in (LEFT, RIGHT):
             if sheet_num % 2 == 1:
                 for col in range(params.cols):
                     for row in range(params.rows):

@@ -1,28 +1,37 @@
 import numpy as np
 import pymupdf as fitz
 
+from enum import IntEnum
 from dataclasses import dataclass
 
+
+class Side(IntEnum):
+    LEFT = 0
+    TOP = 1
+
+LEFT = Side.LEFT
+TOP = Side.TOP
 
 @dataclass
 class BookParams:
     rows: int
     cols: int
+    side: Side
     margin: int
+    dashes_pattern: str
     thickness_lines: int
     show_cut_lines: bool
     show_margin_lines: bool
     show_blocks_lines: bool
     color_lines: tuple[int, ...]
     page_size: tuple[int, int]
-    dashes_pattern: str
-    blocks_are_vertical: bool
     quantity_pages_for_part: int
 
 
-def get_positions_pages(quentity: int, is_vertical: bool = False, 
+def get_positions_pages(quentity: int, side: Side = LEFT, 
                         _list: list | None = None) -> list:
     """получение списка индексов для расположение в порядке для разреза"""
+    is_vertical = bool(side) # TODO
     if _list is None: _list = [3, 0, 1, 2]
     if quentity <= len(_list):
         if is_vertical:
@@ -34,13 +43,15 @@ def get_positions_pages(quentity: int, is_vertical: bool = False,
     for i in range(len(_list)-4):
         if (i % 4 == 0) or (i % 4 == 3):
             _list[i] += 4
-    return get_positions_pages(quentity, is_vertical=is_vertical, _list=_list)
+    return get_positions_pages(quentity, side=side, _list=_list)
+
 
 def get_cell_size(page_size: tuple[int, int], cols: int, rows: int) -> tuple[int, int]:
     """получение размеров ячейки"""
     cell_width = page_size[0] / cols
     cell_height = page_size[1] / rows
     return (cell_width, cell_height)
+
 
 def get_cords_rect(margin: int, page_size: tuple[int, int],
                    col: int = 0, row: int = 0,
@@ -54,6 +65,7 @@ def get_cords_rect(margin: int, page_size: tuple[int, int],
 
     return (x0, y0, x1, y1)
 
+
 def get_cords_vertical_line(page_size: tuple[int, int], col: int, 
                             cols: int, rows: int) -> tuple[int, int]:
     """получение координат размещения вертикальной линии сетки"""
@@ -61,6 +73,7 @@ def get_cords_vertical_line(page_size: tuple[int, int], col: int,
     point0 = ((col + 1) * cell_width, 0)
     point1 = ((col + 1) * cell_width, page_size[1])
     return (point0, point1)
+
 
 def get_cords_horizontal_line(page_size: tuple[int, int], row: int, 
                               cols: int, rows: int) -> tuple[tuple[int, int], ...]:
@@ -70,15 +83,18 @@ def get_cords_horizontal_line(page_size: tuple[int, int], row: int,
     point1 = (page_size[0], (row + 1) * cell_height)
     return (point0, point1)
 
+
 def get_point_center(rect: fitz.Rect) -> tuple[int, int]:
     return (min(rect.x0, rect.x1) + (rect.x1-rect.x0)//2,
             min(rect.y0, rect.y1) + (rect.y1-rect.y0)//2)
 
-def is_cut_line(cord: int, is_vertical: bool, is_row: bool = True) -> bool:
+
+def is_cut_line(cord: int, side: Side, is_row: bool = True) -> bool:
     if is_row:
-        return (cord % 2 == 1) or not is_vertical
+        return (cord % 2 == 1) or (side == Side.LEFT)
     else:
-        return (cord % 2 == 1) or is_vertical
+        return (cord % 2 == 1) or (side == Side.TOP)
+
 
 def draw_formatting_page(
         output_page: fitz.Page, params: BookParams, input_doc: fitz.Document, 
@@ -98,33 +114,35 @@ def draw_formatting_page(
         index = None
 
     if index is not None:
-        if rotate: output_page.show_pdf_page(rect, input_doc, index,
-                                        keep_proportion=True, rotate=180)
-        else: output_page.show_pdf_page(rect, input_doc, index, 
-                                    keep_proportion=True)
+        if rotate: 
+            output_page.show_pdf_page(rect, input_doc, index,
+                                      keep_proportion=True, rotate=180)
+        else: 
+            output_page.show_pdf_page(rect, input_doc, index, 
+                                      keep_proportion=True)
         if indexation_size:
             output_page.insert_text(get_point_center(rect), str(index), 
                                     fontsize=indexation_size)
 
     if params.show_margin_lines and params.margin:
         output_page.draw_rect(rect, color=params.color_lines, 
-                        width=params.thickness_lines, fill=None)
+                              width=params.thickness_lines, fill=None)
 
     if (row is not None) and (col is not None):
-        is_vertical = params.blocks_are_vertical
-        is_cut_lines = [params.show_cut_lines and is_cut_line(row, is_vertical, is_row=True),
-                        params.show_cut_lines and is_cut_line(col, is_vertical, is_row=False)]
+        is_cut_lines = [params.show_cut_lines and is_cut_line(row, params.side, is_row=True),
+                        params.show_cut_lines and is_cut_line(col, params.side, is_row=False)]
         cords_of_lines = [
             get_cords_horizontal_line(params.page_size, row, params.cols, params.rows),
             get_cords_vertical_line(params.page_size, col, params.cols, params.rows)]
         for i, cord in enumerate([row, col]):
             if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
                 output_page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
-                                color=params.color_lines, width=params.thickness_lines,
-                                dashes=(params.dashes_pattern 
-                                        if is_cut_lines[i] else None))
+                                      color=params.color_lines, width=params.thickness_lines,
+                                      dashes=(params.dashes_pattern 
+                                              if is_cut_lines[i] else None))
                 drawn_lines[i].append(cord)
     return drawn_lines
+
 
 def calculate_texture_data(
         page: fitz.Page, scale: int,
@@ -158,28 +176,26 @@ def calculate_texture_data(
     
     return texture_data, (width, height)
 
-def calculate_doc(input_doc: fitz.Document,
-                  params: BookParams, page_num=None, 
-                  indexation_size: int | None = None) -> tuple[fitz.Document, int]:
+
+def calculate_doc(input_doc: fitz.Document, params: BookParams, 
+                  page_num=None, indexation_size: int | None = None,
+                  ) -> tuple[fitz.Document, int]:
     """Расчёт и создание документа с брошюровкой"""
     if input_doc is None:
         raise ValueError("No PDF document loaded")
     
     page_size = params.page_size
     output_doc = fitz.open()
-    is_vertical = params.blocks_are_vertical
     
     if params.quantity_pages_for_part and (len(input_doc) < params.quantity_pages_for_part):
         raise ValueError("Incorrectly specified quantity_pages_for_part")
     
     new_positions = []
     if params.quantity_pages_for_part == 0:
-        positions_pages = get_positions_pages(len(input_doc), 
-                                        is_vertical=is_vertical)
+        positions_pages = get_positions_pages(len(input_doc), side=LEFT)
         new_positions += positions_pages
     else:
-        positions_pages = get_positions_pages(params.quantity_pages_for_part, 
-                                              is_vertical=is_vertical)
+        positions_pages = get_positions_pages(params.quantity_pages_for_part, side=LEFT)
         for i in range((len(input_doc) - 1) // params.quantity_pages_for_part + 1):
             positions = [params.quantity_pages_for_part*i+page for page in positions_pages]
             new_positions += positions
@@ -210,7 +226,7 @@ def calculate_doc(input_doc: fitz.Document,
             page = output_doc.new_page(width=page_size[0], height=page_size[1])
             
         drawn_lines = [[], []]
-        if is_vertical:
+        if params.side == LEFT:
             if sheet_num % 2 == 1:
                 for col in range(params.cols):
                     for row in range(params.rows):
@@ -229,7 +245,7 @@ def calculate_doc(input_doc: fitz.Document,
                                 page, params, input_doc, index, row, col,
                                 drawn_lines, indexation_size, rotate=True
                             )
-        else:      
+        elif params.side == TOP:
             for row in range(params.rows):
                 for col in range(params.cols):
                     index = get_index()
@@ -238,6 +254,7 @@ def calculate_doc(input_doc: fitz.Document,
                             page, params, input_doc, index, row, col, 
                             drawn_lines, indexation_size
                         )
+    
     if (page_num is not None) and (page_num > sheet_num):
         raise ValueError("Not found page #{n}".format(n=page_num))
     

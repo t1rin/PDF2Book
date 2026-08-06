@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from functools import wraps
 import copy
 
-from core import get_positions_pages
+from core import get_positions_pages, LEFT, TOP, Side
 from .geometry import pages_intersect, calculate_vertices, get_quad_distance
 from .data_structures import *
 
@@ -55,7 +55,7 @@ class VisualBook:
 
     def new_book(self, q_parts: int = 1, q_blocks: int = 1, 
                  page_size: tuple[int, int] = (841, 1189),
-                 side: SIDE = SIDE.LEFT) -> None:
+                 side: Side = LEFT) -> None:
         page_size = tuple([self.app.scale * value for value in page_size])
         book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
                     page_size=page_size, side=side)
@@ -100,7 +100,7 @@ class VisualBook:
             part_index: int | None = None, 
             block_index: int | None = None, 
             page_size: tuple[int, int] | None = None, 
-            side: SIDE | None = None, pos: list[int] | None = None, 
+            side: Side | None = None, pos: list[int] | None = None, 
             alpha: int | None = None, beta: int | None = None,
             default_texture: int | str | None = None, 
             rule: RULE | None = None) -> None:

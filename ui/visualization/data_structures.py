@@ -1,13 +1,12 @@
 from enum import IntEnum
 from dataclasses import dataclass
 
+from core import Side
+
+
 class RULE(IntEnum):
     FREE = 0   # свободный, части двигаются без препятствий
     LOGIC = 1  # логичный, двигается так, как в реальной жизни
-
-class SIDE(IntEnum):
-    LEFT = 0
-    TOP = 1
 
 @dataclass
 class Page:
@@ -31,4 +30,4 @@ class Book:
     q_parts: int
     q_blocks: int 
     page_size: tuple[int]
-    side: SIDE
+    side: Side

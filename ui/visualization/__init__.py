@@ -1,5 +1,5 @@
 from .scene import Scene
-from .data_structures import RULE, SIDE
+from .data_structures import RULE
 
 
-__all__ = ['Scene', 'RULE', 'SIDE']
+__all__ = ['Scene', 'RULE']

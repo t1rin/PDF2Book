@@ -40,26 +40,27 @@ class PDFImposer():
         self.update_doc_async(callback)
 
     def update_params(
-            self, rows: int = 2, cols: int = 2, margin: int = 15, 
+            self, 
+            rows: int = 2, cols: int = 2, side: Side = LEFT, margin: int = 15,
             page_size: tuple[int, int] = (841, 1189), show_cut_lines: bool = True, 
             show_margin_lines: bool = True, show_blocks_lines: bool = False, 
             thickness_lines: int = 1, color_lines: tuple[float, ...] = (0.5, 0.5, 0.5), 
-            dashes_pattern: str = "[4 2] 0", blocks_are_vertical: bool = False, 
-            quantity_pages_for_part: int = 0) -> None:
+            dashes_pattern: str = "[4 2] 0", quantity_pages_for_part: int = 0,
+            ) -> None:
         
         if rows * cols % 2 == 1:
             raise ValueError("Not found blocks of pages")
-        if (blocks_are_vertical and (rows % 2 == 1)) or \
-            (not blocks_are_vertical and (cols % 2 == 1)):
-            raise ValueError("Incorrectly specified blocks_are_vertical")
+        if (side == LEFT and (rows % 2 == 1)) or \
+           (side == TOP and (cols % 2 == 1)):
+            raise ValueError("Incorrectly specified side")
         q = quantity_pages_for_part
         if (q < 0) or (q % 4 != 0):
             raise ValueError("Incorrectly specified quantity_pages_for_part")
-        self.params = BookParams(rows, cols, margin, thickness_lines, 
-                                 show_cut_lines, show_margin_lines, 
-                                 show_blocks_lines, color_lines, page_size, 
-                                 dashes_pattern, blocks_are_vertical, 
-                                 quantity_pages_for_part)
+        self.params = BookParams(
+            rows, cols, side, margin, dashes_pattern, thickness_lines, 
+            show_cut_lines, show_margin_lines, show_blocks_lines, 
+            color_lines, page_size, quantity_pages_for_part,
+        )
 
     def get_preview(self, page_num: int, scale: int = 1,
                     indexation_size: int | None = None

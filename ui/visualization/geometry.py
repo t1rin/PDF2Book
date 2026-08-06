@@ -2,7 +2,8 @@ import numpy as np
 
 import math
 
-from .data_structures import Book, SIDE
+from core import Side
+from .data_structures import Book
 
 
 TOLERANCE = 1e-8
@@ -218,13 +219,13 @@ def calculate_vertices(book: Book, thickness: int = 3):
                 uv_coords = []
                 for local_vertex, uv in local_vertices_with_uv[page_idx % 2]:
                     match book.side:
-                        case SIDE.LEFT:
+                        case Side.LEFT:
                             rotation_matrix = np.array([
                                 [math.cos(angle), 0, -math.sin(angle)],
                                 [0,               1,                0],
                                 [math.sin(angle), 0,  math.cos(angle)]
                             ])
-                        case SIDE.TOP:
+                        case Side.TOP:
                             rotation_matrix = np.array([
                                 [1,                0,               0],
                                 [0,  math.cos(angle), math.sin(angle)],

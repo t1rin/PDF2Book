@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.visualization import SIDE, RULE
+from ui.visualization import RULE
+from core import LEFT, TOP, Side
 from ui.config import MODE
 
 if TYPE_CHECKING:
@@ -97,8 +98,7 @@ def reset_visual_book(app: PDF2BookApp) -> None:
         app, q_pages=len(app.pdf_imposer.input_doc), 
         size_part=app.pdf_imposer.params.quantity_pages_for_part)
     format_size = app.pdf_imposer.params.page_size
-    blocks_are_vertical = app.pdf_imposer.params.blocks_are_vertical
-    side = SIDE.TOP if blocks_are_vertical else SIDE.LEFT
+    side = app.pdf_imposer.params.side
     
     app.scene.visual_book.new_book(q_parts, q_blocks, format_size, side)
     app.scene.visual_book.need_reload = True
@@ -242,8 +242,7 @@ def set_values(app: PDF2BookApp) -> None:
     dpg.set_value("rows_input", app.pdf_imposer.params.rows)
     dpg.set_value("cols_input", app.pdf_imposer.params.cols)    
     dpg.set_value("margin_input", app.pdf_imposer.params.margin)
-    dpg.set_value("radio_btn", "Сверху" 
-                  if app.pdf_imposer.params.blocks_are_vertical else "Слева")
+    dpg.set_value("radio_btn", {LEFT: "Слева", TOP: "Сверху"}[app.pdf_imposer.params.side])
     dpg.set_value("show_margin_lines", app.pdf_imposer.params.show_margin_lines)
     dpg.set_value("show_blocks_lines", app.pdf_imposer.params.show_blocks_lines)
     dpg.set_value("show_cut_lines", app.pdf_imposer.params.show_cut_lines)
@@ -305,16 +304,17 @@ def edit_params(app: PDF2BookApp) -> None:
     params = {
         'rows': dpg.get_value("rows_input"),
         'cols': dpg.get_value("cols_input"),
+        'side': ({"Слева": LEFT, "Сверху": TOP}
+                 [dpg.get_value("radio_btn")]),
         'margin': dpg.get_value("margin_input"),
         'page_size': formats[dpg.get_value("combo_formats")],
         'show_cut_lines': dpg.get_value("show_cut_lines"),
         'show_margin_lines': dpg.get_value("show_margin_lines"),
         'show_blocks_lines': dpg.get_value("show_blocks_lines"),
-        'quantity_pages_for_part': dpg.get_value("size_part_input"),
-        'color_lines': [i/255 for i in list(dpg.get_value("color_picker"))[0:3]],
-        'blocks_are_vertical': dpg.get_value("radio_btn") == "Сверху",
         'thickness_lines': dpg.get_value("thickness_input"),
+        'color_lines': [i/255 for i in list(dpg.get_value("color_picker"))[0:3]],
         'dashes_pattern': dpg.get_value("lineedit_pattern"),
+        'quantity_pages_for_part': dpg.get_value("size_part_input"),
     }
     
     if not (_validate_params(app, params) and _is_size_part_normal(app, params)):
@@ -325,24 +325,21 @@ def edit_params(app: PDF2BookApp) -> None:
     app.message()
     app.pdf_imposer.update_params(**params)
 
-    q_parts, q_blocks = _calculate_parts_blocks(
+    params['q_parts'], params['q_blocks'] = _calculate_parts_blocks(
         app, q_pages=len(app.pdf_imposer.input_doc),
         size_part=params['quantity_pages_for_part'])
-    page_size = params['page_size']
-    side = SIDE.TOP if params['blocks_are_vertical'] else SIDE.LEFT
+    is_change = (lambda param: 
+                    app.scene.visual_book.get(param) != params[param])
 
-    if app.scene.visual_book.get('page_size') != page_size:
+    if is_change('page_size'):
         default_texture = app.texture_manager.get_clean_texture(params['page_size'])
         app.scene.visual_book.set(default_texture=default_texture)
-    if (app.scene.visual_book.get('page_size') != page_size or
-        app.scene.visual_book.get('q_parts') != q_parts or
-        app.scene.visual_book.get('q_blocks') != q_blocks or
-        app.scene.visual_book.get('side') != side):
+    if (is_change('page_size') or is_change('q_parts') or 
+        is_change('q_blocks') or is_change('side')):
         reset_visual_book(app)
 
-    align = (params['page_size'] != app.pdf_imposer.params.page_size)
     app.scene.visual_book.need_reload = True
-    update(app, align=align)
+    update(app, align=is_change('page_size'))
 
 def _is_size_part_normal(app: PDF2BookApp, params: dict) -> bool:
     q_pages = len(app.pdf_imposer.input_doc)
@@ -375,12 +372,13 @@ def _validate_params(app: PDF2BookApp, params: dict) -> bool:
     if params['thickness_lines'] > app.conf.max_line_thickness:
         dpg.set_value("thickness_input", app.conf.max_line_thickness)
         return False
-    if params['blocks_are_vertical'] and (params['rows'] % 2 == 1):
+    blocks_are_vertical = params['side'] == TOP
+    if  blocks_are_vertical and (params['rows'] % 2 == 1):
         app.message(
             content="В указанное количество строк не помещаются блоки по два", 
             mood=False)
         return False
-    if not params['blocks_are_vertical'] and (params['cols'] % 2 == 1):
+    if not blocks_are_vertical and (params['cols'] % 2 == 1):
         app.message(
             content="В указанное количество столбцов не помещаются блоки по два", 
             mood=False)

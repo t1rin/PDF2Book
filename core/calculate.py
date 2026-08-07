@@ -2,6 +2,7 @@ import numpy as np
 import pymupdf as fitz
 
 from enum import IntEnum
+from functools import lru_cache
 from dataclasses import dataclass
 
 
@@ -30,6 +31,7 @@ class BookParams:
     quantity_pages_for_part: int
 
 
+@lru_cache(maxsize=128)
 def get_positions_pages(quentity: int, side: Side = Side.LEFT, 
                         _list: list | None = None) -> list:
     """получение списка индексов для расположение в порядке для разреза"""

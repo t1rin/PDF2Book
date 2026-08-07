@@ -2,7 +2,6 @@ import numpy as np
 import pymupdf as fitz
 
 from enum import IntEnum
-from functools import lru_cache
 from dataclasses import dataclass
 
 
@@ -31,20 +30,27 @@ class BookParams:
     quantity_pages_for_part: int
 
 
-@lru_cache(maxsize=128)
+_positions_cache = {}
+
 def get_positions_pages(quentity: int, side: Side = Side.LEFT, 
                         _list: list | None = None) -> list:
     """получение списка индексов для расположение в порядке для разреза"""
+    cache_key = (quentity, side)
+    if cache_key in _positions_cache:
+        return _positions_cache[cache_key].copy()
     if _list is None:
         _list = [3, 0, 1, 2]
         if side == Side.RIGHT:
             _list = get_positions_pages(quentity, Side.LEFT)
             _list[::4], _list[2::4] = _list[2::4], _list[::4]
             _list[1::4], _list[3::4] = _list[3::4], _list[1::4]
-            return _list[::-1]
+            _list = _list[::-1]
+            _positions_cache[cache_key] = _list.copy()
+            return _list
     if quentity <= len(_list):
         if side == Side.TOP:
             _list[2::4], _list[3::4] = _list[3::4], _list[2::4]
+        _positions_cache[cache_key] = _list.copy()
         return _list
     ind = _list.index(_list[-4])
     for i in range(4):

@@ -9,8 +9,8 @@ import os
 from core.calculate import *
 
 
-class PDFImposer():
-    def __init__(self) -> None:
+class PDFImposer:
+    def __init__(self, **option) -> None:
         self.input_doc: fitz.Document | None = None
         self.output_doc: fitz.Document | None = None
         self.quantity_page: int | None = None
@@ -20,7 +20,7 @@ class PDFImposer():
         self._lock: threading.Lock = threading.Lock()
         self._current_task_id: str | None = None
 
-        self.update_params()
+        self.update_params(**option)
 
     def __del__(self) -> None:
         if self.input_doc:

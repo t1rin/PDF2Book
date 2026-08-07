@@ -45,7 +45,7 @@ class PDFImposer:
             page_size: tuple[int, int] = (841, 1189), show_cut_lines: bool = True, 
             show_margin_lines: bool = True, show_blocks_lines: bool = False, 
             thickness_lines: int = 1, color_lines: tuple[float, ...] = (0.5, 0.5, 0.5), 
-            dashes_pattern: str = "[4 2] 0", quantity_pages_for_part: int = 0,
+            dashes_pattern: str = "4 2", quantity_pages_for_part: int = 0,
             ) -> None:
         
         if rows * cols % 2 == 1:

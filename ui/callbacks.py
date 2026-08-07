@@ -153,7 +153,7 @@ def load_file(app: PDF2BookApp) -> None:
             app.message(error, mood=False)
 
     app.pdf_path = path
-    app.pdf_imposer.update_params()
+    app.pdf_imposer.update_params(**app.imposer_options)
     app.pdf_imposer.load_doc(path, on_loading)
 
 def open_file(app: PDF2BookApp) -> None:
@@ -248,7 +248,7 @@ def set_values(app: PDF2BookApp) -> None:
     dpg.set_value("show_cut_lines", app.pdf_imposer.params.show_cut_lines)
     dpg.set_value("color_picker", [int(c * 255) for c in app.pdf_imposer.params.color_lines])
     dpg.set_value("thickness_input", app.pdf_imposer.params.thickness_lines)
-    dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
+    dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern)
     dpg.set_value("split_file_checkbox", app.is_split_file)
     dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
     dpg.set_value("indexes_pages_checkbox", app.is_indexation)
@@ -319,8 +319,6 @@ def edit_params(app: PDF2BookApp) -> None:
     
     if not (_validate_params(app, params) and _is_size_part_normal(app, params)):
         return
-    
-    params['dashes_pattern'] = _prepare_pattern(app, params['dashes_pattern'])
 
     app.message()
     app.pdf_imposer.update_params(**params)
@@ -384,12 +382,6 @@ def _validate_params(app: PDF2BookApp, params: dict) -> bool:
             mood=False)
         return False
     return True
-
-def _prepare_pattern(app: PDF2BookApp, pattern: str) -> str:
-    pattern_code = pattern.split()
-    if (len(pattern_code) % 2 != 0) or not all(s.isdigit() for s in pattern_code):
-        pattern = app.conf.default_pattern
-    return f"[{pattern}] 0"
     
 def _calculate_parts_blocks(app: PDF2BookApp, q_pages: int, size_part: int) -> tuple:
     if size_part:
@@ -456,14 +448,13 @@ def check_lineedit_pattern(app: PDF2BookApp) -> None:
     pattern_code = pattern.split()
 
     if app.pdf_path is None:
-        dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern[1:-3])
+        dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern)
         app.message("Файл PDF не загружен", mood=False)
         return
 
     if (len(pattern_code) % 2 == 0) and all(s.isdigit() for s in pattern_code):
         edit_params(app)
-    else:
-        app.message("Некорректный формат паттерна", mood=False)
+    else: app.message("Некорректный формат паттерна", mood=False)
 
 def move_panel(app: PDF2BookApp) -> None:
     app.pw_left = not app.pw_left

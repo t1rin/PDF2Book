@@ -14,6 +14,10 @@
             841
         ]
     },
+    "imposer_options": {
+        "dashes_pattern": "8 4",
+        "margin":  5
+    },
     "title_font": "assets\\fonts\\Prata-Regular.ttf",
     "selected_font": "assets/fonts/DeleddaOpen.ttf",
     "selected_theme": "light",
@@ -125,6 +129,5 @@
     "padding_loading_text": 10,
     "padding_drawlist": 18,
     "scale": 1,
-    "max_line_thickness": 5,
-    "default_pattern": "4 2"
+    "max_line_thickness": 5
 }

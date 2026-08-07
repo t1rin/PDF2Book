@@ -20,7 +20,8 @@ class PDF2BookApp:
         self.pw_left = self.conf.parametrs_window_on_the_left
         self.scale = self.conf.scale
 
-        self.pdf_imposer = PDFImposer()
+        self.imposer_options = self.conf.imposer_options
+        self.pdf_imposer = PDFImposer(**self.imposer_options)
         self.texture_manager = None
         self.theme_manager = None
         self.scene = None
@@ -78,7 +79,6 @@ class PDF2BookApp:
         dpg.destroy_context()
 
     def create_ui(self):
-
         to_delete = ["primary_window", "loading_window", "context_menu",
                      "split_file_checkbox", "drawlist_window", "plot_window"]
         for item in to_delete:

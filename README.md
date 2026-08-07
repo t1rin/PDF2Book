@@ -22,7 +22,7 @@
 
 загружает исходный файл PDF
 
-### `PDFImposer().update_params(rows=2, cols=2, side=Side.LEFT, margin=15, page_size=(841, 1189), show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="[4 2] 0", quantity_pages_for_part=0`
+### `PDFImposer().update_params(rows=2, cols=2, side=Side.LEFT, margin=15, page_size=(841, 1189), show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="4 2", quantity_pages_for_part=0`
 
 обновляет параметры расшивки
 

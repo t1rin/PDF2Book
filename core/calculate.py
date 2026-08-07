@@ -153,7 +153,7 @@ def draw_formatting_page(
             if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
                 output_page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
                                       color=params.color_lines, width=params.thickness_lines,
-                                      dashes=(params.dashes_pattern 
+                                      dashes=(f"[{params.dashes_pattern}] 0"
                                               if is_cut_lines[i] else None))
                 drawn_lines[i].append(cord)
     return drawn_lines

@@ -108,10 +108,11 @@ def create_drawlist_window(app: PDF2BookApp) -> None:
         with dpg.group(parent="drawlist_window", 
                        pos=[app.conf.padding_drawlist,
                             app.conf.padding_drawlist]):
-            with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
-                with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
-                                    perspective_divide=True, tag="drawlayer_3d"):
-                    with dpg.draw_node(tag="plane_node"): pass
+            with dpg.child_window(tag="drawlist_child_window", no_scrollbar=True):
+                with dpg.drawlist(width=-1, height=-1, tag="drawlist_3d"):
+                    with dpg.draw_layer(depth_clipping=False, cull_mode=dpg.mvCullMode_Back, 
+                                        perspective_divide=True, tag="drawlayer_3d"):
+                        with dpg.draw_node(tag="plane_node"): pass
 
 def create_plot_window(app: PDF2BookApp) -> None:
     with dpg.child_window(tag="plot_window"):

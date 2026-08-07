@@ -111,6 +111,7 @@ class PDF2BookApp:
                     padding = 2 * self.conf.padding_drawlist
                     width = size_drawlist[0] - padding
                     height = size_drawlist[1] - padding
+                    dpg.configure_item("drawlist_child_window", width=width, height=height)
                     dpg.configure_item("drawlist_3d", width=width, height=height)
                     self.scene.set_clip_space(width, height)
                     self.scene.update()

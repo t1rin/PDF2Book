@@ -16,28 +16,28 @@
     },
     "imposer_options": {
         "dashes_pattern": "8 4",
-        "margin":  5
+        "margin": 5
     },
     "title_font": "assets\\fonts\\Prata-Regular.ttf",
     "selected_font": "assets/fonts/DeleddaOpen.ttf",
-    "selected_theme": "light",
+    "selected_theme": "dark",
     "parametrs_window_on_the_left": false,
     "themes": {
         "dark": {
             "window_color": [
-                16,
-                16,
-                16
+                24,
+                24,
+                24
             ],
             "bg_color": [
-                28,
-                28,
-                28
+                31,
+                31,
+                31
             ],
             "widget_color": [
-                50,
-                50,
-                55
+                60,
+                60,
+                70
             ],
             "text_color": [
                 225,
@@ -77,9 +77,9 @@
         },
         "light": {
             "window_color": [
-                228,
-                228,
-                234
+                238,
+                238,
+                244
             ],
             "bg_color": [
                 243,

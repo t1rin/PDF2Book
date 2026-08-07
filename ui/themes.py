@@ -31,9 +31,21 @@ class ThemeManager:
                             dpg.add_theme_style(*style)
                         for color in theme["colors"]:
                             dpg.add_theme_color(*color)
+        
+            with dpg.theme(tag="drawlist_"+theme_name):
+                component = dpg.mvAll
+                with dpg.theme_component(component):
+                    dpg.add_theme_color(dpg.mvThemeCol_ChildBg, 
+                         self.app.conf.themes[theme_name]["window_color"])
+                    dpg.add_theme_style(dpg.mvStyleVar_WindowPadding, 0, 0)
+                    dpg.add_theme_style(dpg.mvStyleVar_ChildRounding, 0)
 
     def update(self) -> None:
         dpg.bind_theme(self.app.theme)
+        if dpg.does_item_exist("drawlist_child_window"):
+            dpg.bind_item_theme("drawlist_child_window",
+                                "drawlist_" + self.app.theme)
+
         self._fonts_settings = [
             (None,            self.app.font,       14),
             ("loading_text",  self.app.font,       20),
@@ -87,13 +99,14 @@ class ThemeManager:
                     (dpg.mvThemeCol_WindowBg, settings["window_color"]),
                     (dpg.mvThemeCol_ChildBg, settings["bg_color"]),
                     (dpg.mvThemeCol_PopupBg, settings["bg_color"]),
-                    (dpg.mvThemeCol_MenuBarBg, settings["bg_color"]),
+                    (dpg.mvThemeCol_MenuBarBg, settings["window_color"]),
                     (dpg.mvThemeCol_FrameBg, settings["widget_color"]),
                     (dpg.mvThemeCol_Button, settings["widget_color"]),
                     (dpg.mvThemeCol_TitleBg, settings["widget_color"]),
                     (dpg.mvThemeCol_TitleBgActive, settings["widget_color"]),
                     (dpg.mvThemeCol_Tab, settings["widget_color"]),
                     (dpg.mvThemeCol_Text, settings["text_color"]),
+                    (dpg.mvThemeCol_Header, settings["hovered_color"]),
                     (dpg.mvThemeCol_TextDisabled, settings["text_disabled_color"]),
                     (dpg.mvThemeCol_ButtonHovered, settings["hovered_color"]),
                     (dpg.mvThemeCol_HeaderHovered, settings["hovered_color"]),
@@ -138,7 +151,3 @@ class ThemeManager:
                 ]
             }
         }
-
-
-
-    

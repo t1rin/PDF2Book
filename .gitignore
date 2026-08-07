@@ -9,6 +9,7 @@ IDEAS.md
 *.pyo
 *.pyd
 
+.vs/
 .vscode/
 .idea/
 *.swp

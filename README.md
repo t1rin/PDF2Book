@@ -22,15 +22,15 @@
 
 загружает исходный файл PDF
 
-### `PDFImposer().update_params(rows=2, cols=2, side=Side.LEFT, margin=15, page_size=(841, 1189), show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="4 2", quantity_pages_for_part=0`
+### `PDFImposer().update_params(rows=2, cols=2, side=Side.LEFT, margin=15, page_size=(841, 1189), show_cut_lines=True, show_margin_lines=True, show_blocks_lines=False, thickness_lines=1, color_lines=(0.5, 0.5, 0.5), dashes_pattern="4 2", quantity_pages_for_part=0)`
 
 обновляет параметры расшивки
 
-### `PDFImposer().get_preview(page_num, scale=1, indexation_size=None)`
+### `PDFImposer().get_preview(page_num, dpi=1, indexation_size=None)`
 
 позволяет получить набор данных страницы `page_num` итогового документа без экспорта, если указан `indexation_size`, то будет проводится индексация страниц
 
-### `PDFImposer().get_formatted_source_page(page_num, scale=1)`
+### `PDFImposer().get_formatted_source_page(page_num, dpi=1)`
 
 позволяет получить страницу номера `page_num` исходного документа
 
@@ -42,7 +42,7 @@
 
 сохраняет выходной файл
 
-### `PDFImposer().get_preview_async(page_num, scale=1, indexation=False, callback=None)`
+### `PDFImposer().get_preview_async(page_num, dpi=1, indexation=False, callback=None)`
 
 то же, что и `PDFImposer().get_preview(...)`, но асинхронно, переданая функция `callback` будет вызвана по окончанию как: `callback(status, message)`, где `status = True`, если ошибок не было, иначе `status = False` и `message` - пояснение ошибки
 

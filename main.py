@@ -18,7 +18,6 @@ class PDF2BookApp:
         self.font = self.conf.selected_font
         self.title_font = self.conf.title_font
         self.pw_left = self.conf.parametrs_window_on_the_left
-        self.scale = self.conf.scale
 
         self.imposer_options = self.conf.imposer_options
         self.pdf_imposer = PDFImposer(**self.imposer_options)
@@ -123,7 +122,6 @@ class PDF2BookApp:
         self.conf.selected_font = self.font
         self.conf.selected_theme = self.theme
         self.conf.parametrs_window_on_the_left = self.pw_left
-        self.conf.scale = self.scale
         self.conf.save()
         print("Завершение...")
         

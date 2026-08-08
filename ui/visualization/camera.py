@@ -21,7 +21,8 @@ class Camera:
         self.home()
 
     def home(self) -> None:
-        self._distance: float = self.app.scale * 3500.0
+        zoom = self.app.conf.dpi / 72
+        self._distance: float = zoom * 3500.0
         self._yaw: float = math.pi / 4
         self._pitch: float = math.pi / 6
         self._target_x: float = 0.0

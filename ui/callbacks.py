@@ -44,7 +44,7 @@ def update_preview(app: PDF2BookApp, align: bool = False) -> None:
     indexation_size = (app.conf.default_indexation_size 
                        if app.is_indexation else 0)
     img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
-                                              scale=app.scale, 
+                                              dpi=app.conf.dpi, 
                                               indexation_size=indexation_size)
     app.texture_manager.update_preview_texture(texture_tag, img_data=img_data)
     if align:
@@ -117,14 +117,14 @@ def _get_textures(app: PDF2BookApp) -> list:
     datas_for_creating = []
     while index < min(q_pages, len(cache_textures)):
         img_data, _ = app.pdf_imposer.get_formatted_source_page(
-            page_num=index, scale=app.scale)
+            page_num=index, dpi=app.conf.dpi)
         texture = cache_textures[index]
         app.texture_manager.update_dynamic_texture(texture, img_data=img_data)
         textures.append(texture)
         index += 1
     while index < q_pages:
         datas_for_creating.append(app.pdf_imposer.get_formatted_source_page(
-            page_num=index, scale=app.scale))
+            page_num=index, dpi=app.conf.dpi))
         index += 1
     if datas_for_creating:
         texture_register = app.texture_manager.create_dynamic_textures(datas_for_creating)
@@ -496,8 +496,8 @@ def edit_indexation(app: PDF2BookApp) -> None:
     update(app)
 
 def edit_scale(app: PDF2BookApp, sender: int) -> None:
-    scale = float(dpg.get_item_label(sender))
-    app.scale = scale
+    dpi = float(dpg.get_item_label(sender))
+    app.conf.dpi = dpi
     app.create_ui()
 
 def reset_to_home(app: PDF2BookApp) -> None:

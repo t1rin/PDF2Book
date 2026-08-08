@@ -2,6 +2,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import dearpygui.dearpygui as dpg
+import pymupdf as fitz
 import numpy as np
 from numpy.typing import NDArray
 
@@ -29,7 +30,10 @@ class TextureManager:
         return np.array([220, 220, 220, 255] * (width * height), dtype=np.uint8)
     
     def _get_scaled_size(self, size: tuple[int, int]) -> tuple[int, int]:
-        return (int(size[0] * self.app.scale), int(size[1] * self.app.scale))
+        zoom = self.app.conf.dpi / 72
+        rect = fitz.Rect(0, 0, *size)
+        irect = (rect * fitz.Matrix(zoom, zoom)).irect
+        return (irect.width, irect.height)
 
     def _get_datas_using_formats(self) -> None:
         images_datas = []
@@ -135,4 +139,3 @@ class TextureManager:
                 
                 if register in self._registers_and_textures:
                     del self._registers_and_textures[register]
-

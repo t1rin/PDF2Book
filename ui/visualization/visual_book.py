@@ -56,7 +56,6 @@ class VisualBook:
     def new_book(self, q_parts: int = 1, q_blocks: int = 1, 
                  page_size: tuple[int, int] = (841, 1189),
                  side: Side = LEFT) -> None:
-        page_size = tuple([self.app.scale * value for value in page_size])
         book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
                     page_size=page_size, side=side)
         for i in range(q_parts):

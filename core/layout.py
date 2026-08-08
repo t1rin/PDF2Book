@@ -62,7 +62,7 @@ class PDFImposer:
             color_lines, page_size, quantity_pages_for_part,
         )
 
-    def get_preview(self, page_num: int, scale: int = 1,
+    def get_preview(self, page_num: int, dpi: int = 72,
                     indexation_size: int | None = None
                     ) -> tuple[list | None, tuple[int] | None]:
         if self.input_doc is None:
@@ -80,14 +80,14 @@ class PDFImposer:
             return None, None
         
         try:
-            return calculate_texture_data(temp_doc[0], scale, self.params.page_size)
+            return calculate_texture_data(temp_doc[0], dpi, self.params.page_size)
         finally:
             try: 
                 if temp_doc: temp_doc.close()
             except: pass
 
     def get_formatted_source_page(self, page_num: int | None, 
-                                  scale: int = 1) -> tuple[list, tuple[int]]:
+                                  dpi: int) -> tuple[list, tuple[int]]:
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
@@ -97,7 +97,7 @@ class PDFImposer:
         page_size = self.params.page_size
         page = fitz.open().new_page(width=page_size[0], height=page_size[1])
         draw_formatting_page(page, self.params, self.input_doc, page_num)
-        return calculate_texture_data(page, scale, self.params.page_size)
+        return calculate_texture_data(page, dpi, self.params.page_size)
 
     def update_doc(self) -> None:
         if self._current_task and self._current_task.is_alive():
@@ -137,12 +137,12 @@ class PDFImposer:
         else:
             self.output_doc.save(path, garbage=4, deflate=True)
 
-    def get_preview_async(self, page_num: int, scale: int = 1, 
+    def get_preview_async(self, page_num: int, dpi: int, 
                           indexation_size: int | None = None, 
                           callback: Callable[[Any], None] | None = None) -> None:
         def worker():
             try:
-                result = self.get_preview(page_num, scale, indexation_size)
+                result = self.get_preview(page_num, dpi, indexation_size)
                 if callback:
                     callback(result)
             except Exception as e:
@@ -218,4 +218,3 @@ class PDFImposer:
     
     def is_processing(self) -> bool:
         return self._current_task is not None and self._current_task.is_alive()
-    

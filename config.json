@@ -128,6 +128,6 @@
     "spacing_between_parts": 300,
     "padding_loading_text": 10,
     "padding_drawlist": 18,
-    "scale": 1,
-    "max_line_thickness": 5
+    "max_line_thickness": 5,
+    "dpi": 96
 }

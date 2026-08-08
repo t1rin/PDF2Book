@@ -160,16 +160,17 @@ def draw_formatting_page(
 
 
 def calculate_texture_data(
-        page: fitz.Page, scale: int,
+        page: fitz.Page, dpi: int,
         page_size: tuple[int, int]
         ) -> tuple[list, tuple[int, int]]:
-    right_width, right_height = page_size
-    right_width = int(right_width * scale)
-    right_height = int(right_height * scale)
-    
+    zoom = dpi / 72
+    target_rect = fitz.Rect(0, 0, *page_size)
+    irect = (target_rect * fitz.Matrix(zoom, zoom)).irect
+    right_width, right_height = irect.width, irect.height
+
     scale_x = right_width / page.rect.width
     scale_y = right_height / page.rect.height
-    
+
     matrix = fitz.Matrix(scale_x, scale_y)
     pix = page.get_pixmap(matrix=matrix, alpha=False)
 
@@ -177,20 +178,19 @@ def calculate_texture_data(
 
     if right_width != width or right_height != height:
         print("Sizes are not equel")
-    
+
     img_array = np.frombuffer(pix.samples, dtype=np.uint8)
     img_array = img_array.reshape(height, width, 3)
-    
+
     img_float = img_array.astype(np.float32) / 255.0
-    
+
     if pix.n == 3:
         alpha = np.ones((height, width, 1), dtype=np.float32)
         img_float = np.concatenate([img_float, alpha], axis=2)
-    
-    texture_data = img_float.flatten().tolist()
-    
-    return texture_data, (width, height)
 
+    texture_data = img_float.flatten().tolist()
+
+    return texture_data, (width, height)
 
 def calculate_doc(input_doc: fitz.Document, params: BookParams, 
                   page_num=None, indexation_size: int | None = None,

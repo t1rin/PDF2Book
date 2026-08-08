@@ -181,7 +181,7 @@ def create_menu_bar(app: PDF2BookApp) -> None:
             dpg.add_separator()
             with dpg.menu(label="Детализация"):
                 dpg.add_text("Включен автоматический\nперезапуск", 
-                           color=(200, 50, 50), wrap=200)
+                    color=app.conf.themes[app.theme]["negative_color"], wrap=200)
                 dpg.add_separator()
                 for dpi in app.conf.defaults_dpi:
                     tag = f"dpi_{dpi}_btn"

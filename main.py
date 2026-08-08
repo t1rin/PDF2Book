@@ -41,9 +41,9 @@ class PDF2BookApp:
     def message(self, content=None, mood=None, sep="\n\n"):
         color = None
         if mood == True:
-            color = (50, 150, 100)
+            color = self.conf.themes[self.theme]["positive_color"]
         if mood == False:
-            color = (200, 50, 50)
+            color = self.conf.themes[self.theme]["negative_color"]
         dpg.configure_item("log_output", color=color)
 
         if isinstance(content, str):

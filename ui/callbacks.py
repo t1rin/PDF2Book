@@ -495,10 +495,10 @@ def edit_indexation(app: PDF2BookApp) -> None:
     app.is_indexation = dpg.get_value("indexes_pages_checkbox")
     update(app)
 
-def edit_scale(app: PDF2BookApp, sender: int) -> None:
-    dpi = float(dpg.get_item_label(sender))
+def edit_dpi(app: PDF2BookApp, sender: int) -> None:
+    dpi = int(dpg.get_item_label(sender))
     app.conf.dpi = dpi
-    app.create_ui()
+    app.restart()
 
 def reset_to_home(app: PDF2BookApp) -> None:
     app.scene.camera.home()
@@ -546,8 +546,8 @@ def register_callbacks(app: PDF2BookApp) -> None:
         "open_output_folder_btn": lambda: open_output_folder(app),
     }
 
-    for det in range(100, 300, 25):
-        callbacks[f"scale_{det/100}_btn"] = lambda s, a, d: edit_scale(app, s)
+    for dpi in app.conf.defaults_dpi:
+        callbacks[f"dpi_{dpi}_btn"] = lambda s, a, d: edit_dpi(app, s)
 
     for item, callback in callbacks.items():
         dpg.set_item_callback(item, callback)

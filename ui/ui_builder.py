@@ -180,15 +180,13 @@ def create_menu_bar(app: PDF2BookApp) -> None:
                               tag="switch_font_btn")
             dpg.add_separator()
             with dpg.menu(label="Детализация"):
-                current_dpi = app.conf.dpi
-                for value in range(100, 300, 25):
-                    dpi = value / 100
-                    tag = f"scale_{dpi}_btn"
-                    dpg.add_menu_item(label=str(dpi), tag=tag, check=True,
-                        default_value=(dpi == current_dpi), user_data=dpi)
+                dpg.add_text("Включен автоматический\nперезапуск", 
+                           color=(200, 50, 50), wrap=200)
                 dpg.add_separator()
-                dpg.add_text("Изменение вступит в силу\nпосле перезапуска", 
-                           color=(150, 150, 60), wrap=200)
+                for dpi in app.conf.defaults_dpi:
+                    tag = f"dpi_{dpi}_btn"
+                    dpg.add_menu_item(label=str(dpi), tag=tag, check=True,
+                        default_value=(dpi == app.conf.dpi), user_data=dpi)
 
 def create_drag_and_drop(app: PDF2BookApp) -> None:
     if os_type() == "Windows":

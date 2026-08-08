@@ -29,6 +29,7 @@ class PDF2BookApp:
         self.is_split_file = False
         self.current_page = 1
 
+        self.need_reload = None
         self._old_size_drawlist = None
         self._processing = None
 
@@ -77,6 +78,10 @@ class PDF2BookApp:
 
         dpg.destroy_context()
 
+    def restart(self) -> None:
+        self.need_reload = True
+        dpg.stop_dearpygui()
+
     def create_ui(self):
         to_delete = ["primary_window", "loading_window", "context_menu",
                      "split_file_checkbox", "drawlist_window", "plot_window"]
@@ -123,7 +128,9 @@ class PDF2BookApp:
         self.conf.selected_theme = self.theme
         self.conf.parametrs_window_on_the_left = self.pw_left
         self.conf.save()
-        print("Завершение...")
+
+        if not self.need_reload:
+            print("Завершение...")
         
         if self.pdf_imposer:
             del self.pdf_imposer
@@ -134,6 +141,12 @@ class PDF2BookApp:
 def main():
     app = PDF2BookApp()
     app.run()
+
+    if app.need_reload:
+        import sys, subprocess
+
+        subprocess.Popen([sys.executable, *sys.argv])
+        sys.exit(0)
 
 
 if __name__ == "__main__":

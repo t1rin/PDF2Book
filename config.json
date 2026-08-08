@@ -123,11 +123,17 @@
             ]
         }
     },
+    "defaults_dpi": [
+        36,
+        72,
+        96,
+        150
+    ],
     "default_panel_width": 250,
     "default_indexation_size": 60,
     "spacing_between_parts": 300,
     "padding_loading_text": 10,
     "padding_drawlist": 18,
     "max_line_thickness": 5,
-    "dpi": 96
+    "dpi": 72
 }

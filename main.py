@@ -5,11 +5,12 @@ from ui.visualization import Scene
 from ui.textures import TextureManager
 from ui.themes import ThemeManager
 from ui.config import MODE
+from utils import get_startup_path
 import ui
 
 
 class PDF2BookApp:
-    def __init__(self):
+    def __init__(self, startup_path=None):
         self.pdf_path = None
         self.mode = MODE.PREVIEW
         self.conf = ui.conf
@@ -19,6 +20,7 @@ class PDF2BookApp:
         self.title_font = self.conf.title_font
         self.pw_left = self.conf.parametrs_window_on_the_left
 
+        self._startup_path = startup_path
         self.imposer_options = self.conf.imposer_options
         self.pdf_imposer = PDFImposer(**self.imposer_options)
         self.texture_manager = None
@@ -56,7 +58,8 @@ class PDF2BookApp:
             for i in range(len(content)):
                 message += content[i] + sep
 
-        dpg.set_value("log_output", message)
+        if dpg.does_item_exist("log_output"):
+            dpg.set_value("log_output", message)
 
     def run(self):
         dpg.create_context()
@@ -68,6 +71,7 @@ class PDF2BookApp:
 
         self.initialize()
         self.create_ui()
+        self.load_startup_path()
 
         dpg.setup_dearpygui()
         dpg.show_viewport()
@@ -97,6 +101,11 @@ class PDF2BookApp:
 
         self.theme_manager.update()
         self.scene.update()
+
+    def load_startup_path(self):
+        if self._startup_path:
+            path = self._startup_path
+            ui.callbacks.load_file(self, path)
 
     def on_frame(self):
         if dpg.get_frame_count() < 25:
@@ -138,8 +147,10 @@ class PDF2BookApp:
             self.texture_manager.delete_textures()
         dpg.stop_dearpygui()
 
+
 def main():
-    app = PDF2BookApp()
+    startup_path = get_startup_path()
+    app = PDF2BookApp(startup_path=startup_path)
     app.run()
 
     if app.need_reload:

@@ -136,8 +136,9 @@ def _get_textures(app: PDF2BookApp) -> list:
 
 # __ Working with files __
 
-def load_file(app: PDF2BookApp) -> None:
-    path = dpg.get_value("lineedit_input_file")
+def load_file(app: PDF2BookApp, path: str | None = None) -> None:
+    if not path:
+        path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
     app.message(err, mood=False)
     if err: return

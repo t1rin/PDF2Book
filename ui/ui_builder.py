@@ -81,7 +81,7 @@ def create_settings_panel(app: PDF2BookApp) -> None:
 
             with dpg.tab(label="Сшивка"):
                 dpg.add_text("Место переплета:")
-                dpg.add_radio_button(("Слева", "Сверху"), tag="radio_btn", horizontal=True)
+                dpg.add_radio_button(("Слева", "Сверху", "Справа"), tag="radio_btn", horizontal=True)
                 dpg.add_checkbox(tag="separate_checkbox", label="Делить на секции")
                 with dpg.group(tag="part_options"):
                     dpg.add_text("Размер секции:")

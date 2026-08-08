@@ -5,7 +5,7 @@ import dearpygui.dearpygui as dpg
 
 from utils import *
 from ui.visualization import RULE
-from core import LEFT, TOP, Side
+from core import LEFT, TOP, RIGHT
 from ui.config import MODE
 
 if TYPE_CHECKING:
@@ -242,7 +242,7 @@ def set_values(app: PDF2BookApp) -> None:
     dpg.set_value("rows_input", app.pdf_imposer.params.rows)
     dpg.set_value("cols_input", app.pdf_imposer.params.cols)    
     dpg.set_value("margin_input", app.pdf_imposer.params.margin)
-    dpg.set_value("radio_btn", {LEFT: "Слева", TOP: "Сверху"}[app.pdf_imposer.params.side])
+    dpg.set_value("radio_btn", {LEFT: "Слева", TOP: "Сверху", RIGHT: "Справа"}[app.pdf_imposer.params.side])
     dpg.set_value("show_margin_lines", app.pdf_imposer.params.show_margin_lines)
     dpg.set_value("show_blocks_lines", app.pdf_imposer.params.show_blocks_lines)
     dpg.set_value("show_cut_lines", app.pdf_imposer.params.show_cut_lines)
@@ -304,7 +304,7 @@ def edit_params(app: PDF2BookApp) -> None:
     params = {
         'rows': dpg.get_value("rows_input"),
         'cols': dpg.get_value("cols_input"),
-        'side': ({"Слева": LEFT, "Сверху": TOP}
+        'side': ({"Слева": LEFT, "Сверху": TOP, "Справа": RIGHT}
                  [dpg.get_value("radio_btn")]),
         'margin': dpg.get_value("margin_input"),
         'page_size': formats[dpg.get_value("combo_formats")],

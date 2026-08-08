@@ -219,7 +219,7 @@ def calculate_vertices(book: Book, thickness: int = 3):
                 uv_coords = []
                 for local_vertex, uv in local_vertices_with_uv[page_idx % 2]:
                     match book.side:
-                        case Side.LEFT:
+                        case Side.LEFT | Side.RIGHT:
                             rotation_matrix = np.array([
                                 [math.cos(angle), 0, -math.sin(angle)],
                                 [0,               1,                0],

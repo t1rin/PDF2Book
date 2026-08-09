@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 import dearpygui.dearpygui as dpg
 
 from utils import *
-from ui.callbacks import set_values, drop_handler
+from ui.config import MODE
+from core import LEFT, TOP, RIGHT
 
 if os_type() == "Windows":
     import ui.DearPyGui_DragAndDrop as dpg_dnd
@@ -192,34 +193,116 @@ def create_menu_bar(app: PDF2BookApp) -> None:
 
 def create_drag_and_drop(app: PDF2BookApp) -> None:
     if os_type() == "Windows":
+        from ui.callbacks import drop_handler
+
         dpg_dnd.initialize()
-        dpg_dnd.set_drop(lambda data, keys: 
+        dpg_dnd.set_drop(lambda data, _: 
                          drop_handler(app, data))
+
+def build_table_layout(app: PDF2BookApp) -> None:
+    order = ("settings_panel", "content_group") if app.pw_left else \
+            ("content_group", "settings_panel")
+
+    for tag in order:
+        dpg.move_item(tag, parent="primary_window")
+
+    if dpg.does_item_exist("layout_table"):
+        dpg.delete_item("layout_table")
+
+    with dpg.table(tag="layout_table", header_row=False, hideable=True,
+                   resizable=True, parent="primary_window"):
+        if app.pw_left:
+            dpg.add_table_column(width_fixed=True,
+                                  init_width_or_weight=app.conf.default_panel_width)
+            dpg.add_table_column()
+        else:
+            dpg.add_table_column()
+            dpg.add_table_column(width_fixed=True,
+                                  init_width_or_weight=app.conf.default_panel_width)
+
+        with dpg.table_row(tag="layout_row"):
+            pass
+
+    for tag in order:
+        dpg.move_item(tag, parent="layout_row")
 
 def create_main_window(app: PDF2BookApp) -> None:
     with dpg.window(tag="primary_window"):
         dpg.set_primary_window("primary_window", True)
         create_menu_bar(app)
-        with dpg.group():
-            with dpg.table(header_row=False, hideable=True, resizable=True):
-                if app.pw_left:
-                    dpg.add_table_column(width_fixed=True, 
-                        init_width_or_weight=app.conf.default_panel_width)
-                dpg.add_table_column()
-                if not app.pw_left:
-                        dpg.add_table_column(width_fixed=True, 
-                            init_width_or_weight=app.conf.default_panel_width)
-                with dpg.table_row():
-                    if app.pw_left:
-                        create_settings_panel(app)
-                    with dpg.group():
-                        create_drawlist_window(app)
-                        create_plot_window(app)
-                    if not app.pw_left:
-                        create_settings_panel(app)
+
+        create_settings_panel(app)
+        with dpg.group(tag="content_group"):
+            create_drawlist_window(app)
+            create_plot_window(app)
+
+        build_table_layout(app)
+
     create_loading_window(app)
 
     resize_update(app)
 
     set_values(app)
     
+def set_values(app: PDF2BookApp) -> None:
+    if app.pdf_path:
+        dpg.set_value("lineedit_input_file", app.pdf_path)
+    dpg.set_value("page_label", app.current_page)
+    dpg.set_value("rows_input", app.pdf_imposer.params.rows)
+    dpg.set_value("cols_input", app.pdf_imposer.params.cols)    
+    dpg.set_value("margin_input", app.pdf_imposer.params.margin)
+    dpg.set_value("radio_btn", {LEFT: "Слева", TOP: "Сверху", RIGHT: "Справа"}[app.pdf_imposer.params.side])
+    dpg.set_value("show_margin_lines", app.pdf_imposer.params.show_margin_lines)
+    dpg.set_value("show_blocks_lines", app.pdf_imposer.params.show_blocks_lines)
+    dpg.set_value("show_cut_lines", app.pdf_imposer.params.show_cut_lines)
+    dpg.set_value("color_picker", [int(c * 255) for c in app.pdf_imposer.params.color_lines])
+    dpg.set_value("thickness_input", app.pdf_imposer.params.thickness_lines)
+    dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern)
+    dpg.set_value("split_file_checkbox", app.is_split_file)
+    dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
+    dpg.set_value("indexes_pages_checkbox", app.is_indexation)
+    dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
+
+    page_size = app.pdf_imposer.params.page_size
+    items = [*app.conf.formats.keys()]
+    select = items[list(app.conf.formats.values()).index(page_size)]
+    dpg.configure_item("combo_formats", items=items)
+    dpg.set_value("combo_formats", select)
+
+    set_values_of_modes(app)
+    set_values_of_visualization(app)
+
+def set_values_of_modes(app: PDF2BookApp) -> None:
+    is_preview_mode = app.mode == MODE.PREVIEW
+    is_visualization_mode = app.mode == MODE.VISUALIZATION
+    dpg.set_value("preview_mode_button", is_preview_mode)
+    dpg.set_value("visualization_mode_button", is_visualization_mode)
+    dpg.configure_item("plot_window", show=is_preview_mode)
+    dpg.configure_item("drawlist_window", show=is_visualization_mode)
+    dpg.configure_item("preview_view_settings", show=is_preview_mode)
+    dpg.configure_item("visualiization_view_settings", 
+                       show=is_visualization_mode)
+    if is_preview_mode:
+        dpg.configure_item("visualization_tab", show=False)
+        dpg.configure_item("detailed_visual_properties_btn", show=True)
+
+def set_values_of_visualization(app: PDF2BookApp) -> None:
+    if app.pdf_imposer.input_doc is not None:
+        q_pages = len(app.pdf_imposer.input_doc)
+        q_parts = app.scene.visual_book.get('q_parts')
+        q_blocks = app.scene.visual_book.get('q_blocks')
+        dpg.configure_item("combo_parts", items=list(range(q_parts)))
+        dpg.configure_item("combo_blocks", items=list(range(q_blocks)))
+        dpg.set_value("quantity_source_page_label", q_pages)
+    part_index = app.scene.visual_book.active_block[0]
+    block_index = app.scene.visual_book.active_block[1]
+    alpha = app.scene.visual_book.get('alpha', part_index, block_index)
+    beta = app.scene.visual_book.get('beta', part_index, block_index)
+    dpg.set_value("combo_parts", part_index)
+    dpg.set_value("combo_blocks", block_index)
+    dpg.set_value("alpha_input", alpha)
+    dpg.set_value("beta_input", beta)
+    dpg.set_value("active_block_label", 
+                  f"({part_index}, {block_index})")
+
+    app.scene.update()

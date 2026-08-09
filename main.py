@@ -87,12 +87,6 @@ class PDF2BookApp:
         dpg.stop_dearpygui()
 
     def create_ui(self):
-        to_delete = ["primary_window", "loading_window", "context_menu",
-                     "split_file_checkbox", "drawlist_window", "plot_window"]
-        for item in to_delete:
-            if dpg.does_item_exist(item):
-                dpg.delete_item(item)
-
         ui.create_main_window(self)
         ui.register_callbacks(self)
         ui.register_mouse_handlers(self)

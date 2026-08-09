@@ -3,10 +3,12 @@ from typing import TYPE_CHECKING
 
 import dearpygui.dearpygui as dpg
 
-from utils import *
-from ui.visualization import RULE
 from core import LEFT, TOP, RIGHT
-from ui.config import MODE
+from .ui_builder import (build_table_layout, set_values,
+    set_values_of_modes, set_values_of_visualization)
+from .visualization import RULE
+from .config import MODE
+from utils import *
 
 if TYPE_CHECKING:
     from main import PDF2BookApp
@@ -104,7 +106,7 @@ def reset_visual_book(app: PDF2BookApp) -> None:
     app.scene.visual_book.need_reload = True
     app.scene.visual_book.active_block = (0, 0)
 
-    _set_values_of_visualization(app)
+    set_values_of_visualization(app)
 
 def _get_textures(app: PDF2BookApp) -> list:
     q_pages = len(app.pdf_imposer.input_doc)
@@ -235,69 +237,6 @@ def open_output_folder(app: PDF2BookApp) -> None:
         app.message(f"Папка не существует", mood=False)
 
 # __ Working with params __
-
-def set_values(app: PDF2BookApp) -> None:
-    if app.pdf_path:
-        dpg.set_value("lineedit_input_file", app.pdf_path)
-    dpg.set_value("page_label", app.current_page)
-    dpg.set_value("rows_input", app.pdf_imposer.params.rows)
-    dpg.set_value("cols_input", app.pdf_imposer.params.cols)    
-    dpg.set_value("margin_input", app.pdf_imposer.params.margin)
-    dpg.set_value("radio_btn", {LEFT: "Слева", TOP: "Сверху", RIGHT: "Справа"}[app.pdf_imposer.params.side])
-    dpg.set_value("show_margin_lines", app.pdf_imposer.params.show_margin_lines)
-    dpg.set_value("show_blocks_lines", app.pdf_imposer.params.show_blocks_lines)
-    dpg.set_value("show_cut_lines", app.pdf_imposer.params.show_cut_lines)
-    dpg.set_value("color_picker", [int(c * 255) for c in app.pdf_imposer.params.color_lines])
-    dpg.set_value("thickness_input", app.pdf_imposer.params.thickness_lines)
-    dpg.set_value("lineedit_pattern", app.pdf_imposer.params.dashes_pattern)
-    dpg.set_value("split_file_checkbox", app.is_split_file)
-    dpg.set_value("separate_checkbox", bool(app.pdf_imposer.params.quantity_pages_for_part))
-    dpg.set_value("indexes_pages_checkbox", app.is_indexation)
-    dpg.configure_item("part_options", show=bool(app.pdf_imposer.params.quantity_pages_for_part))
-
-    page_size = app.pdf_imposer.params.page_size
-    items = [*app.conf.formats.keys()]
-    select = items[list(app.conf.formats.values()).index(page_size)]
-    dpg.configure_item("combo_formats", items=items)
-    dpg.set_value("combo_formats", select)
-
-    _set_values_of_modes(app)
-    _set_values_of_visualization(app)
-
-def _set_values_of_modes(app: PDF2BookApp) -> None:
-    is_preview_mode = app.mode == MODE.PREVIEW
-    is_visualization_mode = app.mode == MODE.VISUALIZATION
-    dpg.set_value("preview_mode_button", is_preview_mode)
-    dpg.set_value("visualization_mode_button", is_visualization_mode)
-    dpg.configure_item("plot_window", show=is_preview_mode)
-    dpg.configure_item("drawlist_window", show=is_visualization_mode)
-    dpg.configure_item("preview_view_settings", show=is_preview_mode)
-    dpg.configure_item("visualiization_view_settings", 
-                       show=is_visualization_mode)
-    if is_preview_mode:
-        dpg.configure_item("visualization_tab", show=False)
-        dpg.configure_item("detailed_visual_properties_btn", show=True)
-
-def _set_values_of_visualization(app: PDF2BookApp) -> None:
-    if app.pdf_imposer.input_doc is not None:
-        q_pages = len(app.pdf_imposer.input_doc)
-        q_parts = app.scene.visual_book.get('q_parts')
-        q_blocks = app.scene.visual_book.get('q_blocks')
-        dpg.configure_item("combo_parts", items=list(range(q_parts)))
-        dpg.configure_item("combo_blocks", items=list(range(q_blocks)))
-        dpg.set_value("quantity_source_page_label", q_pages)
-    part_index = app.scene.visual_book.active_block[0]
-    block_index = app.scene.visual_book.active_block[1]
-    alpha = app.scene.visual_book.get('alpha', part_index, block_index)
-    beta = app.scene.visual_book.get('beta', part_index, block_index)
-    dpg.set_value("combo_parts", part_index)
-    dpg.set_value("combo_blocks", block_index)
-    dpg.set_value("alpha_input", alpha)
-    dpg.set_value("beta_input", beta)
-    dpg.set_value("active_block_label", 
-                  f"({part_index}, {block_index})")
-
-    app.scene.update()
 
 @require_pdf
 def edit_params(app: PDF2BookApp) -> None:
@@ -458,7 +397,7 @@ def check_lineedit_pattern(app: PDF2BookApp) -> None:
 
 def move_panel(app: PDF2BookApp) -> None:
     app.pw_left = not app.pw_left
-    app.create_ui()
+    build_table_layout(app)
 
 def switch_theme(app: PDF2BookApp) -> None:
     themes = list(app.conf.themes.keys())
@@ -473,7 +412,7 @@ def switch_font(app: PDF2BookApp) -> None:
 def switch_mode(app: PDF2BookApp, mode: str) -> None:
     if mode == "preview": app.mode = MODE.PREVIEW
     if mode == "visualization": app.mode = MODE.VISUALIZATION
-    _set_values_of_modes(app)
+    set_values_of_modes(app)
     update(app)
 
 @require_pdf

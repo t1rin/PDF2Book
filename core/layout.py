@@ -50,8 +50,8 @@ class PDFImposer:
         
         if rows * cols % 2 == 1:
             raise ValueError("Not found blocks of pages")
-        if (side in (LEFT, RIGHT) and (rows % 2 == 1)) or \
-           (side == TOP and (cols % 2 == 1)):
+        if (side == TOP and (rows % 2 == 1)) or \
+           (side in (LEFT, RIGHT) and (cols % 2 == 1)):
             raise ValueError("Incorrectly specified side")
         q = quantity_pages_for_part
         if (q < 0) or (q % 4 != 0):

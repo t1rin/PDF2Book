@@ -241,7 +241,7 @@ def calculate_doc(input_doc: fitz.Document, params: BookParams,
             page = output_doc.new_page(width=page_size[0], height=page_size[1])
             
         drawn_lines = [[], []]
-        if params.side in (LEFT, RIGHT):
+        if params.side == TOP:
             if sheet_num % 2 == 1:
                 for col in range(params.cols):
                     for row in range(params.rows):
@@ -260,7 +260,7 @@ def calculate_doc(input_doc: fitz.Document, params: BookParams,
                                 page, params, input_doc, index, row, col,
                                 drawn_lines, indexation_size, rotate=True
                             )
-        elif params.side == TOP:
+        else:
             for row in range(params.rows):
                 for col in range(params.cols):
                     index = get_index()

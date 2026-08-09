@@ -166,17 +166,19 @@ def create_menu_bar(app: PDF2BookApp) -> None:
             
         with dpg.menu(label="Режим"):
             dpg.add_menu_item(label="Просмотр", check=True, default_value=True,
-                              tag="preview_mode_button", user_data="preview")
+                              tag="preview_mode_button", user_data="preview",
+                              shortcut="F1")
             dpg.add_menu_item(label="Визуализация", check=True, 
                               tag="visualization_mode_button", 
-                              user_data="visualization")
+                              user_data="visualization",
+                              shortcut="F2")
             
         with dpg.menu(label="Вид"):
             dpg.add_menu_item(label="Переместить панель", tag="move_panel_btn")
             dpg.add_separator()
-            dpg.add_menu_item(label="Сменить тему", shortcut="F1",
+            dpg.add_menu_item(label="Сменить тему", shortcut="F3",
                               tag="switch_theme_btn")
-            dpg.add_menu_item(label="Сменить шрифт", shortcut="F2",
+            dpg.add_menu_item(label="Сменить шрифт", shortcut="F4",
                               tag="switch_font_btn")
             dpg.add_separator()
             with dpg.menu(label="Детализация"):

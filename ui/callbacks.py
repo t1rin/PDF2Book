@@ -371,13 +371,12 @@ def _validate_params(app: PDF2BookApp, params: dict) -> bool:
     if params['thickness_lines'] > app.conf.max_line_thickness:
         dpg.set_value("thickness_input", app.conf.max_line_thickness)
         return False
-    blocks_are_vertical = params['side'] == TOP
-    if  blocks_are_vertical and (params['rows'] % 2 == 1):
+    if  params['side'] == TOP and (params['rows'] % 2 == 1):
         app.message(
             content="В указанное количество строк не помещаются блоки по два", 
             mood=False)
         return False
-    if not blocks_are_vertical and (params['cols'] % 2 == 1):
+    if params['side'] != TOP and (params['cols'] % 2 == 1):
         app.message(
             content="В указанное количество столбцов не помещаются блоки по два", 
             mood=False)

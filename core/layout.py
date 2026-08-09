@@ -1,16 +1,18 @@
 import pymupdf as fitz
 
 from typing import Callable, Any
+from contextlib import contextmanager
 from copy import deepcopy
 from uuid import uuid4
 import threading
+import time
 import os
 
 from core.calculate import *
 
 
 class PDFImposer:
-    def __init__(self, **option) -> None:
+    def __init__(self, processing_threshold: float = 0.3, **option) -> None:
         self.input_doc: fitz.Document | None = None
         self.output_doc: fitz.Document | None = None
         self.quantity_page: int | None = None
@@ -20,7 +22,45 @@ class PDFImposer:
         self._lock: threading.Lock = threading.Lock()
         self._current_task_id: str | None = None
 
+        self._active_operations: dict[object, float] = {}
+        self._active_lock: threading.Lock = threading.Lock()
+        self._processing_threshold: float = processing_threshold
+
         self.update_params(**option)
+
+    @contextmanager
+    def _track_operation(self):
+        op_id = object()
+        with self._active_lock:
+            self._active_operations[op_id] = time.monotonic()
+        try:
+            yield
+        finally:
+            with self._active_lock:
+                self._active_operations.pop(op_id, None)
+
+    def _run_async(self, func: Callable[..., Any], *args,
+                    callback: Callable[[bool, Any], None] | None = None,
+                    **kwargs) -> threading.Thread:
+        op_id = object()
+        with self._active_lock:
+            self._active_operations[op_id] = time.monotonic()
+
+        def worker():
+            try:
+                result = func(*args, **kwargs)
+                if callback:
+                    callback(True, result)
+            except Exception as e:
+                if callback:
+                    callback(False, e)
+            finally:
+                with self._active_lock:
+                    self._active_operations.pop(op_id, None)
+
+        thread = threading.Thread(target=worker, daemon=False)
+        thread.start()
+        return thread
 
     def __del__(self) -> None:
         if self.input_doc:
@@ -33,10 +73,11 @@ class PDFImposer:
     def load_doc(self, path: str, 
                  callback: Callable[[Any], None] | None = None):
         self._cancel_async_task()
-        
-        if self.input_doc:
-            self.input_doc.close()
-        self.input_doc = fitz.open(path)
+
+        with self._track_operation():
+            if self.input_doc:
+                self.input_doc.close()
+            self.input_doc = fitz.open(path)
         self.update_doc_async(callback)
 
     def update_params(
@@ -70,21 +111,22 @@ class PDFImposer:
         
         if self.output_doc is None and self._current_task and self._current_task.is_alive():
             self._current_task.join()
-        
-        temp_doc, total_pages = calculate_doc(self.input_doc, self.params, 
-                                              page_num=page_num,
-                                              indexation_size=indexation_size)
-        self.quantity_page = total_pages
 
-        if temp_doc is None or len(temp_doc) == 0:
-            return None, None
-        
-        try:
-            return calculate_texture_data(temp_doc[0], dpi, self.params.page_size)
-        finally:
-            try: 
-                if temp_doc: temp_doc.close()
-            except: pass
+        with self._track_operation():
+            temp_doc, total_pages = calculate_doc(self.input_doc, self.params,
+                                                  page_num=page_num,
+                                                  indexation_size=indexation_size)
+            self.quantity_page = total_pages
+
+            if temp_doc is None or len(temp_doc) == 0:
+                return None, None
+
+            try:
+                return calculate_texture_data(temp_doc[0], dpi, self.params.page_size)
+            finally:
+                try:
+                    if temp_doc: temp_doc.close()
+                except: pass
 
     def get_formatted_source_page(self, page_num: int | None, 
                                   dpi: int) -> tuple[list, tuple[int]]:
@@ -93,18 +135,26 @@ class PDFImposer:
         
         if page_num and (page_num >= len(self.input_doc)):
             raise ValueError("page_num >= len(self.input_doc)!!!")
-        
-        page_size = self.params.page_size
-        page = fitz.open().new_page(width=page_size[0], height=page_size[1])
-        draw_formatting_page(page, self.params, self.input_doc, page_num)
-        return calculate_texture_data(page, dpi, self.params.page_size)
+
+        with self._track_operation():
+            page_size = self.params.page_size
+            page = fitz.open().new_page(width=page_size[0], height=page_size[1])
+            draw_formatting_page(page, self.params, self.input_doc, page_num)
+            return calculate_texture_data(page, dpi, self.params.page_size)
+
+    def get_formatted_source_page_async(self, page_num: int | None, dpi: int,
+                         callback: Callable[[bool, Any], None] | None = None
+                         ) -> threading.Thread:
+        return self._run_async(self.get_formatted_source_page, page_num, dpi,
+                               callback=callback)
 
     def update_doc(self) -> None:
         if self._current_task and self._current_task.is_alive():
             self._current_task.join()
-        
-        self.output_doc, total_pages = calculate_doc(self.input_doc, self.params)
-        self.quantity_page = total_pages
+
+        with self._track_operation():
+            self.output_doc, total_pages = calculate_doc(self.input_doc, self.params)
+            self.quantity_page = total_pages
 
     def _get_split(self) -> tuple[fitz.Document, fitz.Document]:
         output_1 = fitz.open()
@@ -125,21 +175,31 @@ class PDFImposer:
             raise ValueError("No PDF document loaded")
         
         self.update_doc()
-        if split:
-            name = path.split(os.sep)[-1]
-            if not os.path.exists(path): 
-                os.mkdir(path)
-            output_docs = self._get_split()
-            for i, output in enumerate(output_docs):
-                name_pdf = f"{name}_{i}.pdf"
-                output.save(os.sep.join([path, name_pdf]), garbage=4, deflate=True)
-                output.close()
-        else:
-            self.output_doc.save(path, garbage=4, deflate=True)
+        with self._track_operation():
+            if split:
+                name = path.split(os.sep)[-1]
+                if not os.path.exists(path):
+                    os.mkdir(path)
+                output_docs = self._get_split()
+                for i, output in enumerate(output_docs):
+                    name_pdf = f"{name}_{i}.pdf"
+                    output.save(os.sep.join([path, name_pdf]), garbage=4, deflate=True)
+                    output.close()
+            else:
+                self.output_doc.save(path, garbage=4, deflate=True)
+
+    def export_doc_async(self, path, split=False,
+                         callback: Callable[[bool, Any], None] | None = None
+                         ) -> threading.Thread:
+        return self._run_async(self.export_doc, path, split, callback=callback)
 
     def get_preview_async(self, page_num: int, dpi: int, 
                           indexation_size: int | None = None, 
                           callback: Callable[[Any], None] | None = None) -> None:
+        op_id = object()
+        with self._active_lock:
+            self._active_operations[op_id] = time.monotonic()
+
         def worker():
             try:
                 result = self.get_preview(page_num, dpi, indexation_size)
@@ -148,7 +208,10 @@ class PDFImposer:
             except Exception as e:
                 if callback:
                     callback(None)
-        
+            finally:
+                with self._active_lock:
+                    self._active_operations.pop(op_id, None)
+
         thread = threading.Thread(target=worker, daemon=False)
         thread.start()
 
@@ -169,7 +232,11 @@ class PDFImposer:
         self._current_task_id = task_id
         
         params_copy = deepcopy(self.params)
-        
+
+        op_id = object()
+        with self._active_lock:
+            self._active_operations[op_id] = time.monotonic()
+
         def worker():
             try:
                 if self._cancel_flag.is_set() or task_id != self._current_task_id:
@@ -196,6 +263,8 @@ class PDFImposer:
                 with self._lock:
                     if task_id == self._current_task_id:
                         self._current_task = None
+                with self._active_lock:
+                    self._active_operations.pop(op_id, None)
         
         self._cancel_flag.clear()
         self._current_task = threading.Thread(target=worker, daemon=False)
@@ -216,5 +285,12 @@ class PDFImposer:
             return not self._current_task.is_alive()
         return True
     
-    def is_processing(self) -> bool:
-        return self._current_task is not None and self._current_task.is_alive()
+    def set_processing_threshold(self, seconds: float) -> None:
+        self._processing_threshold = seconds
+
+    def is_processing(self, threshold: float | None = None) -> bool:
+        threshold = self._processing_threshold if threshold is None else threshold
+        now = time.monotonic()
+        with self._active_lock:
+            return any((now - start) >= threshold
+                       for start in self._active_operations.values())

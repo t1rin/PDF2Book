@@ -192,6 +192,7 @@ def calculate_texture_data(
 
     return texture_data, (width, height)
 
+
 def calculate_doc(input_doc: fitz.Document, params: BookParams, 
                   page_num=None, indexation_size: int | None = None,
                   ) -> tuple[fitz.Document, int]:

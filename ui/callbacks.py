@@ -1,4 +1,5 @@
 from __future__ import annotations
+from operator import call
 from typing import TYPE_CHECKING
 
 import dearpygui.dearpygui as dpg
@@ -45,15 +46,23 @@ def update_preview(app: PDF2BookApp, align: bool = False) -> None:
     texture_tag = _get_format(app)
     indexation_size = (app.conf.default_indexation_size 
                        if app.is_indexation else 0)
-    img_data, _ = app.pdf_imposer.get_preview(page_num=app.current_page, 
-                                              dpi=app.conf.dpi, 
-                                              indexation_size=indexation_size)
-    app.texture_manager.update_preview_texture(texture_tag, img_data=img_data)
-    if align:
-        dpg.fit_axis_data("x_axis")
-        dpg.fit_axis_data("y_axis")
-    if app.pdf_imposer.output_doc is not None:
-        dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
+
+    def on_viewing(result):
+        if result is None:
+            print("failed")
+            return
+        img_data, _ = result
+        app.texture_manager.update_preview_texture(texture_tag, img_data=img_data)
+        if align:
+            dpg.fit_axis_data("x_axis")
+            dpg.fit_axis_data("y_axis")
+        if app.pdf_imposer.output_doc is not None:
+            dpg.set_value("quantity_page_label", app.pdf_imposer.quantity_page)
+
+    app.pdf_imposer.get_preview_async(page_num=app.current_page, 
+                                      dpi=app.conf.dpi, 
+                                      indexation_size=indexation_size,
+                                      callback=on_viewing)
 
 def update_visualization(app: PDF2BookApp) -> None:
     camera_pos = app.scene.camera.get_position()
@@ -409,9 +418,11 @@ def switch_font(app: PDF2BookApp) -> None:
     app.font = fonts[fonts.index(normalize_path(app.font))-1]
     app.theme_manager.update()
 
-def switch_mode(app: PDF2BookApp, mode: str) -> None:
-    if mode == "preview": app.mode = MODE.PREVIEW
-    if mode == "visualization": app.mode = MODE.VISUALIZATION
+def switch_mode(app: PDF2BookApp, mode_name: str) -> None:
+    modes = {"preview": MODE.PREVIEW, 
+             "visualization": MODE.VISUALIZATION}
+    if app.mode == modes[mode_name] : return
+    app.mode = modes[mode_name]
     set_values_of_modes(app)
     update(app)
 

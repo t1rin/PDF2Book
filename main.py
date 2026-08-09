@@ -33,7 +33,6 @@ class PDF2BookApp:
 
         self.need_reload = None
         self._old_size_drawlist = None
-        self._processing = None
 
     def initialize(self):
         self.theme_manager = ThemeManager(self)
@@ -105,7 +104,7 @@ class PDF2BookApp:
         if dpg.get_frame_count() < 25:
             ui.resize_update(self)
         else:
-            show = self._processing or self.pdf_imposer.is_processing()
+            show = self.pdf_imposer.is_processing()
             if dpg.does_item_exist("loading_window"):
                 dpg.configure_item("loading_window", show=show)
 

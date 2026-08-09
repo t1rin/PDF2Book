@@ -3,8 +3,6 @@
 import os
 import sys
 import glob
-import platform
-import subprocess
 from pathlib import Path
 from tkinter import filedialog, Tk
 import pymupdf as fitz
@@ -156,9 +154,6 @@ def get_fonts():
     fonts = [os.sep.join(font.split(os.sep)[-3::1]) for font in paths2fonts]
     return fonts
 
-def os_type():
-    return platform.system()
-
 def is_type(path, type):
     return path.split(".")[-1] == type
 
@@ -172,19 +167,4 @@ def join_path(*args):
 
 def is_directory(path):
     return os.path.isdir(path)
-
-def start_path(path):
-    if os_type() == "Windows":
-        subprocess.Popen(['explorer', '/select,', os.path.normpath(path)])
-        return True
-        
-    elif os_type() == "Darwin":
-        subprocess.Popen(['open', '-R', path])
-        return True
-        
-    else:
-        folder = os.path.dirname(path)
-        if folder:
-            subprocess.Popen(['xdg-open', folder])
-            return True
 

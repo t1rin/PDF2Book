@@ -46,6 +46,7 @@ def register_keyboards(app: PDF2BookApp) -> None:
                                   callback=lambda: switch_mode(app, "visualization"))
         dpg.add_key_press_handler(dpg.mvKey_F3, callback=lambda: switch_theme(app))
         dpg.add_key_press_handler(dpg.mvKey_F4, callback=lambda: switch_font(app))
+        dpg.add_key_press_handler(dpg.mvKey_F5, callback=lambda: move_panel(app))
         dpg.add_key_press_handler(dpg.mvKey_O, callback=lambda: open_file(app))
         dpg.add_key_press_handler(dpg.mvKey_S, callback=lambda: save_file(app))
         dpg.add_key_press_handler(dpg.mvKey_Left, callback=lambda: back_page(app))

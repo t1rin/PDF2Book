@@ -1,6 +1,6 @@
 import pymupdf as fitz
 
-from typing import Callable, Any
+from typing import Callable, Any, Generator
 from contextlib import contextmanager
 from copy import deepcopy
 from uuid import uuid4
@@ -27,9 +27,9 @@ class PDFImposer:
         self._processing_threshold: float = processing_threshold
 
         self.update_params(**option)
-
+    
     @contextmanager
-    def _track_operation(self):
+    def _track_operation(self) -> Generator:
         op_id = object()
         with self._active_lock:
             self._active_operations[op_id] = time.monotonic()
@@ -62,6 +62,13 @@ class PDFImposer:
         thread.start()
         return thread
 
+    def _require_doc(self, func: Callable[..., Any]) -> None:
+        def wrapper(self, *args, **kwargs):
+            if self.input_doc is None:
+                raise ValueError("No PDF document loaded")
+            return func(self, *args, **kwargs)
+        return wrapper
+
     def __del__(self) -> None:
         if self.input_doc:
             self.input_doc.close()
@@ -80,6 +87,7 @@ class PDFImposer:
             self.input_doc = fitz.open(path)
         self.update_doc_async(callback)
 
+    @_require_doc
     def update_params(
             self, 
             rows: int = 2, cols: int = 2, side: Side = LEFT, margin: int = 15,
@@ -103,12 +111,10 @@ class PDFImposer:
             color_lines, page_size, quantity_pages_for_part,
         )
 
+    @_require_doc
     def get_preview(self, page_num: int, dpi: int = 72,
                     indexation_size: int | None = None
                     ) -> tuple[list | None, tuple[int, int] | None]:
-        if self.input_doc is None:
-            raise ValueError("No PDF document loaded")
-        
         if self.output_doc is None and self._current_task and self._current_task.is_alive():
             self._current_task.join()
 
@@ -128,12 +134,10 @@ class PDFImposer:
                     if temp_doc: temp_doc.close()
                 except: pass
 
+    @_require_doc
     def get_formatted_source_pages(
         self, page_nums: list[int | None] | None = None,
         dpi: int = 72) -> list[tuple[list, tuple[int, int]]]:
-        if self.input_doc is None:
-            raise ValueError("No PDF document loaded")
-
         if page_nums is None:
             page_nums = list(range(len(self.input_doc)))
 
@@ -182,10 +186,8 @@ class PDFImposer:
         
         return output_1, output_2
 
-    def export_doc(self, path, split=False) -> None:
-        if self.input_doc is None:
-            raise ValueError("No PDF document loaded")
-        
+    @_require_doc
+    def export_doc(self, path, split=False) -> None:        
         self.update_doc()
         with self._track_operation():
             if split:

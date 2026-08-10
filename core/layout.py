@@ -62,7 +62,8 @@ class PDFImposer:
         thread.start()
         return thread
 
-    def _require_doc(self, func: Callable[..., Any]) -> None:
+    @staticmethod
+    def _require_doc(func: Callable[..., Any]) -> None:
         def wrapper(self, *args, **kwargs):
             if self.input_doc is None:
                 raise ValueError("No PDF document loaded")
@@ -87,7 +88,6 @@ class PDFImposer:
             self.input_doc = fitz.open(path)
         self.update_doc_async(callback)
 
-    @_require_doc
     def update_params(
             self, 
             rows: int = 2, cols: int = 2, side: Side = LEFT, margin: int = 15,

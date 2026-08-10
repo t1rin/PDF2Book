@@ -37,9 +37,8 @@ def update(app: PDF2BookApp, align: bool = False) -> None:
         case MODE.VISUALIZATION:
             update_visualization(app)  
             if app.scene.visual_book.need_reload:
-                app.scene.visual_book.load_textures(_get_textures(app))
+                load_textures(app)
                 app.scene.visual_book.need_reload = False
-            update_visualization(app)        
 
 @require_pdf
 def update_preview(app: PDF2BookApp, align: bool = False) -> None:
@@ -47,9 +46,9 @@ def update_preview(app: PDF2BookApp, align: bool = False) -> None:
     indexation_size = (app.conf.default_indexation_size 
                        if app.is_indexation else 0)
 
-    def on_viewing(result):
-        if result is None:
-            print("failed")
+    def on_viewing(success, result):
+        if not success:
+            app.message(result, mood=False)
             return
         img_data, _ = result
         app.texture_manager.update_preview_texture(texture_tag, img_data=img_data)
@@ -104,6 +103,7 @@ def update_visualization(app: PDF2BookApp) -> None:
 
     app.scene.update()
 
+@require_pdf
 def reset_visual_book(app: PDF2BookApp) -> None:
     q_parts, q_blocks = _calculate_parts_blocks(
         app, q_pages=len(app.pdf_imposer.input_doc), 
@@ -117,33 +117,42 @@ def reset_visual_book(app: PDF2BookApp) -> None:
 
     set_values_of_visualization(app)
 
-def _get_textures(app: PDF2BookApp) -> list:
+def load_textures(app: PDF2BookApp) -> list:
     q_pages = len(app.pdf_imposer.input_doc)
-    page_size = app.pdf_imposer.params.page_size
-    index_format = list(app.conf.formats.values()).index(page_size)
-    cache_textures = app.scene.visual_book.cache_textures[index_format]
 
-    index = 0
-    textures = []
-    datas_for_creating = []
-    while index < min(q_pages, len(cache_textures)):
-        img_data, _ = app.pdf_imposer.get_formatted_source_page(
-            page_num=index, dpi=app.conf.dpi)
-        texture = cache_textures[index]
-        app.texture_manager.update_dynamic_texture(texture, img_data=img_data)
-        textures.append(texture)
-        index += 1
-    while index < q_pages:
-        datas_for_creating.append(app.pdf_imposer.get_formatted_source_page(
-            page_num=index, dpi=app.conf.dpi))
-        index += 1
-    if datas_for_creating:
-        texture_register = app.texture_manager.create_dynamic_textures(datas_for_creating)
-        new_textures = app.texture_manager.get_dynamic_textures(texture_register)
-        cache_textures += new_textures
-        textures += new_textures
+    def on_loading(success, content):
+        if not success:
+            app.message(content, mood=False)
+            return
         
-    return textures
+        page_size = app.pdf_imposer.params.page_size
+        index_format = list(app.conf.formats.values()).index(page_size)
+        cache_textures = app.scene.visual_book.cache_textures[index_format]
+
+        index = 0
+        textures = []
+        datas_for_creating = []
+        while index < min(q_pages, len(cache_textures)):
+            img_data, _ = content[index]
+            texture = cache_textures[index]
+            app.texture_manager.update_dynamic_texture(texture, img_data=img_data)
+            textures.append(texture)
+            index += 1
+        while index < q_pages:
+            datas_for_creating.append(content[index])
+            index += 1
+        if datas_for_creating:
+            texture_register = app.texture_manager.create_dynamic_textures(datas_for_creating)
+            new_textures = app.texture_manager.get_dynamic_textures(texture_register)
+            cache_textures += new_textures
+            textures += new_textures
+        
+        app.scene.visual_book.load_textures(textures)
+        update_visualization(app)        
+
+    app.pdf_imposer.get_formatted_source_pages_async(
+        page_nums=list(range(q_pages)), dpi=app.conf.dpi,
+        callback=on_loading)
 
 # __ Working with files __
 
@@ -421,10 +430,10 @@ def switch_font(app: PDF2BookApp) -> None:
 def switch_mode(app: PDF2BookApp, mode_name: str) -> None:
     modes = {"preview": MODE.PREVIEW, 
              "visualization": MODE.VISUALIZATION}
-    if app.mode == modes[mode_name] : return
-    app.mode = modes[mode_name]
+    if app.mode != modes[mode_name]:
+        app.mode = modes[mode_name]
+        update(app)
     set_values_of_modes(app)
-    update(app)
 
 @require_pdf
 def separate(app: PDF2BookApp) -> None:

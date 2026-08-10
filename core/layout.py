@@ -12,7 +12,7 @@ from core.calculate import *
 
 
 class PDFImposer:
-    def __init__(self, processing_threshold: float = 0.3, **option) -> None:
+    def __init__(self, processing_threshold: float = 0.2, **option) -> None:
         self.input_doc: fitz.Document | None = None
         self.output_doc: fitz.Document | None = None
         self.quantity_page: int | None = None
@@ -51,9 +51,9 @@ class PDFImposer:
                 result = func(*args, **kwargs)
                 if callback:
                     callback(True, result)
-            except Exception as e:
+            except Exception as error:
                 if callback:
-                    callback(False, e)
+                    callback(False, error)
             finally:
                 with self._active_lock:
                     self._active_operations.pop(op_id, None)
@@ -105,7 +105,7 @@ class PDFImposer:
 
     def get_preview(self, page_num: int, dpi: int = 72,
                     indexation_size: int | None = None
-                    ) -> tuple[list | None, tuple[int] | None]:
+                    ) -> tuple[list | None, tuple[int, int] | None]:
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
         
@@ -128,24 +128,36 @@ class PDFImposer:
                     if temp_doc: temp_doc.close()
                 except: pass
 
-    def get_formatted_source_page(self, page_num: int | None, 
-                                  dpi: int) -> tuple[list, tuple[int]]:
+    def get_formatted_source_pages(
+        self, page_nums: list[int | None] | None = None,
+        dpi: int = 72) -> list[tuple[list, tuple[int, int]]]:
         if self.input_doc is None:
             raise ValueError("No PDF document loaded")
-        
-        if page_num and (page_num >= len(self.input_doc)):
-            raise ValueError("page_num >= len(self.input_doc)!!!")
+
+        if page_nums is None:
+            page_nums = list(range(len(self.input_doc)))
+
+        for page_num in page_nums:
+            if page_num and (page_num >= len(self.input_doc)):
+                raise ValueError("page_num >= len(self.input_doc)!!!")
 
         with self._track_operation():
             page_size = self.params.page_size
-            page = fitz.open().new_page(width=page_size[0], height=page_size[1])
-            draw_formatting_page(page, self.params, self.input_doc, page_num)
-            return calculate_texture_data(page, dpi, self.params.page_size)
+            doc = fitz.open()
+            try:
+                for page_num in page_nums:
+                    page = doc.new_page(width=page_size[0], height=page_size[1])
+                    draw_formatting_page(page, self.params, self.input_doc, page_num)
 
-    def get_formatted_source_page_async(self, page_num: int | None, dpi: int,
-                         callback: Callable[[bool, Any], None] | None = None
-                         ) -> threading.Thread:
-        return self._run_async(self.get_formatted_source_page, page_num, dpi,
+                return [calculate_texture_data(page, dpi, page_size) for page in doc]
+            finally:
+                doc.close()
+
+    def get_formatted_source_pages_async(
+            self, page_nums: list[int | None] | None = None, dpi: int = 72,
+            callback: Callable[[bool, Any], None] | None = None
+            ) -> threading.Thread:
+        return self._run_async(self.get_formatted_source_pages, page_nums, dpi,
                                callback=callback)
 
     def update_doc(self) -> None:
@@ -196,24 +208,7 @@ class PDFImposer:
     def get_preview_async(self, page_num: int, dpi: int, 
                           indexation_size: int | None = None, 
                           callback: Callable[[Any], None] | None = None) -> None:
-        op_id = object()
-        with self._active_lock:
-            self._active_operations[op_id] = time.monotonic()
-
-        def worker():
-            try:
-                result = self.get_preview(page_num, dpi, indexation_size)
-                if callback:
-                    callback(result)
-            except Exception as e:
-                if callback:
-                    callback(None)
-            finally:
-                with self._active_lock:
-                    self._active_operations.pop(op_id, None)
-
-        thread = threading.Thread(target=worker, daemon=False)
-        thread.start()
+        self._run_async(self.get_preview, page_num, dpi, indexation_size, callback=callback)
 
     def update_doc_async(self, 
             callback: Callable[[bool, str | None], None] | None = None) -> None:

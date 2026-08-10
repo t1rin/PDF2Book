@@ -287,15 +287,22 @@ def edit_params(app: PDF2BookApp) -> None:
     is_change = (lambda param: 
                     app.scene.visual_book.get(param) != params[param])
 
+    if (is_change('rows') or is_change('cols')) and (app.mode == MODE.VISUALIZATION):
+        return
+
     if is_change('page_size'):
         default_texture = app.texture_manager.get_clean_texture(params['page_size'])
         app.scene.visual_book.set(default_texture=default_texture)
-    if (is_change('page_size') or is_change('q_parts') or 
-        is_change('q_blocks') or is_change('side')):
+        reset_visual_book(app)
+        app.scene.visual_book.need_reload = True
+        update(app, align=True)
+        return
+
+    if is_change('q_parts') or is_change('q_blocks') or is_change('side'):
         reset_visual_book(app)
 
     app.scene.visual_book.need_reload = True
-    update(app, align=is_change('page_size'))
+    update(app)
 
 def _is_size_part_normal(app: PDF2BookApp, params: dict) -> bool:
     q_pages = len(app.pdf_imposer.input_doc)
@@ -310,23 +317,24 @@ def _is_size_part_normal(app: PDF2BookApp, params: dict) -> bool:
     return True
 
 def _validate_params(app: PDF2BookApp, params: dict) -> bool:
-    if params['rows'] <= 0:
-        dpg.set_value("rows_input", 1)
+    if not (1 <= params['rows'] <= app.conf.max_rows):
+        dpg.set_value("rows_input", max(1, 
+            min(params['rows'], app.conf.max_rows)))
         return False
-    if params['cols'] <= 0:
-        dpg.set_value("cols_input", 1)
+    if not (1 <= params['cols'] <= app.conf.max_columns):
+        dpg.set_value("cols_input", max(1, 
+            min(params['cols'], app.conf.max_columns)))
         return False
-    if params['margin'] < 0:
-        dpg.set_value("margin_input", 0)
+    if not (0 <= params['margin'] <= app.conf.max_margin):
+        dpg.set_value("margin_input", max(0, 
+            min(params['margin'], app.conf.max_margin)))
+        return False
+    if not (0 <= params['thickness_lines'] <= app.conf.max_line_thickness):
+        dpg.set_value("thickness_input", max(0, min(params['thickness_lines'],
+                                                    app.conf.max_line_thickness)))
         return False
     if params['quantity_pages_for_part'] < 0:
         dpg.set_value("size_part_input", 0)
-        return False
-    if params['thickness_lines'] < 0:
-        dpg.set_value("thickness_input", 0)
-        return False
-    if params['thickness_lines'] > app.conf.max_line_thickness:
-        dpg.set_value("thickness_input", app.conf.max_line_thickness)
         return False
     if  params['side'] == TOP and (params['rows'] % 2 == 1):
         app.message(
@@ -395,6 +403,10 @@ def edit_visualization(app: PDF2BookApp) -> None:
     beta = dpg.get_value("beta_input")
     if app.scene.visual_book.get('alpha', part_index, block_index) != alpha or \
        app.scene.visual_book.get('beta', part_index, block_index) != beta:
+        alpha = max(0, min(180, alpha))
+        beta = max(0, min(180, beta))
+        dpg.set_value("alpha_input", alpha)
+        dpg.set_value("beta_input", beta)
         app.scene.visual_book.set(part_index=part_index, 
                                   block_index=block_index, 
                                   alpha=alpha, beta=beta)

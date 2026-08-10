@@ -1,5 +1,4 @@
 import numpy as np
-
 import math
 
 from core import Side
@@ -8,6 +7,7 @@ from .data_structures import Book
 
 TOLERANCE = 1e-8
 BLOCK_SIZE = 4
+
 
 def pages_intersect(page1_vertices, page2_vertices):
     alpha = get_plane(page1_vertices)
@@ -23,12 +23,14 @@ def pages_intersect(page1_vertices, page2_vertices):
        is_line_in_rectangle(line_intersection, page2_vertices):
         return True
     return False
-    
+
+
 def get_plane(vertices):
     r0_vector = np.array(vertices[0])
     vector1 = np.array(vertices[1]) - r0_vector
     vector2 = np.array(vertices[3]) - r0_vector
     return (r0_vector, vector1, vector2)
+
 
 def get_intersection(alpha, beta, tol=TOLERANCE):
     r1, u, v = alpha
@@ -36,25 +38,31 @@ def get_intersection(alpha, beta, tol=TOLERANCE):
     n1 = np.cross(u, v)
     n2 = np.cross(p, q)
     s = np.cross(n1, n2)
-    
+
     if np.linalg.norm(s) < tol:
         return
 
     delta = r2 - r1
     A = np.column_stack([v, -p, -q])
-    sol, _, _, _ = np.linalg.lstsq(A, delta, rcond=None)
-    t, _, _ = sol
-    r0 = r1 + 0 * u + t * v
+
+    try:
+        sol = np.linalg.solve(A, delta)
+    except np.linalg.LinAlgError:
+        sol, _, _, _ = np.linalg.lstsq(A, delta, rcond=None)
+    t = sol[0]
+    r0 = r1 + t * v
     return r0, s
+
 
 def get_edges_page(vertices):
     edges = []
     for i in range(4):
         edges.append((
             np.array(vertices[i]),
-            np.array(vertices[(i+1)%4]) - np.array(vertices[i])
+            np.array(vertices[(i + 1) % 4]) - np.array(vertices[i])
         ))
     return edges
+
 
 def are_lines_equal(line1, line2, tol=TOLERANCE):
     r0_1, v1 = line1
@@ -63,48 +71,49 @@ def are_lines_equal(line1, line2, tol=TOLERANCE):
     cross_prod = np.cross(v1, v2)
     if np.linalg.norm(cross_prod) > tol:
         return False
-    
+
     idx = np.argmax(np.abs(v2))
     if abs(v2[idx]) < tol:
         return np.linalg.norm(r0_1 - r0_2) < tol
     t = (r0_1[idx] - r0_2[idx]) / v2[idx]
-    
+
     return np.linalg.norm(r0_1 - (r0_2 + t * v2)) < tol
+
 
 def is_line_in_rectangle(line, rect_vertices, tol=TOLERANCE):
     r0, d = line
-    
+
     if np.linalg.norm(d) < tol:
         return point_in_rectangle(r0, rect_vertices, tol)
-    
+
     r1, axis1, axis2 = get_plane(rect_vertices)
-    
+
     len1 = np.linalg.norm(axis1)
     len2 = np.linalg.norm(axis2)
-    
+
     if len1 < tol or len2 < tol:
         return False
-    
+
     e1 = axis1 / len1
     e2 = axis2 / len2
-    
+
     normal = np.cross(e1, e2)
     if abs(np.dot(d, normal)) > tol:
         return False
-    
+
     dist = np.dot(r0 - r1, normal)
     if abs(dist) > tol:
         return False
-    
+
     u0 = np.dot(r0 - r1, e1)
     v0 = np.dot(r0 - r1, e2)
-    
+
     du = np.dot(d, e1)
     dv = np.dot(d, e2)
-    
+
     t_min = -np.inf
     t_max = np.inf
-    
+
     if abs(du) > tol:
         t1 = -u0 / du
         t2 = (len1 - u0) / du
@@ -113,7 +122,7 @@ def is_line_in_rectangle(line, rect_vertices, tol=TOLERANCE):
     else:
         if u0 < -tol or u0 > len1 + tol:
             return False
-    
+
     if abs(dv) > tol:
         t1 = -v0 / dv
         t2 = (len2 - v0) / dv
@@ -122,34 +131,36 @@ def is_line_in_rectangle(line, rect_vertices, tol=TOLERANCE):
     else:
         if v0 < -tol or v0 > len2 + tol:
             return False
-    
+
     if t_max - t_min > tol:
         return True
-    
+
     return False
+
 
 def point_in_rectangle(point, rect_vertices, tol=TOLERANCE):
     r1, axis1, axis2 = get_plane(rect_vertices)
-    
+
     len1 = np.linalg.norm(axis1)
     len2 = np.linalg.norm(axis2)
-    
+
     if len1 < tol or len2 < tol:
         return False
-    
+
     e1 = axis1 / len1
     e2 = axis2 / len2
-    
+
     u = np.dot(point - r1, e1)
     v = np.dot(point - r1, e2)
-    
+
     return (-tol <= u <= len1 + tol) and (-tol <= v <= len2 + tol)
+
 
 def get_scale_multiplier(distance):
     if distance < 100:
         return distance * 0.03
     elif distance < 500:
-        return distance * 0.04 
+        return distance * 0.04
     elif distance < 2000:
         return distance * 0.06
     elif distance < 5000:
@@ -157,10 +168,12 @@ def get_scale_multiplier(distance):
     else:
         return distance * 0.15
 
+
 def get_quad_distance(vertices, camera_pos):
     center = np.mean(vertices, axis=0)
     distance = np.linalg.norm(center - camera_pos)
     return distance
+
 
 def _resolve_texture_conflict(candidates):
     sorded_candidates = [[], []]
@@ -171,74 +184,76 @@ def _resolve_texture_conflict(candidates):
 
     surface_id = None
     total_canditates = []
-    for angle_id, candidates in enumerate(sorded_candidates):
-        page_num = candidates[0]['page_num']
-        _min, _max = (0, page_num), (0, page_num)
-        for candidate_id, candidate in enumerate(candidates):
-            page_num = candidate['page_num']
-            if page_num < _min[1]:
-                _min = (candidate_id, page_num)
-            if page_num > _max[1]:
-                _max = (candidate_id, page_num)
+    for angle_id, group in enumerate(sorded_candidates):
+        min_candidate = min(group, key=lambda c: c['page_num'])
+        max_candidate = max(group, key=lambda c: c['page_num'])
+
+        page_num = group[-1]['page_num']
         surface_id = page_num % 2
+
         if angle_id == surface_id:
-            total_canditates.append(candidates[_min[0]])
-            continue
-        total_canditates.append(candidates[_max[0]])
+            total_canditates.append(min_candidate)
+        else:
+            total_canditates.append(max_candidate)
     return total_canditates[surface_id]
+
 
 def calculate_vertices(book: Book, thickness: int = 3):
     sheets_vertices = []
     w, h = book.page_size
 
     local_vertices_with_uv = [[
-        ([0,  0, thickness/2], [0, 0]),
-        ([0, -h, thickness/2], [0, 1]),
-        ([w, -h, thickness/2], [1, 1]),
-        ([w,  0, thickness/2], [1, 0])], 
-    [
-        ([0,  0, -thickness/2], [1, 0]),
-        ([w,  0, -thickness/2], [0, 0]),
-        ([w, -h, -thickness/2], [0, 1]),
-        ([0, -h, -thickness/2], [1, 1])
+        (np.array([0,  0, thickness / 2]), [0, 0]),
+        (np.array([0, -h, thickness / 2]), [0, 1]),
+        (np.array([w, -h, thickness / 2]), [1, 1]),
+        (np.array([w,  0, thickness / 2]), [1, 0])],
+        [
+        (np.array([0,  0, -thickness / 2]), [1, 0]),
+        (np.array([w,  0, -thickness / 2]), [0, 0]),
+        (np.array([w, -h, -thickness / 2]), [0, 1]),
+        (np.array([0, -h, -thickness / 2]), [1, 1])
     ]]
-    
+
     position_map = dict()
     for part_idx, part in enumerate(book.parts):
-        for block_idx, block in enumerate(part.blocks): 
+        n_blocks = len(part.blocks)
+        for block_idx, block in enumerate(part.blocks):
             base = np.array(part.pos) + np.array(block.pos)
-            
+
             alpha_rad = math.radians(block.alpha)
             beta_rad = math.radians(block.beta)
-            angles = [alpha_rad, beta_rad]
-            
+            angles = (alpha_rad, beta_rad)
+
+            block_num = part_idx * n_blocks + block_idx
+
             for page_idx, page in enumerate(block.pages):
                 angle = angles[page_idx // 2]
+
+                cos_a = math.cos(angle)
+                sin_a = math.sin(angle)
+                match book.side:
+                    case Side.LEFT | Side.RIGHT:
+                        rotation_matrix = np.array([
+                            [cos_a, 0, -sin_a],
+                            [0,     1,      0],
+                            [sin_a, 0,  cos_a]
+                        ])
+                    case Side.TOP:
+                        rotation_matrix = np.array([
+                            [1,      0,     0],
+                            [0,  cos_a, sin_a],
+                            [0, -sin_a, cos_a]
+                        ])
 
                 vertices = []
                 uv_coords = []
                 for local_vertex, uv in local_vertices_with_uv[page_idx % 2]:
-                    match book.side:
-                        case Side.LEFT | Side.RIGHT:
-                            rotation_matrix = np.array([
-                                [math.cos(angle), 0, -math.sin(angle)],
-                                [0,               1,                0],
-                                [math.sin(angle), 0,  math.cos(angle)]
-                            ])
-                        case Side.TOP:
-                            rotation_matrix = np.array([
-                                [1,                0,               0],
-                                [0,  math.cos(angle), math.sin(angle)],
-                                [0, -math.sin(angle), math.cos(angle)]
-                            ])
-                    final = base + np.dot(rotation_matrix, local_vertex)
-                    vertex = tuple([*map(lambda point: round(point, 3), 
-                                         final.tolist())])
+                    final = base + rotation_matrix.dot(local_vertex)
+                    vertex = tuple(round(float(coord), 3) for coord in final)
                     vertices.append(vertex)
                     uv_coords.append(uv)
                 vertices = tuple(vertices)
-        
-                block_num = part_idx * len(part.blocks) + block_idx
+
                 page_num = block_num * BLOCK_SIZE + page_idx
 
                 candidate = {
@@ -249,15 +264,12 @@ def calculate_vertices(book: Book, thickness: int = 3):
                     'uv_coords': uv_coords
                 }
 
-                if vertices not in position_map:
-                    position_map[vertices] = []
-                position_map[vertices].append(candidate)
-                
-    for _, candidates in position_map.items():
+                position_map.setdefault(vertices, []).append(candidate)
+
+    for candidates in position_map.values():
         if len(candidates) == 1:
             sheets_vertices.append(candidates[0])
         else:
-            winner = _resolve_texture_conflict(candidates)
-            sheets_vertices.append(winner)
+            sheets_vertices.append(_resolve_texture_conflict(candidates))
 
     return sheets_vertices

@@ -12,18 +12,23 @@ if TYPE_CHECKING:
 def switch_theme(app: PDF2BookApp) -> None:
     cb.switch_theme(app)
 
+
 def switch_font(app: PDF2BookApp) -> None:
     cb.switch_font(app)
+
 
 def move_panel(app: PDF2BookApp) -> None:
     cb.move_panel(app)
 
+
 def switch_mode(app: PDF2BookApp, mode: str) -> None:
     cb.switch_mode(app, mode)
+
 
 def open_file(app: PDF2BookApp) -> None:
     if dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl):
         cb.open_file(app)
+
 
 def save_file(app: PDF2BookApp) -> None:
     if (dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl)) and \
@@ -32,8 +37,10 @@ def save_file(app: PDF2BookApp) -> None:
     elif dpg.is_key_down(dpg.mvKey_LControl) or dpg.is_key_down(dpg.mvKey_RControl):
         cb.save_file(app)                                                     
 
+
 def back_page(app: PDF2BookApp) -> None:
     cb.arrow_left_callback(app)
+
 
 def next_page(app: PDF2BookApp) -> None:
     cb.arrow_right_callback(app)

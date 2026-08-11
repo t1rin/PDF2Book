@@ -10,7 +10,6 @@ if TYPE_CHECKING:
     from main import PDF2BookApp
 
 
-
 class TextureManager:
     def __init__(self, app: PDF2BookApp) -> None:
         self.app: PDF2BookApp = app
@@ -20,7 +19,7 @@ class TextureManager:
 
         self.start()
 
-    def start(self):
+    def start(self) -> None:
         self.create_preview_textures()
         images_datas = self._get_datas_using_formats()['images_datas']
         self.create_dynamic_textures(

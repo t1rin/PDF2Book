@@ -1,15 +1,36 @@
-import numpy as np
+from __future__ import annotations
+
 import math
+from collections.abc import Sequence
+from typing import Any, TypedDict
+
+import numpy as np
+import numpy.typing as npt
 
 from core import Side
 from .data_structures import Book
 
 
-TOLERANCE = 1e-8
-BLOCK_SIZE = 4
+TOLERANCE: float = 1e-8
+BLOCK_SIZE: int = 4
 
 
-def pages_intersect(page1_vertices, page2_vertices):
+Vector = npt.NDArray[np.float64]
+Vertex = tuple[float, float, float]
+Vertices = Sequence[Vertex]
+Plane = tuple[Vector, Vector, Vector]
+Line = tuple[Vector, Vector]
+
+
+class Candidate(TypedDict):
+    page_num: int
+    block_num: int
+    texture: Any
+    vertices: tuple[Vertex, ...]
+    uv_coords: list[list[int]]
+
+
+def pages_intersect(page1_vertices: Vertices, page2_vertices: Vertices) -> bool:
     alpha = get_plane(page1_vertices)
     beta = get_plane(page2_vertices)
     line_intersection = get_intersection(alpha, beta)
@@ -25,14 +46,14 @@ def pages_intersect(page1_vertices, page2_vertices):
     return False
 
 
-def get_plane(vertices):
+def get_plane(vertices: Vertices) -> Plane:
     r0_vector = np.array(vertices[0])
     vector1 = np.array(vertices[1]) - r0_vector
     vector2 = np.array(vertices[3]) - r0_vector
     return (r0_vector, vector1, vector2)
 
 
-def get_intersection(alpha, beta, tol=TOLERANCE):
+def get_intersection(alpha: Plane, beta: Plane, tol: float = TOLERANCE) -> Line | None:
     r1, u, v = alpha
     r2, p, q = beta
     n1 = np.cross(u, v)
@@ -40,7 +61,7 @@ def get_intersection(alpha, beta, tol=TOLERANCE):
     s = np.cross(n1, n2)
 
     if np.linalg.norm(s) < tol:
-        return
+        return None
 
     delta = r2 - r1
     A = np.column_stack([v, -p, -q])
@@ -54,8 +75,8 @@ def get_intersection(alpha, beta, tol=TOLERANCE):
     return r0, s
 
 
-def get_edges_page(vertices):
-    edges = []
+def get_edges_page(vertices: Vertices) -> list[Line]:
+    edges: list[Line] = []
     for i in range(4):
         edges.append((
             np.array(vertices[i]),
@@ -64,7 +85,7 @@ def get_edges_page(vertices):
     return edges
 
 
-def are_lines_equal(line1, line2, tol=TOLERANCE):
+def are_lines_equal(line1: Line, line2: Line, tol: float = TOLERANCE) -> bool:
     r0_1, v1 = line1
     r0_2, v2 = line2
 
@@ -74,13 +95,13 @@ def are_lines_equal(line1, line2, tol=TOLERANCE):
 
     idx = np.argmax(np.abs(v2))
     if abs(v2[idx]) < tol:
-        return np.linalg.norm(r0_1 - r0_2) < tol
+        return bool(np.linalg.norm(r0_1 - r0_2) < tol)
     t = (r0_1[idx] - r0_2[idx]) / v2[idx]
 
-    return np.linalg.norm(r0_1 - (r0_2 + t * v2)) < tol
+    return bool(np.linalg.norm(r0_1 - (r0_2 + t * v2)) < tol)
 
 
-def is_line_in_rectangle(line, rect_vertices, tol=TOLERANCE):
+def is_line_in_rectangle(line: Line, rect_vertices: Vertices, tol: float = TOLERANCE) -> bool:
     r0, d = line
 
     if np.linalg.norm(d) < tol:
@@ -138,7 +159,7 @@ def is_line_in_rectangle(line, rect_vertices, tol=TOLERANCE):
     return False
 
 
-def point_in_rectangle(point, rect_vertices, tol=TOLERANCE):
+def point_in_rectangle(point: Vector, rect_vertices: Vertices, tol: float = TOLERANCE) -> bool:
     r1, axis1, axis2 = get_plane(rect_vertices)
 
     len1 = np.linalg.norm(axis1)
@@ -153,10 +174,10 @@ def point_in_rectangle(point, rect_vertices, tol=TOLERANCE):
     u = np.dot(point - r1, e1)
     v = np.dot(point - r1, e2)
 
-    return (-tol <= u <= len1 + tol) and (-tol <= v <= len2 + tol)
+    return bool((-tol <= u <= len1 + tol) and (-tol <= v <= len2 + tol))
 
 
-def get_scale_multiplier(distance):
+def get_scale_multiplier(distance: float) -> float:
     if distance < 100:
         return distance * 0.03
     elif distance < 500:
@@ -169,21 +190,21 @@ def get_scale_multiplier(distance):
         return distance * 0.15
 
 
-def get_quad_distance(vertices, camera_pos):
+def get_quad_distance(vertices: Vertices, camera_pos: Vector) -> float:
     center = np.mean(vertices, axis=0)
     distance = np.linalg.norm(center - camera_pos)
-    return distance
+    return float(distance)
 
 
-def _resolve_texture_conflict(candidates):
-    sorded_candidates = [[], []]
+def _resolve_texture_conflict(candidates: list[Candidate]) -> Candidate:
+    sorded_candidates: list[list[Candidate]] = [[], []]
     for candidate in candidates:
         page_num = candidate['page_num']
         angle_id = (page_num % 4) // 2
         sorded_candidates[angle_id].append(candidate)
 
-    surface_id = None
-    total_canditates = []
+    surface_id: int | None = None
+    total_canditates: list[Candidate] = []
     for angle_id, group in enumerate(sorded_candidates):
         min_candidate = min(group, key=lambda c: c['page_num'])
         max_candidate = max(group, key=lambda c: c['page_num'])
@@ -195,14 +216,15 @@ def _resolve_texture_conflict(candidates):
             total_canditates.append(min_candidate)
         else:
             total_canditates.append(max_candidate)
+    assert surface_id is not None
     return total_canditates[surface_id]
 
 
-def calculate_vertices(book: Book, thickness: int = 3):
-    sheets_vertices = []
+def calculate_vertices(book: Book, thickness: int = 3) -> list[Candidate]:
+    sheets_vertices: list[Candidate] = []
     w, h = book.page_size
 
-    local_vertices_with_uv = [[
+    local_vertices_with_uv: list[list[tuple[Vector, list[int]]]] = [[
         (np.array([0,  0, thickness / 2]), [0, 0]),
         (np.array([0, -h, thickness / 2]), [0, 1]),
         (np.array([w, -h, thickness / 2]), [1, 1]),
@@ -214,7 +236,7 @@ def calculate_vertices(book: Book, thickness: int = 3):
         (np.array([0, -h, -thickness / 2]), [1, 1])
     ]]
 
-    position_map: dict[tuple, list[dict]] = dict()
+    position_map: dict[tuple[Vertex, ...], list[Candidate]] = dict()
     for part_idx, part in enumerate(book.parts):
         n_blocks = len(part.blocks)
         for block_idx, block in enumerate(part.blocks):
@@ -231,6 +253,7 @@ def calculate_vertices(book: Book, thickness: int = 3):
 
                 cos_a = math.cos(angle)
                 sin_a = math.sin(angle)
+                rotation_matrix: Vector
                 match book.side:
                     case Side.LEFT | Side.RIGHT:
                         rotation_matrix = np.array([
@@ -245,18 +268,19 @@ def calculate_vertices(book: Book, thickness: int = 3):
                             [0, -sin_a, cos_a]
                         ])
 
-                vertices = []
-                uv_coords = []
+                vertices: list[Vertex] = []
+                uv_coords: list[list[int]] = []
                 for local_vertex, uv in local_vertices_with_uv[page_idx % 2]:
                     final = base + rotation_matrix.dot(local_vertex)
                     vertex = tuple(round(float(coord), 3) for coord in final)
+                    assert len(vertex) == 3
                     vertices.append(vertex)
                     uv_coords.append(uv)
-                vertices_ = tuple(vertices)
+                vertices_: tuple[Vertex, ...] = tuple(vertices)
 
                 page_num = block_num * BLOCK_SIZE + page_idx
 
-                candidate = {
+                candidate: Candidate = {
                     'page_num': page_num,
                     'block_num': block_num,
                     'texture': page.texture,

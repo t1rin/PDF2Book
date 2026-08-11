@@ -1,6 +1,5 @@
 from __future__ import annotations
-from operator import call
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import dearpygui.dearpygui as dpg
 
@@ -186,7 +185,7 @@ def open_file(app: PDF2BookApp) -> None:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
         
-def drop_handler(app: PDF2BookApp, data: list) -> None:
+def drop_handler(app: PDF2BookApp, data: Any) -> None:
     path = data[0]
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)

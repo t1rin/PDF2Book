@@ -29,5 +29,5 @@ class Book:
     parts: list[BookPart]
     q_parts: int
     q_blocks: int 
-    page_size: tuple[int]
+    page_size: tuple[int, int]
     side: Side

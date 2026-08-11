@@ -214,7 +214,7 @@ def calculate_vertices(book: Book, thickness: int = 3):
         (np.array([0, -h, -thickness / 2]), [1, 1])
     ]]
 
-    position_map = dict()
+    position_map: dict[tuple, list[dict]] = dict()
     for part_idx, part in enumerate(book.parts):
         n_blocks = len(part.blocks)
         for block_idx, block in enumerate(part.blocks):
@@ -252,7 +252,7 @@ def calculate_vertices(book: Book, thickness: int = 3):
                     vertex = tuple(round(float(coord), 3) for coord in final)
                     vertices.append(vertex)
                     uv_coords.append(uv)
-                vertices = tuple(vertices)
+                vertices_ = tuple(vertices)
 
                 page_num = block_num * BLOCK_SIZE + page_idx
 
@@ -260,11 +260,11 @@ def calculate_vertices(book: Book, thickness: int = 3):
                     'page_num': page_num,
                     'block_num': block_num,
                     'texture': page.texture,
-                    'vertices': vertices,
+                    'vertices': vertices_,
                     'uv_coords': uv_coords
                 }
 
-                position_map.setdefault(vertices, []).append(candidate)
+                position_map.setdefault(vertices_, []).append(candidate)
 
     for candidates in position_map.values():
         if len(candidates) == 1:

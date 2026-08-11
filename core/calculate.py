@@ -3,6 +3,7 @@ import pymupdf as fitz
 
 from enum import IntEnum
 from dataclasses import dataclass
+from typing import Literal
 
 
 class Side(IntEnum):
@@ -25,12 +26,12 @@ class BookParams:
     show_cut_lines: bool
     show_margin_lines: bool
     show_blocks_lines: bool
-    color_lines: tuple[int, ...]
+    color_lines: tuple[float, ...]
     page_size: tuple[int, int]
     quantity_pages_for_part: int
 
 
-_positions_cache = {}
+_positions_cache: dict[tuple[int, Side], list[int]] = {}
 
 def get_positions_pages(quentity: int, side: Side = Side.LEFT, 
                         _list: list | None = None) -> list:
@@ -63,14 +64,14 @@ def get_positions_pages(quentity: int, side: Side = Side.LEFT,
 
 def get_cell_size(page_size: tuple[int, int], cols: int, rows: int) -> tuple[int, int]:
     """получение размеров ячейки"""
-    cell_width = page_size[0] / cols
-    cell_height = page_size[1] / rows
+    cell_width = int(page_size[0] / cols)
+    cell_height = int(page_size[1] / rows)
     return (cell_width, cell_height)
 
 
 def get_cords_rect(margin: int, page_size: tuple[int, int],
                    col: int = 0, row: int = 0,
-                   cols: int = 1, rows: int = 1) -> tuple[int, int, int, int]:
+                   cols: int = 1, rows: int = 1) -> tuple[int, ...]:
     """получение области размещения страницы"""
     cell_width, cell_height = get_cell_size(page_size, cols, rows)
     x0 = col * cell_width + margin
@@ -82,7 +83,7 @@ def get_cords_rect(margin: int, page_size: tuple[int, int],
 
 
 def get_cords_vertical_line(page_size: tuple[int, int], col: int, 
-                            cols: int, rows: int) -> tuple[int, int]:
+                            cols: int, rows: int) -> tuple[tuple[int, int], ...]:
     """получение координат размещения вертикальной линии сетки"""
     cell_width, _ = get_cell_size(page_size, cols, rows)
     point0 = ((col + 1) * cell_width, 0)
@@ -112,18 +113,23 @@ def is_cut_line(cord: int, side: Side, is_row: bool = True) -> bool:
 
 
 def draw_formatting_page(
-        output_page: fitz.Page, params: BookParams, input_doc: fitz.Document, 
+        output_page: fitz.Page, params: BookParams, input_doc: fitz.Document | None, 
         index: int | None, row=None, col=None, drawn_lines: list | None = None, 
         indexation_size: int | None = None, rotate=False) -> list[list[int]]:
     """Отрисовка страницы с форматированием"""
+    if input_doc is None:
+        raise ValueError("No PDF document loaded")
+
     if drawn_lines is None:
         drawn_lines = [[], []]
 
-    rect_params = {'margin': params.margin, 'page_size': params.page_size}
     if (row is not None) and (col is not None):
-        rect_params.update({'col': col, 'row': row, 
-                            'cols': params.cols, 'rows': params.rows})
-    rect = fitz.Rect(get_cords_rect(**rect_params))
+        rect = fitz.Rect(get_cords_rect(
+            params.margin, page_size=params.page_size, col=col,
+            row=row, cols=params.cols, rows=params.rows))
+    else:
+        rect = fitz.Rect(get_cords_rect(
+            margin=params.margin, page_size=params.page_size))
 
     if index is not None and index not in range(len(input_doc)):
         index = None
@@ -146,13 +152,13 @@ def draw_formatting_page(
     if (row is not None) and (col is not None):
         is_cut_lines = [params.show_cut_lines and is_cut_line(row, params.side, is_row=True),
                         params.show_cut_lines and is_cut_line(col, params.side, is_row=False)]
-        cords_of_lines = [
+        cords_of_lines: list[tuple[tuple[int, int], ...]] = [
             get_cords_horizontal_line(params.page_size, row, params.cols, params.rows),
             get_cords_vertical_line(params.page_size, col, params.cols, params.rows)]
         for i, cord in enumerate([row, col]):
             if (cord not in drawn_lines[i]) and (is_cut_lines[i] or params.show_blocks_lines):
-                output_page.draw_line(*map(lambda p: fitz.Point(*p), cords_of_lines[i]),
-                                      color=params.color_lines, width=params.thickness_lines,
+                p1, p2 = tuple(map(lambda p: fitz.Point(*p), cords_of_lines[i]))
+                output_page.draw_line(p1, p2, color=params.color_lines, width=params.thickness_lines,
                                       dashes=(f"[{params.dashes_pattern}] 0"
                                               if is_cut_lines[i] else None))
                 drawn_lines[i].append(cord)
@@ -180,9 +186,8 @@ def calculate_texture_data(
         print("Sizes are not equel")
 
     img_array = np.frombuffer(pix.samples, dtype=np.uint8)
-    img_array = img_array.reshape(height, width, 3)
 
-    img_float = img_array.astype(np.float32) / 255.0
+    img_float = img_array.reshape(height, width, 3).astype(np.float32) / 255.0
 
     if pix.n == 3:
         alpha = np.ones((height, width, 1), dtype=np.float32)
@@ -193,7 +198,7 @@ def calculate_texture_data(
     return texture_data, (width, height)
 
 
-def calculate_doc(input_doc: fitz.Document, params: BookParams, 
+def calculate_doc(input_doc: fitz.Document | None, params: BookParams, 
                   page_num=None, indexation_size: int | None = None,
                   ) -> tuple[fitz.Document, int]:
     """Расчёт и создание документа с брошюровкой"""
@@ -241,7 +246,7 @@ def calculate_doc(input_doc: fitz.Document, params: BookParams,
         if (page_num is None) or (page_num == sheet_num):
             page = output_doc.new_page(width=page_size[0], height=page_size[1])
             
-        drawn_lines = [[], []]
+        drawn_lines: list[list[int]] = [[], []]
         if params.side == TOP:
             if sheet_num % 2 == 1:
                 for col in range(params.cols):

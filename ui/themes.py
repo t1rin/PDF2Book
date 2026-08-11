@@ -72,7 +72,7 @@ class ThemeManager:
                     self.app.message(
                         content=f"Warning: Font file not found: {path}", 
                         mood=False)
-                    return
+                    return None
                 font_tag = dpg.generate_uuid()
                 with dpg.font(_path, size, tag=font_tag):
                     self._cache_fonts[item] = font_tag

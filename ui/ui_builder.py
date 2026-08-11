@@ -196,8 +196,7 @@ def create_drag_and_drop(app: PDF2BookApp) -> None:
         from ui.callbacks import drop_handler
 
         dpg_dnd.initialize()
-        dpg_dnd.set_drop(lambda data, _: 
-                         drop_handler(app, data))
+        dpg_dnd.set_drop(lambda data, _: drop_handler(app, data))
 
 def build_table_layout(app: PDF2BookApp) -> None:
     order = ("settings_panel", "content_group") if app.pw_left else \

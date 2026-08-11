@@ -63,7 +63,7 @@ class PDFImposer:
         return thread
 
     @staticmethod
-    def _require_doc(func: Callable[..., Any]) -> None:
+    def _require_doc(func: Callable[..., Any]) -> Callable[..., Any]:
         def wrapper(self, *args, **kwargs):
             if self.input_doc is None:
                 raise ValueError("No PDF document loaded")
@@ -79,7 +79,7 @@ class PDFImposer:
             self.output_doc = None
 
     def load_doc(self, path: str, 
-                 callback: Callable[[Any], None] | None = None):
+                 callback: Callable[[bool, str | None], None] | None = None):
         self._cancel_async_task()
 
         with self._track_operation():
@@ -138,6 +138,7 @@ class PDFImposer:
     def get_formatted_source_pages(
         self, page_nums: list[int | None] | None = None,
         dpi: int = 72) -> list[tuple[list, tuple[int, int]]]:
+        assert self.input_doc is not None
         if page_nums is None:
             page_nums = list(range(len(self.input_doc)))
 
@@ -153,7 +154,7 @@ class PDFImposer:
                     page = doc.new_page(width=page_size[0], height=page_size[1])
                     draw_formatting_page(page, self.params, self.input_doc, page_num)
 
-                return [calculate_texture_data(page, dpi, page_size) for page in doc]
+                return [calculate_texture_data(doc[i], dpi, page_size) for i in range(len(doc))]
             finally:
                 doc.close()
 
@@ -164,6 +165,7 @@ class PDFImposer:
         return self._run_async(self.get_formatted_source_pages, page_nums, dpi,
                                callback=callback)
 
+    @_require_doc
     def update_doc(self) -> None:
         if self._current_task and self._current_task.is_alive():
             self._current_task.join()
@@ -176,7 +178,7 @@ class PDFImposer:
         output_1 = fitz.open()
         output_2 = fitz.open()
         
-        if self.output_doc is not None:
+        if self.output_doc is not None and self.quantity_page is not None:
             for i in range(0, self.quantity_page, 2):
                 ind_1, ind_2 = i, self.quantity_page-i-1
                 output_1.insert_pdf(
@@ -200,6 +202,7 @@ class PDFImposer:
                     output.save(os.sep.join([path, name_pdf]), garbage=4, deflate=True)
                     output.close()
             else:
+                assert self.output_doc is not None
                 self.output_doc.save(path, garbage=4, deflate=True)
 
     def export_doc_async(self, path, split=False,
@@ -209,7 +212,7 @@ class PDFImposer:
 
     def get_preview_async(self, page_num: int, dpi: int, 
                           indexation_size: int | None = None, 
-                          callback: Callable[[Any], None] | None = None) -> None:
+                          callback: Callable[[bool, Any], None] | None = None) -> None:
         self._run_async(self.get_preview, page_num, dpi, indexation_size, callback=callback)
 
     def update_doc_async(self, 

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from numpy.typing import NDArray
 
@@ -59,8 +59,8 @@ class VisualBook:
         book = Book(parts=[], q_parts=q_parts, q_blocks=q_blocks, 
                     page_size=page_size, side=side)
         for i in range(q_parts):
-            part = BookPart(pos=[-page_size[0]/2, page_size[1]/2, 
-                                 -i*self._spacing_between_parts], 
+            part = BookPart(pos=[-int(page_size[0]/2), int(page_size[1]/2), 
+                                 -int(i*self._spacing_between_parts)], 
                             blocks=[])
             for j in range(q_blocks):
                 block = BlockPages(
@@ -73,7 +73,7 @@ class VisualBook:
         self._book = book
         self._q_parts = q_parts
         self._q_blocks = q_blocks
-        self._sheets_vertices = []
+        self._sheets_vertices: list = []
 
     def load_textures(self, textures: list) -> None:
         q_pages_on_block = 4 * self._q_blocks
@@ -131,7 +131,7 @@ class VisualBook:
 
     def get(self, param: str, 
             part_ind: int | None = None, 
-            block_ind: int | None = None) -> None:
+            block_ind: int | None = None) -> Any:
         params = {
             'q_parts': self._book.q_parts,
             'q_blocks': self._book.q_blocks,
@@ -198,7 +198,7 @@ class VisualBook:
             key=lambda s: get_quad_distance(s['vertices'], camera_pos),
             reverse=True)
 
-    def is_order_changed(self, camera_pos: NDArray) -> None:
+    def is_order_changed(self, camera_pos: NDArray) -> bool:
         old_order = [sheet_vertices['page_num']
                      for sheet_vertices in self._sheets_vertices]
         self._sort_sheets_vertices(camera_pos)
@@ -206,10 +206,8 @@ class VisualBook:
                  for sheet_vertices in self._sheets_vertices]
         return order != old_order
 
-    def solve_visualization(self, camera_pos: NDArray | None = None) -> None:
+    def solve_visualization(self, camera_pos: NDArray | None = None) -> list:
         sheets_vertices = calculate_vertices(self._book)
-        if sheets_vertices is None:
-            return
         self._sheets_vertices = sheets_vertices
         
         if camera_pos is not None:

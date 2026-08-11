@@ -35,7 +35,7 @@ class TextureManager:
         irect = (rect * fitz.Matrix(zoom, zoom)).irect
         return (irect.width, irect.height)
 
-    def _get_datas_using_formats(self) -> None:
+    def _get_datas_using_formats(self) -> dict:
         images_datas = []
         for size in self._formats.values():
             scaled_size = self._get_scaled_size(size)
@@ -58,17 +58,17 @@ class TextureManager:
             if not dpg.does_item_exist(texture_register):
                 texture_register_tag = texture_register
             else:
-                return
+                return None
         else: texture_register_tag = dpg.generate_uuid()
 
         if textures_tags and len(textures_tags) != len(images_datas):
-            return
+            return None
 
         textures = []
         with dpg.texture_registry(tag=texture_register_tag):
             for index in range(len(images_datas)):
                 img_data, size = images_datas[index]
-                tag = 0
+                tag: str | int = 0
                 if textures_tags and not dpg.does_item_exist(textures_tags[index]):
                     tag = textures_tags[index]
                 texture = dpg.add_dynamic_texture(*size, img_data, tag=tag)
@@ -103,7 +103,7 @@ class TextureManager:
         textures = self.get_dynamic_textures("visual_textures")
         return textures[index]
 
-    def update_preview_texture(self, format_name: str | int, 
+    def update_preview_texture(self, format_name: str, 
                        img_data: NDArray | None = None, 
                        size: tuple[int, int] | None = None) -> None:
         if size is None:

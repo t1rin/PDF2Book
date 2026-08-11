@@ -117,7 +117,7 @@ def reset_visual_book(app: PDF2BookApp) -> None:
 
     set_values_of_visualization(app)
 
-def load_textures(app: PDF2BookApp) -> list:
+def load_textures(app: PDF2BookApp) -> None:
     q_pages = len(app.pdf_imposer.input_doc)
 
     def on_loading(success, content):

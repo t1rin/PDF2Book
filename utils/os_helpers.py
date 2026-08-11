@@ -4,7 +4,7 @@ import platform
 import subprocess
 
 
-def os_type():
+def os_type() -> str:
     return platform.system()
 
 def get_startup_path() -> str | None:
@@ -14,7 +14,7 @@ def get_startup_path() -> str | None:
             return candidate
     return None
 
-def start_path(path):
+def start_path(path: str) -> bool:
     if os_type() == "Windows":
         subprocess.Popen(['explorer', '/select,', os.path.normpath(path)])
         return True
@@ -28,3 +28,5 @@ def start_path(path):
         if folder:
             subprocess.Popen(['xdg-open', folder])
             return True
+
+    return False

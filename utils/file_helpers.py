@@ -132,10 +132,10 @@ class PDFInfo:
 def normalize_path(path):
     return path.replace('\\', os.sep).replace('/', os.sep)
 
-def resource_path(relative_path):
-    try:
+def resource_path(relative_path: str) -> str:
+    if hasattr(sys, '_MEIPASS'):
         base_path = Path(sys._MEIPASS)
-    except AttributeError:
+    else:
         base_path = Path(__file__).resolve().parent.parent
         
     path = Path(normalize_path(relative_path))
@@ -145,26 +145,24 @@ def resource_path(relative_path):
     
     final_path = base_path / clean_path
     
-    final_path = os.path.abspath(final_path)
-    
-    return str(final_path)
+    return str(os.path.abspath(final_path))
 
-def get_fonts():
+def get_fonts() -> list[str]:
     paths2fonts = glob.glob(resource_path(os.path.join("assets", "fonts", "*.ttf")))
     fonts = [os.sep.join(font.split(os.sep)[-3::1]) for font in paths2fonts]
     return fonts
 
-def is_type(path, type):
+def is_type(path: str, type: str) -> bool:
     return path.split(".")[-1] == type
 
-def split_path(src):
+def split_path(src: str) -> tuple[str, str]:
     source_dir = os.path.dirname(src)
     source_name = os.path.splitext(os.path.basename(src))[0]
     return source_dir, source_name
 
-def join_path(*args):
+def join_path(*args: str) -> str:
     return os.path.join(*args)
 
-def is_directory(path):
+def is_directory(path: str) -> bool:
     return os.path.isdir(path)
 

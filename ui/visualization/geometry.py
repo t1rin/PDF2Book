@@ -220,6 +220,51 @@ def _resolve_texture_conflict(candidates: list[Candidate]) -> Candidate:
     return total_canditates[surface_id]
 
 
+def subdivide_uv(uv_coords: Vertices, n: int = 8,
+                 ) -> list[tuple[Vector, ...]]:
+    uv0, uv1, uv2, uv3 = [*map(np.array, uv_coords)]
+    
+    uvs: list[tuple[Vector, ...]] = []
+    for i in range(n):
+        for j in range(n):
+            s0, s1 = i / n, (i + 1) / n
+            t0, t1 = j / n, (j + 1) / n
+            
+            def lerp(a, b, t):
+                return a + (b - a) * t
+            
+            uv00 = lerp(lerp(uv0, uv1, t0), lerp(uv3, uv2, t0), s0)
+            uv10 = lerp(lerp(uv0, uv1, t1), lerp(uv3, uv2, t1), s0)
+            uv11 = lerp(lerp(uv0, uv1, t1), lerp(uv3, uv2, t1), s1)
+            uv01 = lerp(lerp(uv0, uv1, t0), lerp(uv3, uv2, t0), s1)
+            
+            uvs.append((uv00, uv10, uv11, uv01))
+    
+    return uvs
+
+
+def subdivide_quad(vertices: Vertices, n: int = 8,
+                   ) -> list[tuple[Vector, ...]]:
+    vs = [*map(np.array, vertices)]
+
+    quads: list[tuple[Vector, ...]] = []
+    for i in range(n):
+        for j in range(n):
+            s0, s1 = i / n,     (i + 1) / n
+            t0, t1 = j / n,     (j + 1) / n
+            
+            def lerp(a, b, t):
+                return a + (b - a) * t
+            
+            p00 = lerp(lerp(vs[0], vs[1], t0), lerp(vs[3], vs[2], t0), s0)
+            p10 = lerp(lerp(vs[0], vs[1], t1), lerp(vs[3], vs[2], t1), s0)
+            p11 = lerp(lerp(vs[0], vs[1], t1), lerp(vs[3], vs[2], t1), s1)
+            p01 = lerp(lerp(vs[0], vs[1], t0), lerp(vs[3], vs[2], t0), s1)
+            
+            quads.append((p00, p10, p11, p01))
+    return quads
+
+
 def calculate_vertices(book: Book, thickness: int = 3) -> list[Candidate]:
     sheets_vertices: list[Candidate] = []
     w, h = book.page_size

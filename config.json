@@ -154,9 +154,10 @@
     "spacing_between_parts": 300,
     "padding_loading_text": 10,
     "padding_drawlist": 18,
+    "texture_subdivision": 2,
     "max_line_thickness": 5,
     "max_margin": 40,
     "max_columns": 50,
     "max_rows": 50,
-    "dpi": 72
+    "dpi": 36
 }

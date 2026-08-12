@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 import dearpygui.dearpygui as dpg
 
 from core import LEFT, TOP, RIGHT
+from .visualization.geometry import subdivide_quad, subdivide_uv
 from .ui_builder import (build_table_layout, set_values,
     set_values_of_modes, set_values_of_visualization)
 from .visualization import RULE
@@ -79,6 +80,7 @@ def update_visualization(app: PDF2BookApp) -> None:
     camera_pos = app.scene.camera.get_position()
     sheets_vertices = app.scene.visual_book.solve_visualization(camera_pos)
 
+    n = app.conf.texture_subdivision
     cache = app.scene.visual_book.cache_planes
     cache_index = 0
 
@@ -87,30 +89,36 @@ def update_visualization(app: PDF2BookApp) -> None:
         texture_tag = sheet["texture"]
         uv_coords = sheet["uv_coords"]
 
-        quad_params = {
-            'p1': vertices[0], 'p2': vertices[1],
-            'p3': vertices[2], 'p4': vertices[3],
-            'uv1': uv_coords[0], 'uv2': uv_coords[1], 
-            'uv3': uv_coords[2], 'uv4': uv_coords[3],
-            'parent': "plane_node", 'texture_tag': texture_tag
-        }
+        sub_quads = subdivide_quad(vertices, n=n)
+        sub_uvs = subdivide_uv(uv_coords, n=n)
 
-        if cache_index < len(cache):
-            if dpg.does_item_exist(item := cache[cache_index]):
-                dpg.configure_item(item=item, show=True, **quad_params)
+        for (p0, p1, p2, p3), (uv0, uv1, uv2, uv3) in zip(sub_quads, sub_uvs):
+            quad_params = {
+                'p1': p0, 'p2': p1, 'p3': p2, 'p4': p3,
+                'uv1': uv0, 'uv2': uv1, 'uv3': uv2, 'uv4': uv3,
+                'parent': "plane_node",
+                'texture_tag': texture_tag,
+            }
+
+            if cache_index < len(cache):
+                item = cache[cache_index]
+                if dpg.does_item_exist(item):
+                    dpg.configure_item(item=item, show=True, **quad_params)
+                else:
+                    dpg.draw_image_quad(tag=item, **quad_params)
             else:
-                dpg.draw_image_quad(tag=item, **quad_params)
-        else:
-            item = dpg.draw_image_quad(**quad_params)
-            cache.append(item)
-        cache_index += 1
+                item = dpg.draw_image_quad(**quad_params)
+                cache.append(item)
+
+            cache_index += 1
 
     while cache_index < len(cache):
-        dpg.configure_item(item=cache[cache_index], show=False)
+        if dpg.does_item_exist(cache[cache_index]):
+            dpg.configure_item(item=cache[cache_index], show=False)
         cache_index += 1
 
     if app.pdf_imposer.input_doc is not None:
-        dpg.set_value("quantity_source_page_label", 
+        dpg.set_value("quantity_source_page_label",
                       len(app.pdf_imposer.input_doc))
 
     app.scene.update()

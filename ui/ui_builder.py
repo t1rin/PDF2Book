@@ -276,6 +276,8 @@ def set_values(app: PDF2BookApp) -> None:
     set_values_of_modes(app)
     set_values_of_visualization(app)
 
+    app.message()
+
 def set_values_of_modes(app: PDF2BookApp) -> None:
     is_preview_mode = app.mode == MODE.PREVIEW
     is_visualization_mode = app.mode == MODE.VISUALIZATION

@@ -331,15 +331,12 @@ def edit_params(app: PDF2BookApp) -> None:
 
     app.message()
     app.pdf_imposer.update_params(**params)
-
+    
     params['q_parts'], params['q_blocks'] = _calculate_parts_blocks(
         app, q_pages=len(app.pdf_imposer.input_doc),
         size_part=params['quantity_pages_for_part'])
     is_change = (lambda param: 
                     app.scene.visual_book.get(param) != params[param])
-
-    if (is_change('rows') or is_change('cols')) and (app.mode == MODE.VISUALIZATION):
-        return
 
     if is_change('page_size'):
         try: default_texture = app.texture_manager.get_clean_texture(params['page_size'])
@@ -371,6 +368,11 @@ def _is_size_part_normal(app: PDF2BookApp, params: dict) -> bool:
 
 
 def _validate_params(app: PDF2BookApp, params: dict) -> bool:
+    if ((app.mode == MODE.VISUALIZATION) and 
+        ((app.pdf_imposer.params.cols != params['cols']) or 
+         (app.pdf_imposer.params.rows != params['rows']))):
+        set_values(app)
+        return False
     if not (1 <= params['rows'] <= app.conf.max_rows):
         dpg.set_value("rows_input", max(1, 
             min(params['rows'], app.conf.max_rows)))

@@ -1,12 +1,20 @@
+import logging
+
 import dearpygui.dearpygui as dpg
 
+from utils import setup_log
+setup_log(console_level=logging.DEBUG,
+          file_level=logging.DEBUG)
 from core import PDFImposer
 from ui.visualization import Scene
 from ui.textures import TextureManager
 from ui.themes import ThemeManager
 from ui.config import MODE
-from utils import get_startup_path
+from utils import get_startup_path, get_logger
 import ui
+
+
+log = get_logger(__name__)
 
 
 class PDF2BookApp:
@@ -33,6 +41,8 @@ class PDF2BookApp:
 
         self.need_reload = None
         self._old_size_drawlist = None
+
+        log.info("Запуск PDF2Book")
 
     def initialize(self):
         self.theme_manager = ThemeManager(self)
@@ -132,7 +142,7 @@ class PDF2BookApp:
         self.conf.save()
 
         if not self.need_reload:
-            print("Завершение...")
+            log.info("Завершение...")
         
         if self.pdf_imposer:
             del self.pdf_imposer
@@ -149,6 +159,7 @@ def main():
     if app.need_reload:
         import sys, subprocess
 
+        log.debug("Main window reopened")
         subprocess.Popen([sys.executable, *sys.argv])
         sys.exit(0)
 

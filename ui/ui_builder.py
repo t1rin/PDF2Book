@@ -14,6 +14,9 @@ if TYPE_CHECKING:
     from main import PDF2BookApp
 
 
+log = get_logger(__name__)
+
+
 def resize_update(app: PDF2BookApp) -> None:
     viewport_width = dpg.get_viewport_width()
     viewport_height = dpg.get_viewport_height()
@@ -226,6 +229,8 @@ def build_table_layout(app: PDF2BookApp) -> None:
         dpg.move_item(tag, parent="layout_row")
 
 def create_main_window(app: PDF2BookApp) -> None:
+    log.info("Building UI...")
+
     with dpg.window(tag="primary_window"):
         dpg.set_primary_window("primary_window", True)
         create_menu_bar(app)

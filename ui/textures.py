@@ -6,8 +6,13 @@ import pymupdf as fitz
 import numpy as np
 from numpy.typing import NDArray
 
+from utils import get_logger
+
 if TYPE_CHECKING:
     from main import PDF2BookApp
+
+
+log = get_logger(__name__)
 
 
 class TextureManager:
@@ -16,6 +21,8 @@ class TextureManager:
         self._formats: dict[str, tuple[int, int]] = app.conf.formats
 
         self._registers_and_textures: dict[str | int, list[str | int]] = dict()
+
+        log.info("Initialize TextureManager...")
 
         self.start()
 

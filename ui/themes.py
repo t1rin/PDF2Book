@@ -4,16 +4,21 @@ from typing import TYPE_CHECKING
 import os
 import dearpygui.dearpygui as dpg
 
-from utils import resource_path
+from utils import resource_path, get_logger
 
 if TYPE_CHECKING:
     from main import PDF2BookApp
+
+
+log = get_logger(__name__)
 
 
 class ThemeManager:
     def __init__(self, app: PDF2BookApp) -> None:
         self.app: PDF2BookApp = app
         self._cache_fonts: dict[tuple[str, int], str | int] = dict()
+
+        log.info("Initialize ThemeManager...")
 
         self.registry_themes()
 
@@ -69,9 +74,9 @@ class ThemeManager:
             with dpg.font_registry(tag=dpg.generate_uuid()):
                 _path = resource_path(path)
                 if not os.path.exists(_path):
-                    self.app.message(
-                        content=f"Warning: Font file not found: {path}", 
-                        mood=False)
+                    msg = f"Font file not found: {path}"
+                    self.app.message(content=msg, mood=False)
+                    log.warning(msg)
                     return None
                 font_tag = dpg.generate_uuid()
                 with dpg.font(_path, size, tag=font_tag):

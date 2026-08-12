@@ -13,6 +13,8 @@ from utils import *
 if TYPE_CHECKING:
     from main import PDF2BookApp
 
+log = get_logger(__name__)
+
 
 BLOCK_SIZE = 4
 
@@ -45,13 +47,19 @@ def update(app: PDF2BookApp, align: bool = False) -> None:
 
 @require_pdf
 def update_preview(app: PDF2BookApp, align: bool = False) -> None:
-    texture_tag = _get_format(app)
+    try:
+        texture_tag = _get_format(app)
+    except Exception as err:
+        log.error(err)
+        return
+
     indexation_size = (app.conf.default_indexation_size 
                        if app.is_indexation else 0)
 
     def on_viewing(success, result):
         if not success:
             app.message(result, mood=False)
+            log.error(result)
             return
         img_data, _ = result
         app.texture_manager.update_preview_texture(texture_tag, img_data=img_data)
@@ -129,6 +137,7 @@ def load_textures(app: PDF2BookApp) -> None:
     def on_loading(success, content):
         if not success:
             app.message(content, mood=False)
+            log.error(content)
             return
         
         page_size = app.pdf_imposer.params.page_size
@@ -168,18 +177,22 @@ def load_file(app: PDF2BookApp, path: str | None = None) -> None:
     if not path:
         path = dpg.get_value("lineedit_input_file")
     _, err = PDFInfo.validate_and_get_info(path)
-    app.message(err, mood=False)
-    if err: return
+    if err:
+        app.message(err, mood=False)
+        log.error(err)
+        return
 
     def on_loading(success, error):
         if success:
             reset_visual_book(app)
             update(app, align=True)
             set_values(app)
-            app.message("Файл успешно загружен", mood=True)
+            app.message(msg := "Файл успешно загружен", mood=True)
+            log.info(msg)
         else:
             app.pdf_path = None
             app.message(error, mood=False)
+            log.error(error)
 
     app.pdf_path = path
     app.pdf_imposer.update_params(**app.imposer_options)
@@ -190,8 +203,10 @@ def open_file(app: PDF2BookApp) -> None:
     path = FileDialogHelper.open_pdf_file()
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
-    app.message(err, mood=False)
-    if not err:
+    if err:
+        app.message(err, mood=False)
+        log.error(err)
+    else:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
 
@@ -200,8 +215,10 @@ def drop_handler(app: PDF2BookApp, data: Any) -> None:
     path = data[0]
     if path is None: return
     _, err = PDFInfo.validate_and_get_info(path)
-    app.message(err, mood=False)
-    if not err:
+    if err:
+        app.message(err, mood=False)
+        log.error(err)
+    else:
         dpg.set_value("lineedit_input_file", path)
         load_file(app)
 
@@ -214,7 +231,8 @@ def save_as_file(app: PDF2BookApp) -> None:
         path = FileDialogHelper.save_pdf_file()
         if path is None: return
         if not is_type(path, "pdf"):
-            app.message("Файл некорректного типа")
+            app.message(msg := "Путь некорректный")
+            log.warning(msg)
             return
     dpg.set_value("lineedit_output", path)
     save_file(app)
@@ -226,10 +244,12 @@ def save_file(app: PDF2BookApp) -> None:
     path = dpg.get_value("lineedit_output")
 
     if path and not app.is_split_file and not is_type(path, "pdf"):
-        messages.append("Файл некорректного типа")
+        messages.append(msg := "Файл некорректного типа")
+        log.warning(msg)
         path = None
-    if path and app.is_split_file and not is_directory(path):
-        messages.append("Путь не директория")
+    elif path and app.is_split_file and not is_directory(path):
+        messages.append(msg := "Путь не директория")
+        log.warning(msg)
         path = None
     
     if not path:
@@ -239,11 +259,14 @@ def save_file(app: PDF2BookApp) -> None:
         else:
             path = join_path(source_dir, f"book_{source_name}.pdf")
         dpg.set_value("lineedit_output", path)
-        messages.append(f"Путь автоматически установлен: {path}")
+        messages.append(msg := f"Путь автоматически установлен: {path}")
+        log.info(msg)
 
     app.pdf_imposer.export_doc(path, app.is_split_file)
 
-    messages.append("Файлы сохранены" if app.is_split_file else "Файл сохранен")
+    messages.append(msg := ("Файлы сохранены" if app.is_split_file 
+                            else "Файл сохранен"))
+    log.info(msg)
     app.message(messages, mood=True)
 
 
@@ -256,18 +279,21 @@ def open_input_folder(app: PDF2BookApp) -> None:
     path = dpg.get_value("lineedit_input_file")
 
     if not start_path(path):
-        app.message(f"Папка не существует", mood=False)
+        app.message(msg := f"Папка не существует", mood=False)
+        log.warning(msg)
 
 
 @require_pdf
 def open_output_folder(app: PDF2BookApp) -> None:
     path = dpg.get_value("lineedit_output")
     if not path:
-        app.message("Файл не был сохранён", mood=False)
+        app.message(msg := "Файл не был сохранён", mood=False)
+        log.warning(msg)
         return
     
     if not start_path(path):
-        app.message(f"Папка не существует", mood=False)
+        app.message(msg := f"Папка не существует", mood=False)
+        log.warning(msg)
 
 
 # __ Working with params __
@@ -308,7 +334,8 @@ def edit_params(app: PDF2BookApp) -> None:
         return
 
     if is_change('page_size'):
-        default_texture = app.texture_manager.get_clean_texture(params['page_size'])
+        try: default_texture = app.texture_manager.get_clean_texture(params['page_size'])
+        except Exception as err: log.error(err)
         app.scene.visual_book.set(default_texture=default_texture)
         reset_visual_book(app)
         app.scene.visual_book.need_reload = True
@@ -355,15 +382,15 @@ def _validate_params(app: PDF2BookApp, params: dict) -> bool:
     if params['quantity_pages_for_part'] < 0:
         dpg.set_value("size_part_input", 0)
         return False
-    if  params['side'] == TOP and (params['rows'] % 2 == 1):
-        app.message(
-            content="В указанное количество строк не помещаются блоки по два", 
-            mood=False)
+    if params['side'] == TOP and (params['rows'] % 2 == 1):
+        msg = "В указанное количество строк не помещаются блоки по два"
+        app.message(content=msg, mood=False)
+        log.warning(msg)
         return False
     if params['side'] != TOP and (params['cols'] % 2 == 1):
-        app.message(
-            content="В указанное количество столбцов не помещаются блоки по два", 
-            mood=False)
+        msg = "В указанное количество столбцов не помещаются блоки по два"
+        app.message(content=msg, mood=False)
+        log.warning(msg)
         return False
     return True
 
@@ -456,18 +483,21 @@ def check_lineedit_pattern(app: PDF2BookApp) -> None:
 def move_panel(app: PDF2BookApp) -> None:
     app.pw_left = not app.pw_left
     build_table_layout(app)
+    log.info("Panel moved")
 
 
 def switch_theme(app: PDF2BookApp) -> None:
     themes = list(app.conf.themes.keys())
     app.theme = themes[themes.index(app.theme)-1]
     app.theme_manager.update()
+    log.info("Theme switched (%s)", app.theme)
 
 
 def switch_font(app: PDF2BookApp) -> None:
     fonts = get_fonts()
     app.font = fonts[fonts.index(normalize_path(app.font))-1]
     app.theme_manager.update()
+    log.info("Font switched (%s)", app.font)
 
 
 def switch_mode(app: PDF2BookApp, mode_name: str) -> None:
@@ -475,6 +505,7 @@ def switch_mode(app: PDF2BookApp, mode_name: str) -> None:
              "visualization": MODE.VISUALIZATION}
     if app.mode != modes[mode_name]:
         app.mode = modes[mode_name]
+        log.info("Mode switched (%s)", mode_name)
         update(app)
     set_values_of_modes(app)
 

@@ -16,3 +16,5 @@ IDEAS.md
 *.swo
 
 *.pdf
+
+/logs

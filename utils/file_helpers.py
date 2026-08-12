@@ -7,6 +7,11 @@ from pathlib import Path
 from tkinter import filedialog, Tk
 import pymupdf as fitz
 
+from .log_helpers import get_logger
+
+
+log = get_logger(__name__)
+
 
 class FileDialogHelper:
     _root = None
@@ -81,7 +86,7 @@ class PDFInfo:
             doc.close()
             return count
         except Exception as e:
-            print(f"Ошибка при чтении PDF: {e}")
+            log.error(f"Ошибка при чтении PDF: {e}")
             return 0
     
     @staticmethod
@@ -93,7 +98,7 @@ class PDFInfo:
             doc.close()
             return rect.width, rect.height
         except Exception as e:
-            print(f"Ошибка получения размера страницы: {e}")
+            log.error(f"Ошибка получения размера страницы: {e}")
             return 0, 0
     
     @staticmethod
@@ -104,7 +109,7 @@ class PDFInfo:
             doc.close()
             return metadata
         except Exception as e:
-            print(f"Ошибка получения метаданных: {e}")
+            log.error(f"Ошибка получения метаданных: {e}")
             return {}
     
     @staticmethod

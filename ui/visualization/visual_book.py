@@ -1,17 +1,21 @@
 from __future__ import annotations
-from typing import TYPE_CHECKING, Any
 
 from numpy.typing import NDArray
 
+from typing import TYPE_CHECKING, Any
 from functools import wraps
 import copy
 
+from utils import get_logger
 from core import get_positions_pages, LEFT, TOP, Side
 from .geometry import pages_intersect, calculate_vertices, get_quad_distance
 from .data_structures import *
 
 if TYPE_CHECKING:
     from main import PDF2BookApp
+
+
+log = get_logger(__name__)
 
 
 def with_rule(func):
@@ -26,7 +30,7 @@ def with_rule(func):
         
         if self._rule == RULE.LOGIC:
             if not self._is_params_normal(**all_kwargs):
-                print(f"warning: {func.__name__} заблокирован")
+                log.warning(f"{func.__name__} заблокирован")
                 return
         
         return func(self, *args, **kwargs)
@@ -74,6 +78,7 @@ class VisualBook:
         self._q_parts = q_parts
         self._q_blocks = q_blocks
         self._sheets_vertices: list = []
+        log.debug("New book created")
 
     def load_textures(self, textures: list) -> None:
         q_pages_on_block = 4 * self._q_blocks
@@ -114,13 +119,15 @@ class VisualBook:
                 self._rule = rule
         elif part_index is not None and block_index is None:
             if not (part_index < self._q_parts):
-                self.app.message("failed editing angle of page of block")
+                self.app.message(err := "failed editing angle of page of block")
+                log.error(err)
                 return
             if pos is not None:
                 self._book.parts[part_index].pos = pos
         elif part_index is not None and block_index is not None:
             if (self._q_parts <= part_index) or (self._q_blocks <= block_index):
-                self.app.message("failed editing angle of page of block")
+                self.app.message(err := "failed editing angle of page of block")
+                log.error(err)
                 return
             if alpha is not None:
                 self._book.parts[part_index].blocks[block_index].alpha = alpha

@@ -19,7 +19,7 @@
         "margin": 5
     },
     "title_font": "assets\\fonts\\Prata-Regular.ttf",
-    "selected_font": "assets/fonts/DeleddaOpen.ttf",
+    "selected_font": "assets\\fonts\\DeleddaOpen.ttf",
     "selected_theme": "dark",
     "parametrs_window_on_the_left": false,
     "themes": {
@@ -158,5 +158,5 @@
     "max_margin": 40,
     "max_columns": 50,
     "max_rows": 50,
-    "dpi": 36
+    "dpi": 72
 }

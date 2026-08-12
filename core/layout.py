@@ -26,7 +26,10 @@ class PDFImposer:
         self._active_lock: threading.Lock = threading.Lock()
         self._processing_threshold: float = processing_threshold
 
-        self.update_params(**option)
+        try:
+            self.update_params(**option)
+        except:
+            self.update_params()
     
     @contextmanager
     def _track_operation(self) -> Generator:

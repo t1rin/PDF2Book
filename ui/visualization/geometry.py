@@ -315,7 +315,12 @@ def calculate_vertices(book: Book, thickness: int = 3) -> list[Candidate]:
 
                 vertices: list[Vertex] = []
                 uv_coords: list[list[int]] = []
-                for local_vertex, uv in local_vertices_with_uv[page_idx % 2]:
+                data = local_vertices_with_uv[page_idx % 2]
+                if ((book.side == Side.TOP) and (page_idx % 2)):
+                    coords, uvs = zip(*data)
+                    shifted_uvs = uvs[2:] + uvs[:2]
+                    data = list(zip(coords, shifted_uvs))
+                for local_vertex, uv in data:
                     final = base + rotation_matrix.dot(local_vertex)
                     vertex = tuple(round(float(coord), 3) for coord in final)
                     assert len(vertex) == 3

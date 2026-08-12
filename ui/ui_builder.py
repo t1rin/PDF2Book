@@ -193,6 +193,9 @@ def create_menu_bar(app: PDF2BookApp) -> None:
                     tag = f"dpi_{dpi}_btn"
                     dpg.add_menu_item(label=str(dpi), tag=tag, check=True,
                         default_value=(dpi == app.conf.dpi), user_data=dpi)
+            
+        with dpg.menu(label="Справка"):
+            dpg.add_menu_item(label="GitHub", tag="github_btn")
 
 def create_drag_and_drop(app: PDF2BookApp) -> None:
     if os_type() == "Windows":

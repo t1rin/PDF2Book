@@ -558,6 +558,11 @@ def show_visual_settings(app: PDF2BookApp) -> None:
     dpg.configure_item("detailed_visual_properties_btn", show=False)
 
 
+def open_github(app: PDF2BookApp) -> None:
+    import webbrowser
+    webbrowser.open("https://github.com/t1rin/PDF2Book")
+
+
 def register_callbacks(app: PDF2BookApp) -> None:
     callbacks = {
         "open_file_btn": lambda: open_file(app),
@@ -593,6 +598,7 @@ def register_callbacks(app: PDF2BookApp) -> None:
         "beta_input": lambda: edit_visualization(app),
         "open_input_folder_btn": lambda: open_input_folder(app),
         "open_output_folder_btn": lambda: open_output_folder(app),
+        "github_btn": lambda: open_github(app),
     }
 
     for dpi in app.conf.defaults_dpi:

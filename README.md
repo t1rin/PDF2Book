@@ -128,38 +128,22 @@ UI написан на библиотеке `dearpygui`
 
 # Подключение
 
-## 1. Создание виртуального окружения внутри каталога проекта
+## Требования
+- Python 3.12 или выше
+- [Poetry](https://python-poetry.org/docs/#installation) (рекомендуется)
 
-```shell
-python3 -m venv venv
-```
+## Установка и запуск
 
-## 2. Подключение к виртуальному окружению
+```bash
+# 1. Клонируем репозиторий
+git clone https://github.com/t1rin/PDF2Book.git
+cd PDF2Book
 
-### Linux
+# 2. Устанавливаем зависимости через Poetry
+poetry install
 
-```shell
-source ./venv/bin/activate
-```
-
-или
-
-### Windows
-
-```shell
-venv\Scripts\activate
-```
-
-## 3. Установка зависимостей
-
-```shell
-pip install -r requirements.txt
-```
-
-для Windows дополнительно:
-
-```shell
-pip install pywin32==312
+# 3. Запускаем приложение
+poetry run python main.py
 ```
 
 ---

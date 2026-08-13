@@ -8,13 +8,28 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        include:
+          - os: windows-latest
+            artifact_name: main.exe
+            asset_name: app-windows.exe
+          - os: macos-latest
+            artifact_name: main
+            asset_name: app-macos
+          - os: ubuntu-latest
+            artifact_name: main
+            asset_name: app-linux
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
       - run: uv sync
       - run: uv run pyinstaller main.spec
+      - name: Rename binary
+        shell: bash
+        run: |
+          if [ -f "dist/${{ matrix.artifact_name }}" ]; then
+            mv "dist/${{ matrix.artifact_name }}" "dist/${{ matrix.asset_name }}"
+          fi
       - uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: dist/${{ matrix.asset_name }}

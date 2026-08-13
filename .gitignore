@@ -2,6 +2,9 @@ test.py
 test*.py
 IDEAS.md
 
+/build
+/dist
+
 /venv
 /__pycache__
 /*/__pycache__

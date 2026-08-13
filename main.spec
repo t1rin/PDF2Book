@@ -1,11 +1,17 @@
-# -*- mode: pyt# -*- mode: python ; coding: utf-8 -*-
+# -*- mode: python ; coding: utf-8 -*-
+
+from PyInstaller.utils.hooks import collect_data_files
+
+pyfiglet_datas = collect_data_files('pyfiglet')
 
 a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('assets/', 'assets/'), ('config.json', '.')],
-    hiddenimports=[],
+    datas=[('assets/', 'assets/'), 
+           ('config.json', '.'),
+           *pyfiglet_datas],
+    hiddenimports=['pyfiglet.fonts'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
@@ -19,8 +25,8 @@ pyz = PYZ(a.pure, cipher=None)
 exe = EXE(
     pyz,
     a.scripts,
-    [],
-    exclude_binaries=True,
+    a.binaries,
+    a.datas,
     name='main',
     debug=False,
     bootloader_ignore_signals=False,
@@ -33,14 +39,4 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon='assets/icon.ico',
-)
-
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=True,
-    upx=False,
-    upx_exclude=[],
-    name='PDF2Book',
 )
